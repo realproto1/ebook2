@@ -292,10 +292,20 @@ app.post('/api/generate-character-image', async (req, res) => {
       
       if (translateResponse.ok) {
         const translateData = await translateResponse.json();
-        characterDescriptionEn = translateData.candidates[0].content.parts[0].text.trim();
-        console.log('Translated character description:', characterDescriptionEn);
+        if (translateData.candidates && 
+            translateData.candidates[0] && 
+            translateData.candidates[0].content && 
+            translateData.candidates[0].content.parts && 
+            translateData.candidates[0].content.parts[0]) {
+          characterDescriptionEn = translateData.candidates[0].content.parts[0].text.trim();
+          console.log('Translated character description:', characterDescriptionEn);
+        } else {
+          console.warn('Translation response structure unexpected, using original description');
+          characterDescriptionEn = character.description;
+        }
       } else {
         console.warn('Translation failed, using original description');
+        characterDescriptionEn = character.description;
       }
     }
     
@@ -377,8 +387,17 @@ app.post('/api/generate-illustration', async (req, res) => {
         
         if (translateResponse.ok) {
           const translateData = await translateResponse.json();
-          editNoteEn = translateData.candidates[0].content.parts[0].text.trim();
-          console.log('Translated edit note:', editNoteEn);
+          if (translateData.candidates && 
+              translateData.candidates[0] && 
+              translateData.candidates[0].content && 
+              translateData.candidates[0].content.parts && 
+              translateData.candidates[0].content.parts[0]) {
+            editNoteEn = translateData.candidates[0].content.parts[0].text.trim();
+            console.log('Translated edit note:', editNoteEn);
+          } else {
+            console.warn('Translation response structure unexpected, using original edit note');
+            editNoteEn = editNote;
+          }
         } else {
           console.warn('Translation failed, using original edit note');
           editNoteEn = editNote;
@@ -408,10 +427,20 @@ app.post('/api/generate-illustration', async (req, res) => {
       
       if (translateResponse.ok) {
         const translateData = await translateResponse.json();
-        sceneDescriptionEn = translateData.candidates[0].content.parts[0].text.trim();
-        console.log('Translated scene description:', sceneDescriptionEn);
+        if (translateData.candidates && 
+            translateData.candidates[0] && 
+            translateData.candidates[0].content && 
+            translateData.candidates[0].content.parts && 
+            translateData.candidates[0].content.parts[0]) {
+          sceneDescriptionEn = translateData.candidates[0].content.parts[0].text.trim();
+          console.log('Translated scene description:', sceneDescriptionEn);
+        } else {
+          console.warn('Translation response structure unexpected, using original description');
+          sceneDescriptionEn = page.scene_description;
+        }
       } else {
         console.warn('Translation failed, using original description');
+        sceneDescriptionEn = page.scene_description;
       }
     }
     
@@ -464,9 +493,21 @@ app.post('/api/generate-illustration', async (req, res) => {
       
       if (translateResponse.ok) {
         const translateData = await translateResponse.json();
-        const translated = translateData.candidates[0].content.parts[0].text.trim();
-        sceneDetails = `\n\n**Scene Structure:**\n${translated}`;
-        console.log('Translated scene structure:', translated);
+        if (translateData.candidates && 
+            translateData.candidates[0] && 
+            translateData.candidates[0].content && 
+            translateData.candidates[0].content.parts && 
+            translateData.candidates[0].content.parts[0]) {
+          const translated = translateData.candidates[0].content.parts[0].text.trim();
+          sceneDetails = `\n\n**Scene Structure:**\n${translated}`;
+          console.log('Translated scene structure:', translated);
+        } else {
+          console.warn('Translation response structure unexpected, using original structure');
+          sceneDetails = `\n\n**Scene Structure:**
+- **Characters & Actions:** ${page.scene_structure.characters}
+- **Background Setting:** ${page.scene_structure.background}  
+- **Mood & Atmosphere:** ${page.scene_structure.atmosphere}`;
+        }
       } else {
         sceneDetails = `\n\n**Scene Structure:**
 - **Characters & Actions:** ${page.scene_structure.characters}
