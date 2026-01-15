@@ -128,6 +128,8 @@ function saveStorybooks() {
 function renderBookList() {
     const listDiv = document.getElementById('bookList');
     
+    console.log('📋 renderBookList 호출 - 동화책 개수:', storybooks.length);
+    
     if (storybooks.length === 0) {
         listDiv.innerHTML = '<p class="text-gray-500 text-center py-4">아직 만든 동화책이 없어요</p>';
         return;
@@ -232,15 +234,23 @@ async function generateStorybook() {
         if (response.data.success) {
             currentStorybook = response.data.storybook;
             
+            console.log('✅ 동화책 생성 성공:', currentStorybook.title, 'ID:', currentStorybook.id);
+            
             // 목록에 추가
             const index = storybooks.findIndex(b => b.id === currentStorybook.id);
             if (index !== -1) {
+                console.log('📝 기존 동화책 업데이트:', index);
                 storybooks[index] = currentStorybook;
             } else {
+                console.log('➕ 새 동화책 추가');
                 storybooks.push(currentStorybook);
             }
+            
+            console.log('💾 저장 전 목록 개수:', storybooks.length);
             saveStorybooks();
+            console.log('🎨 목록 렌더링 시작');
             renderBookList();
+            console.log('📚 현재 목록:', storybooks.map(b => b.title));
             
             displayStorybook(currentStorybook);
         } else {
