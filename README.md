@@ -219,11 +219,29 @@ location.reload()
 ## 🚀 배포
 
 ### Vercel 배포 (권장)
+
+#### 1. Vercel에 프로젝트 임포트
 1. https://vercel.com 접속
 2. GitHub 계정으로 로그인
 3. "Import Project" → `ebook2` 저장소 선택
 4. "Deploy" 클릭
-5. 완료! (약 1-2분 소요)
+
+#### 2. 환경 변수 설정 (중요!)
+배포 전 또는 후에 환경 변수를 설정해야 합니다:
+
+**Vercel Dashboard에서:**
+1. 프로젝트 선택 → "Settings" → "Environment Variables"
+2. 다음 변수 추가:
+   - **Name**: `GEMINI_API_KEY`
+   - **Value**: `AIzaSyCBbhANVn2ESO3IzRSD-220UzAEEBIQZPk` (또는 본인의 API 키)
+   - **Environment**: Production, Preview, Development 모두 선택
+3. "Save" 클릭
+4. 프로젝트 재배포 (Deployments → ... → Redeploy)
+
+#### 3. 배포 완료
+- URL: `https://your-project.vercel.app`
+- 자동 HTTPS 적용
+- GitHub push 시 자동 재배포
 
 ### PM2로 로컬 배포
 ```bash

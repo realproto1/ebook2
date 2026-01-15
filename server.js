@@ -14,8 +14,8 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API 키
-const GEMINI_API_KEY = 'AIzaSyCBbhANVn2ESO3IzRSD-220UzAEEBIQZPk';
+// API 키 (환경 변수 또는 기본값)
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyCBbhANVn2ESO3IzRSD-220UzAEEBIQZPk';
 
 // Gemini 이미지 생성 함수 (Nano Banana Pro) - 멀티모달 지원
 async function generateImage(prompt, referenceImages = []) {
@@ -199,8 +199,13 @@ JSON만 응답하세요.`;
     });
 
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: '스토리 생성 실패: ' + error.message });
+    console.error('Storybook generation error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      success: false,
+      error: '스토리 생성 실패: ' + error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
