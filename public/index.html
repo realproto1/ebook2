@@ -97,12 +97,22 @@
                         <label class="block text-gray-700 font-semibold mb-2">
                             <i class="fas fa-palette mr-2"></i>그림체
                         </label>
-                        <select id="artStyle" class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500">
+                        <select id="artStyleSelect" onchange="handleArtStyleChange()" class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500 mb-2">
                             <option value="Modern Illustration" selected>현대 일러스트</option>
                             <option value="Watercolor">수채화</option>
                             <option value="Cartoon">카툰</option>
                             <option value="Storybook">전통 동화책</option>
+                            <option value="Anime">애니메이션</option>
+                            <option value="Oil Painting">유화</option>
+                            <option value="Pencil Sketch">연필 스케치</option>
+                            <option value="custom">✏️ 직접 입력</option>
                         </select>
+                        <input 
+                            type="text" 
+                            id="artStyleCustom" 
+                            placeholder="그림체를 입력하세요 (예: Pixar style 3D animation)"
+                            class="hidden w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
+                        />
                     </div>
                 </div>
 

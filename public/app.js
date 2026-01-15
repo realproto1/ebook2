@@ -178,6 +178,19 @@ function deleteStorybook(id) {
     }
 }
 
+// 그림체 선택 변경 핸들러
+function handleArtStyleChange() {
+    const select = document.getElementById('artStyleSelect');
+    const customInput = document.getElementById('artStyleCustom');
+    
+    if (select.value === 'custom') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+    } else {
+        customInput.classList.add('hidden');
+    }
+}
+
 function showCreateForm() {
     document.getElementById('createForm').style.display = 'block';
     document.getElementById('storybookResult').classList.add('hidden');
@@ -189,10 +202,19 @@ function showCreateForm() {
 async function generateStorybook() {
     const title = document.getElementById('bookTitle').value.trim();
     const targetAge = document.getElementById('targetAge').value;
-    const artStyle = document.getElementById('artStyle').value;
+    const artStyleSelect = document.getElementById('artStyleSelect').value;
+    const artStyleCustom = document.getElementById('artStyleCustom').value.trim();
+    
+    // 그림체 결정: custom이면 직접 입력값 사용, 아니면 선택값 사용
+    const artStyle = artStyleSelect === 'custom' ? artStyleCustom : artStyleSelect;
 
     if (!title) {
         alert('동화책 제목을 입력해주세요.');
+        return;
+    }
+    
+    if (artStyleSelect === 'custom' && !artStyleCustom) {
+        alert('그림체를 입력해주세요.');
         return;
     }
 
@@ -499,7 +521,13 @@ function displayStorybook(storybook) {
                             return `
                             <div class="bg-white p-4 rounded-lg border-2 border-blue-200">
                                 <div class="flex justify-between items-center mb-2">
-                                    <p class="font-bold text-gray-700">${word}</p>
+                                    <input 
+                                        type="text" 
+                                        id="vocab-word-${idx}" 
+                                        value="${word}"
+                                        onchange="updateVocabularyWord(${idx}, this.value)"
+                                        class="font-bold text-gray-700 bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none w-24"
+                                    />
                                     ${vocabImg && vocabImg.imageUrl ? 
                                         `<button 
                                             onclick="downloadImage('${vocabImg.imageUrl}', '단어_${word}.png')"
@@ -581,6 +609,20 @@ function addNewCharacter() {
 function updatePageText(pageIndex, newText) {
     if (newText.trim()) {
         currentStorybook.pages[pageIndex].text = newText.trim();
+        saveCurrentStorybook();
+    }
+}
+
+// 단어 업데이트 함수
+function updateVocabularyWord(wordIndex, newWord) {
+    if (newWord.trim()) {
+        currentStorybook.educational_content.vocabulary[wordIndex] = newWord.trim();
+        
+        // 해당 단어의 이미지도 업데이트 (있다면)
+        if (currentStorybook.vocabularyImages && currentStorybook.vocabularyImages[wordIndex]) {
+            currentStorybook.vocabularyImages[wordIndex].word = newWord.trim();
+        }
+        
         saveCurrentStorybook();
     }
 }
