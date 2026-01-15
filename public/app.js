@@ -305,6 +305,12 @@ function displayStorybook(storybook) {
                         <i class="fas fa-images mr-2"></i>모든 레퍼런스 생성
                     </button>
                     <button 
+                        onclick="downloadAllCharacterReferences()"
+                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
+                    >
+                        <i class="fas fa-download mr-2"></i>모두 다운로드
+                    </button>
+                    <button 
                         onclick="addNewCharacter()"
                         class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition whitespace-nowrap"
                     >
@@ -342,6 +348,14 @@ function displayStorybook(storybook) {
                                 '<p class="text-white text-sm text-center p-4">이미지 생성 대기중</p>'
                             }
                         </div>
+                        ${char.referenceImage ? 
+                            `<button 
+                                onclick="downloadImage('${char.referenceImage}', '캐릭터_${char.name}.png')"
+                                class="w-full bg-green-500 text-white py-2 rounded-lg font-semibold hover:bg-green-600 transition mb-2"
+                            >
+                                <i class="fas fa-download mr-2"></i>이미지 다운로드
+                            </button>` : ''
+                        }
                         <textarea 
                             id="char-prompt-${idx}" 
                             class="w-full p-2 border border-white rounded-lg text-sm mb-2 bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70"
@@ -982,6 +996,38 @@ function saveCurrentStorybook() {
 }
 
 // 다운로드 함수들
+// 모든 캐릭터 레퍼런스 다운로드
+async function downloadAllCharacterReferences() {
+    const characters = currentStorybook.characters.filter(char => char.referenceImage);
+    
+    if (characters.length === 0) {
+        alert('다운로드할 캐릭터 레퍼런스가 없습니다.');
+        return;
+    }
+    
+    for (const char of characters) {
+        try {
+            const response = await fetch(char.referenceImage);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `캐릭터_${char.name}.png`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            // 다운로드 간 짧은 지연
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+            console.error(`Download error for ${char.name}:`, error);
+        }
+    }
+    
+    alert(`${characters.length}개의 캐릭터 레퍼런스를 다운로드했습니다.`);
+}
+
 async function downloadAllIllustrations() {
     const images = currentStorybook.pages
         .filter(page => page.illustrationImage)
