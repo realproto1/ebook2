@@ -554,6 +554,15 @@ function displayStorybook(storybook) {
                                     >
                                         <i class="fas fa-magic mr-1"></i>${vocabImg && vocabImg.imageUrl ? '재생성' : '생성'}
                                     </button>
+                                    ${vocabImg && vocabImg.imageUrl ? 
+                                        `<button 
+                                            onclick="downloadImage('${vocabImg.imageUrl}', '단어_${word}.png')"
+                                            class="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 transition"
+                                            title="다운로드"
+                                        >
+                                            <i class="fas fa-download"></i>
+                                        </button>` : ''
+                                    }
                                 </div>
                             </div>
                             `;
