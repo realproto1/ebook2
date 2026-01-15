@@ -259,7 +259,15 @@ async function generateStorybook() {
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('동화책 생성 중 오류가 발생했습니다.');
+        let errorMessage = '동화책 생성 중 오류가 발생했습니다.';
+        
+        if (error.response && error.response.data && error.response.data.error) {
+            errorMessage = error.response.data.error;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        alert(errorMessage + '\n\n잠시 후 다시 시도해주세요.');
         document.getElementById('createForm').style.display = 'block';
     } finally {
         document.getElementById('loading').classList.add('hidden');

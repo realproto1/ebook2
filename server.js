@@ -197,7 +197,33 @@ JSON만 응답하세요.`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini Error:', errorText);
-      return res.status(500).json({ error: 'AI 스토리 생성 실패' });
+      
+      let errorMessage = 'AI 스토리 생성 실패';
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.error) {
+          const code = errorJson.error.code;
+          const status = errorJson.error.status;
+          const message = errorJson.error.message;
+          
+          if (code === 503 || status === 'UNAVAILABLE') {
+            errorMessage = 'AI 서버가 일시적으로 과부하 상태입니다. 잠시 후 다시 시도해주세요.';
+          } else if (code === 429) {
+            errorMessage = 'API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.';
+          } else if (code === 403) {
+            errorMessage = 'API 키 권한 오류입니다. 관리자에게 문의하세요.';
+          } else {
+            errorMessage = `AI 오류: ${message}`;
+          }
+        }
+      } catch (e) {
+        // JSON 파싱 실패 시 기본 메시지 사용
+      }
+      
+      return res.status(response.status).json({ 
+        success: false,
+        error: errorMessage 
+      });
     }
 
     const data = await response.json();
