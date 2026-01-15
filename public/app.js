@@ -433,7 +433,16 @@ function displayStorybook(storybook) {
                                     rows="2"
                                 >${page.scene_description}</textarea>
                                 
+                                <h5 class="font-bold text-gray-700 mb-2 mt-3">그림체</h5>
+                                <input 
+                                    id="artstyle-${idx}" 
+                                    value="${page.artStyle || storybook.artStyle}"
+                                    placeholder="그림체 (예: 현대 일러스트레이션)"
+                                    class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm mb-2"
+                                />
+                                
                                 ${page.scene_structure ? `
+                                <h5 class="font-bold text-gray-700 mb-2 mt-3">장면 구조</h5>
                                 <div class="space-y-2 mb-2">
                                     <input 
                                         id="scene-char-${idx}" 
@@ -853,6 +862,8 @@ async function generateAllIllustrations() {
             if (!page.illustrationImage) {
                 try {
                     const sceneDesc = document.getElementById(`scene-${i}`)?.value || page.scene_description;
+                    const artStyleElem = document.getElementById(`artstyle-${i}`);
+                    const artStyle = artStyleElem ? artStyleElem.value : (page.artStyle || currentStorybook.artStyle);
                     const sceneCharElem = document.getElementById(`scene-char-${i}`);
                     const sceneBgElem = document.getElementById(`scene-bg-${i}`);
                     const sceneAtmElem = document.getElementById(`scene-atm-${i}`);
@@ -869,7 +880,7 @@ async function generateAllIllustrations() {
                             scene_description: sceneDesc,
                             scene_structure: sceneStructure
                         },
-                        artStyle: currentStorybook.artStyle,
+                        artStyle: artStyle,
                         characterReferences: characterReferences,
                         settings: imageSettings
                     });
@@ -878,6 +889,7 @@ async function generateAllIllustrations() {
                         currentStorybook.pages[i].illustrationImage = response.data.imageUrl;
                         currentStorybook.pages[i].scene_description = sceneDesc;
                         currentStorybook.pages[i].scene_structure = sceneStructure;
+                        currentStorybook.pages[i].artStyle = artStyle;
                         return { index: i, success: true, imageUrl: response.data.imageUrl };
                     } else {
                         throw new Error(response.data.error || '이미지 생성 실패');
@@ -915,6 +927,8 @@ async function generateAllIllustrations() {
 async function generateIllustration(pageIndex) {
     const page = currentStorybook.pages[pageIndex];
     const sceneDesc = document.getElementById(`scene-${pageIndex}`).value;
+    const artStyleElem = document.getElementById(`artstyle-${pageIndex}`);
+    const artStyle = artStyleElem ? artStyleElem.value : currentStorybook.artStyle;
     const illustrationDiv = document.getElementById(`illustration-${pageIndex}`);
     
     const sceneCharElem = document.getElementById(`scene-char-${pageIndex}`);
@@ -949,7 +963,7 @@ async function generateIllustration(pageIndex) {
                 scene_description: sceneDesc,
                 scene_structure: sceneStructure
             },
-            artStyle: currentStorybook.artStyle,
+            artStyle: artStyle,
             characterReferences: characterReferences,
             settings: imageSettings
         });
@@ -959,10 +973,11 @@ async function generateIllustration(pageIndex) {
             currentStorybook.pages[pageIndex].illustrationImage = imageUrl;
             currentStorybook.pages[pageIndex].scene_description = sceneDesc;
             currentStorybook.pages[pageIndex].scene_structure = sceneStructure;
+            currentStorybook.pages[pageIndex].artStyle = artStyle;
             saveCurrentStorybook();
             
+            // displayStorybook을 호출하지 않고 해당 div만 업데이트
             illustrationDiv.innerHTML = `<img src="${imageUrl}" alt="Page ${page.pageNumber}" class="w-full h-full object-cover rounded-lg"/>`;
-            displayStorybook(currentStorybook);
         } else {
             throw new Error(response.data.error || '이미지 URL을 받지 못했습니다.');
         }
