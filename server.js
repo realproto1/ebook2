@@ -153,7 +153,16 @@ app.post('/api/generate-storybook', async (req, res) => {
   "educational_content": {
     "symbols": ["상징 해석 질문 3-4개"],
     "activity": "창의 활동 아이디어",
-    "vocabulary": ["영어 단어 6-8개"]
+    "vocabulary": [
+      {"word": "영어명사1", "korean": "한글뜻1"},
+      {"word": "영어명사2", "korean": "한글뜻2"},
+      {"word": "영어명사3", "korean": "한글뜻3"},
+      {"word": "영어명사4", "korean": "한글뜻4"},
+      {"word": "영어명사5", "korean": "한글뜻5"},
+      {"word": "영어명사6", "korean": "한글뜻6"},
+      {"word": "영어명사7", "korean": "한글뜻7"},
+      {"word": "영어명사8", "korean": "한글뜻8"}
+    ]
   }
 }
 
@@ -164,11 +173,14 @@ app.post('/api/generate-storybook', async (req, res) => {
 - 캐릭터 description은 반드시 영어로
 - **매우 중요**: scene_description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소를 자세히 포함하세요
 - **매우 중요**: 각 페이지에 scene_structure 객체를 반드시 포함하세요
+- **매우 중요**: vocabulary는 반드시 동화 내용과 관련된 구체적인 명사(noun) 8개를 선정하세요 (예: Apple, Tree, Star, Moon, River, Mountain 등)
+- **매우 중요**: 각 단어는 {"word": "영어명사", "korean": "한글뜻"} 형식으로 작성하세요
 
 예시:
 - text: "토끼가 숲에서 당근을 발견했어요" 
 - scene_description: "숲속에서 흰 토끼가 오렌지색 당근을 발견하고 깜짝 놀라며 기뻐하는 장면. 토끼의 귀가 쫑긋 서있고 눈이 반짝거립니다."
 - scene_structure: {"characters": "흰 토끼가 기쁜 표정으로 당근을 발견함", "background": "초록색 숲속, 햇살이 비치는 낮", "atmosphere": "밝고 즐거운 분위기"}
+- vocabulary 예시: [{"word": "Rabbit", "korean": "토끼"}, {"word": "Carrot", "korean": "당근"}, {"word": "Forest", "korean": "숲"}]
 
 JSON만 응답하세요.`;
 
@@ -433,15 +445,19 @@ app.post('/api/generate-vocabulary-images', async (req, res) => {
     
     const images = [];
     
-    for (const word of vocabulary) {
+    for (const vocabItem of vocabulary) {
       try {
+        // vocabItem이 객체인지 문자열인지 확인
+        const word = typeof vocabItem === 'object' ? vocabItem.word : vocabItem;
+        const korean = typeof vocabItem === 'object' ? vocabItem.korean : '';
+        
         const noTextPrompt = enforceNoText ? 
           '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, or captions in the image. Absolutely NO TEXT of any kind. Pure illustration only.' :
           '\n\n**IMPORTANT:** Do NOT include any text, labels, words, or letters in the image.';
         
         const prompt = `Create a simple, clear, educational illustration for a children's vocabulary learning card.
 
-**Word to Illustrate:** ${word}
+**Word to Illustrate:** ${word}${korean ? ` (${korean})` : ''}
 
 **Art Style:** ${artStyle} style for children's book illustration.
 
@@ -454,16 +470,18 @@ app.post('/api/generate-vocabulary-images', async (req, res) => {
 - Child-friendly, appealing design
 - Age-appropriate for 4-8 years old
 - Focus on clarity and easy recognition
+- The object should be a concrete, tangible noun (not abstract concepts)
 ${noTextPrompt}
 ${additionalPrompt ? '\n\n**Additional Requirements:** ' + additionalPrompt : ''}
 
 Create a single, clear image that children can easily understand and associate with the word.`;
 
-        console.log(`Generating vocabulary image for: ${word}`);
+        console.log(`Generating vocabulary image for: ${word}${korean ? ` (${korean})` : ''}`);
         const imageUrl = await generateImage(prompt);
         
         images.push({
           word: word,
+          korean: korean,
           imageUrl: imageUrl,
           success: true
         });
@@ -471,9 +489,11 @@ Create a single, clear image that children can easily understand and associate w
         await new Promise(resolve => setTimeout(resolve, 500));
         
       } catch (error) {
+        const word = typeof vocabItem === 'object' ? vocabItem.word : vocabItem;
         console.error(`Error generating image for ${word}:`, error);
         images.push({
           word: word,
+          korean: typeof vocabItem === 'object' ? vocabItem.korean : '',
           imageUrl: null,
           success: false,
           error: error.message

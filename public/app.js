@@ -526,22 +526,37 @@ function displayStorybook(storybook) {
                     </div>
                     
                     <div class="grid md:grid-cols-4 gap-4">
-                        ${storybook.educational_content.vocabulary.map((word, idx) => {
+                        ${storybook.educational_content.vocabulary.map((vocabItem, idx) => {
+                            // vocabulary가 객체 형식인지 문자열인지 확인
+                            const word = typeof vocabItem === 'object' ? vocabItem.word : vocabItem;
+                            const korean = typeof vocabItem === 'object' ? vocabItem.korean : '';
                             const vocabImg = storybook.vocabularyImages && storybook.vocabularyImages[idx];
                             return `
                             <div class="bg-white p-4 rounded-lg border-2 border-blue-200">
                                 <div class="flex justify-between items-center mb-2">
-                                    <input 
-                                        type="text" 
-                                        id="vocab-word-${idx}" 
-                                        value="${word}"
-                                        onchange="updateVocabularyWord(${idx}, this.value)"
-                                        class="font-bold text-gray-700 bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none w-24"
-                                    />
+                                    <div class="flex-1">
+                                        <input 
+                                            type="text" 
+                                            id="vocab-word-${idx}" 
+                                            value="${word}"
+                                            onchange="updateVocabularyWord(${idx}, this.value, 'word')"
+                                            class="font-bold text-gray-700 bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none w-full mb-1"
+                                            placeholder="영어 단어"
+                                        />
+                                        ${korean ? `
+                                        <input 
+                                            type="text" 
+                                            id="vocab-korean-${idx}" 
+                                            value="${korean}"
+                                            onchange="updateVocabularyWord(${idx}, this.value, 'korean')"
+                                            class="text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-blue-400 focus:outline-none w-full"
+                                            placeholder="한글 뜻"
+                                        />` : ''}
+                                    </div>
                                     ${vocabImg && vocabImg.imageUrl ? 
                                         `<button 
                                             onclick="downloadImage('${vocabImg.imageUrl}', '단어_${word}.png')"
-                                            class="text-green-600 hover:text-green-800"
+                                            class="text-green-600 hover:text-green-800 ml-2"
                                             title="다운로드"
                                         >
                                             <i class="fas fa-download"></i>
@@ -633,13 +648,29 @@ function updatePageText(pageIndex, newText) {
 }
 
 // 단어 업데이트 함수
-function updateVocabularyWord(wordIndex, newWord) {
-    if (newWord.trim()) {
-        currentStorybook.educational_content.vocabulary[wordIndex] = newWord.trim();
+function updateVocabularyWord(wordIndex, newValue, field = 'word') {
+    if (newValue.trim()) {
+        const vocab = currentStorybook.educational_content.vocabulary[wordIndex];
+        
+        // 객체 형식인지 확인
+        if (typeof vocab === 'object') {
+            vocab[field] = newValue.trim();
+        } else {
+            // 문자열이면 객체로 변환
+            if (field === 'word') {
+                currentStorybook.educational_content.vocabulary[wordIndex] = {
+                    word: newValue.trim(),
+                    korean: ''
+                };
+            }
+        }
         
         // 해당 단어의 이미지도 업데이트 (있다면)
         if (currentStorybook.vocabularyImages && currentStorybook.vocabularyImages[wordIndex]) {
-            currentStorybook.vocabularyImages[wordIndex].word = newWord.trim();
+            const word = typeof currentStorybook.educational_content.vocabulary[wordIndex] === 'object' 
+                ? currentStorybook.educational_content.vocabulary[wordIndex].word 
+                : currentStorybook.educational_content.vocabulary[wordIndex];
+            currentStorybook.vocabularyImages[wordIndex].word = word;
         }
         
         saveCurrentStorybook();
@@ -915,14 +946,16 @@ async function generateSingleVocabularyImage(wordIndex) {
         return;
     }
     
-    const word = currentStorybook.educational_content.vocabulary[wordIndex];
+    const vocabItem = currentStorybook.educational_content.vocabulary[wordIndex];
+    const word = typeof vocabItem === 'object' ? vocabItem.word : vocabItem;
+    const korean = typeof vocabItem === 'object' ? vocabItem.korean : '';
     const vocabImgDiv = document.getElementById(`vocab-img-${wordIndex}`);
     
     vocabImgDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-2"></div><p class="text-gray-600 text-xs">생성 중...</p></div>';
     
     try {
         const response = await axios.post('/api/generate-vocabulary-images', {
-            vocabulary: [word],
+            vocabulary: [{ word, korean }],
             artStyle: currentStorybook.artStyle,
             settings: imageSettings
         });
@@ -937,6 +970,7 @@ async function generateSingleVocabularyImage(wordIndex) {
             
             currentStorybook.vocabularyImages[wordIndex] = {
                 word: word,
+                korean: korean,
                 imageUrl: imageUrl,
                 success: true
             };
