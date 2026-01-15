@@ -10,11 +10,18 @@
     "clean-port": "fuser -k 3000/tcp 2>/dev/null || true",
     "test": "curl http://localhost:3000"
   },
-  "keywords": ["storybook", "ai", "gemini", "children", "education"],
+  "keywords": [
+    "storybook",
+    "ai",
+    "gemini",
+    "children",
+    "education"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^5.2.1",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
   }
 }

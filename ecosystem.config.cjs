@@ -1,3 +1,6 @@
+// .env 파일 로드
+require('dotenv').config();
+
 module.exports = {
   apps: [
     {
@@ -5,7 +8,8 @@ module.exports = {
       script: 'server.js',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000
+        PORT: 3000,
+        GEMINI_API_KEY: process.env.GEMINI_API_KEY
       },
       watch: false,
       instances: 1,
