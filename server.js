@@ -133,7 +133,7 @@ app.post('/api/generate-storybook', async (req, res) => {
   "characters": [
     {
       "name": "캐릭터 이름",
-      "description": "외모와 성격 상세 설명 (영어로, 이미지 생성용)",
+      "description": "외모와 성격 상세 설명 (한국어)",
       "role": "주인공/조력자/악역 등"
     }
   ],
@@ -170,7 +170,7 @@ app.post('/api/generate-storybook', async (req, res) => {
 - 10-12페이지 분량
 - 종결어미: ~했어, ~였어, ~구나 사용
 - 밝고 긍정적인 이야기
-- 캐릭터 description은 반드시 영어로
+- **매우 중요**: 캐릭터 description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소(색상, 크기, 특징 등)를 자세히 포함하세요
 - **매우 중요**: scene_description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소를 자세히 포함하세요
 - **매우 중요**: 각 페이지에 scene_structure 객체를 반드시 포함하세요
 - **매우 중요**: vocabulary는 반드시 동화 내용과 관련된 구체적인 명사(noun) 8개를 선정하세요 (예: Apple, Tree, Star, Moon, River, Mountain 등)
@@ -239,6 +239,33 @@ app.post('/api/generate-character-image', async (req, res) => {
     const enforceNoText = settings.enforceNoText !== false;
     const additionalPrompt = settings.additionalPrompt || '';
     
+    // character.description을 영어로 번역 (한글인 경우)
+    let characterDescriptionEn = character.description;
+    if (/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(character.description)) {
+      // 한글이 포함되어 있으면 번역
+      console.log('Translating character description to English...');
+      const translateUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const translateResponse = await fetch(translateUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ 
+            parts: [{ 
+              text: `Translate the following Korean character description to English for image generation. Keep it detailed and visual:\n\n${character.description}` 
+            }] 
+          }]
+        })
+      });
+      
+      if (translateResponse.ok) {
+        const translateData = await translateResponse.json();
+        characterDescriptionEn = translateData.candidates[0].content.parts[0].text.trim();
+        console.log('Translated character description:', characterDescriptionEn);
+      } else {
+        console.warn('Translation failed, using original description');
+      }
+    }
+    
     // 텍스트 제거 강조
     const noTextPrompt = enforceNoText ? 
       '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, captions, titles, or character names in the image. Absolutely NO TEXT of any kind. Pure illustration only.' : 
@@ -246,7 +273,7 @@ app.post('/api/generate-character-image', async (req, res) => {
     
     const prompt = `Create a professional character design reference sheet for a children's storybook character. 
 
-**Character Description:** ${character.description}
+**Character Description:** ${characterDescriptionEn}
 
 **Art Style:** ${artStyle} style for children's book illustration.
 

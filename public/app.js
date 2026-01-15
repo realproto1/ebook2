@@ -677,22 +677,79 @@ function updateVocabularyWord(wordIndex, newValue, field = 'word') {
     }
 }
 
-// 한 번에 모든 캐릭터 레퍼런스 생성
+// 한 번에 모든 캐릭터 레퍼런스 생성 (병렬 처리)
 async function generateAllCharacterReferences() {
-    if (!confirm(`${currentStorybook.characters.length}개의 캐릭터 레퍼런스를 모두 생성하시겠습니까?\n\n예상 소요 시간: 약 ${currentStorybook.characters.length * 8}초`)) {
+    const toGenerate = currentStorybook.characters.filter(char => !char.referenceImage);
+    
+    if (toGenerate.length === 0) {
+        alert('모든 캐릭터 레퍼런스가 이미 생성되었습니다.');
         return;
     }
     
-    for (let i = 0; i < currentStorybook.characters.length; i++) {
-        if (!currentStorybook.characters[i].referenceImage) {
-            await generateCharacterReference(i);
-            if (i < currentStorybook.characters.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-        }
+    if (!confirm(`${toGenerate.length}개의 캐릭터 레퍼런스를 동시에 생성하시겠습니까?\n\n예상 소요 시간: 약 8초`)) {
+        return;
     }
     
-    alert('모든 캐릭터 레퍼런스 생성이 완료되었습니다!');
+    // 모든 캐릭터의 로딩 상태 표시
+    currentStorybook.characters.forEach((char, i) => {
+        if (!char.referenceImage) {
+            const refDiv = document.getElementById(`char-ref-${i}`);
+            if (refDiv) {
+                refDiv.innerHTML = '<div class="flex items-center justify-center h-full"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div><p class="text-white ml-3 text-sm">AI가 이미지 생성 중...</p></div>';
+            }
+        }
+    });
+    
+    try {
+        // 모든 캐릭터를 병렬로 생성
+        const promises = currentStorybook.characters.map(async (char, i) => {
+            if (!char.referenceImage) {
+                try {
+                    const promptTextarea = document.getElementById(`char-prompt-${i}`);
+                    const customPrompt = promptTextarea ? promptTextarea.value.trim() : char.description;
+                    
+                    const response = await axios.post('/api/generate-character-image', {
+                        character: {
+                            ...char,
+                            description: customPrompt
+                        },
+                        artStyle: currentStorybook.artStyle,
+                        settings: imageSettings
+                    });
+                    
+                    if (response.data.success && response.data.imageUrl) {
+                        currentStorybook.characters[i].referenceImage = response.data.imageUrl;
+                        return { index: i, success: true, imageUrl: response.data.imageUrl };
+                    } else {
+                        throw new Error(response.data.error || '이미지 생성 실패');
+                    }
+                } catch (error) {
+                    console.error(`Error generating character ${i}:`, error);
+                    return { index: i, success: false, error: error.message };
+                }
+            }
+            return { index: i, success: true, skipped: true };
+        });
+        
+        const results = await Promise.all(promises);
+        
+        // 결과 저장 및 UI 업데이트
+        saveCurrentStorybook();
+        displayStorybook(currentStorybook);
+        
+        const successCount = results.filter(r => r.success && !r.skipped).length;
+        const failCount = results.filter(r => !r.success).length;
+        
+        if (failCount > 0) {
+            alert(`캐릭터 레퍼런스 생성 완료!\n성공: ${successCount}개\n실패: ${failCount}개`);
+        } else {
+            alert(`모든 캐릭터 레퍼런스 생성이 완료되었습니다! (${successCount}개)`);
+        }
+    } catch (error) {
+        console.error('Batch generation error:', error);
+        alert('배치 생성 중 오류가 발생했습니다: ' + error.message);
+        displayStorybook(currentStorybook);
+    }
 }
 
 // 캐릭터 레퍼런스 생성
@@ -738,7 +795,7 @@ async function generateCharacterReference(charIndex) {
     }
 }
 
-// 한 번에 모든 삽화 생성
+// 한 번에 모든 삽화 생성 (병렬 처리)
 async function generateAllIllustrations() {
     const hasCharacterReferences = currentStorybook.characters.some(char => char.referenceImage);
     if (!hasCharacterReferences) {
@@ -753,20 +810,91 @@ async function generateAllIllustrations() {
         return;
     }
     
-    if (!confirm(`${pagesToGenerate.length}개의 삽화를 생성하시겠습니까?\n\n예상 소요 시간: 약 ${pagesToGenerate.length * 8}초`)) {
+    if (!confirm(`${pagesToGenerate.length}개의 삽화를 동시에 생성하시겠습니까?\n\n예상 소요 시간: 약 8초`)) {
         return;
     }
     
-    for (let i = 0; i < currentStorybook.pages.length; i++) {
-        if (!currentStorybook.pages[i].illustrationImage) {
-            await generateIllustration(i);
-            if (i < currentStorybook.pages.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+    // 캐릭터 레퍼런스 준비
+    const characterReferences = currentStorybook.characters
+        .filter(char => char.referenceImage)
+        .map(char => ({
+            name: char.name,
+            description: char.description,
+            referenceImage: char.referenceImage
+        }));
+    
+    // 모든 페이지의 로딩 상태 표시
+    currentStorybook.pages.forEach((page, i) => {
+        if (!page.illustrationImage) {
+            const illustrationDiv = document.getElementById(`illustration-${i}`);
+            if (illustrationDiv) {
+                illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-3"></div><p class="text-gray-600 text-sm">AI가 삽화를 생성하는 중...</p></div>';
             }
         }
-    }
+    });
     
-    alert('모든 삽화 생성이 완료되었습니다!');
+    try {
+        // 모든 페이지를 병렬로 생성
+        const promises = currentStorybook.pages.map(async (page, i) => {
+            if (!page.illustrationImage) {
+                try {
+                    const sceneDesc = document.getElementById(`scene-${i}`)?.value || page.scene_description;
+                    const sceneCharElem = document.getElementById(`scene-char-${i}`);
+                    const sceneBgElem = document.getElementById(`scene-bg-${i}`);
+                    const sceneAtmElem = document.getElementById(`scene-atm-${i}`);
+                    
+                    const sceneStructure = {
+                        characters: sceneCharElem ? sceneCharElem.value : page.scene_structure?.characters || '',
+                        background: sceneBgElem ? sceneBgElem.value : page.scene_structure?.background || '',
+                        atmosphere: sceneAtmElem ? sceneAtmElem.value : page.scene_structure?.atmosphere || ''
+                    };
+                    
+                    const response = await axios.post('/api/generate-illustration', {
+                        page: {
+                            ...page,
+                            scene_description: sceneDesc,
+                            scene_structure: sceneStructure
+                        },
+                        artStyle: currentStorybook.artStyle,
+                        characterReferences: characterReferences,
+                        settings: imageSettings
+                    });
+                    
+                    if (response.data.success && response.data.imageUrl) {
+                        currentStorybook.pages[i].illustrationImage = response.data.imageUrl;
+                        currentStorybook.pages[i].scene_description = sceneDesc;
+                        currentStorybook.pages[i].scene_structure = sceneStructure;
+                        return { index: i, success: true, imageUrl: response.data.imageUrl };
+                    } else {
+                        throw new Error(response.data.error || '이미지 생성 실패');
+                    }
+                } catch (error) {
+                    console.error(`Error generating illustration ${i}:`, error);
+                    return { index: i, success: false, error: error.message };
+                }
+            }
+            return { index: i, success: true, skipped: true };
+        });
+        
+        const results = await Promise.all(promises);
+        
+        // 결과 저장 및 UI 업데이트
+        saveCurrentStorybook();
+        displayStorybook(currentStorybook);
+        
+        const successCount = results.filter(r => r.success && !r.skipped).length;
+        const failCount = results.filter(r => !r.success).length;
+        
+        if (failCount > 0) {
+            alert(`삽화 생성 완료!\n성공: ${successCount}개\n실패: ${failCount}개`);
+        } else {
+            alert(`모든 삽화 생성이 완료되었습니다! (${successCount}개)`);
+        }
+    } catch (error) {
+        console.error('Batch generation error:', error);
+        alert('배치 생성 중 오류가 발생했습니다: ' + error.message);
+        displayStorybook(currentStorybook);
+    }
 }
 
 // 페이지 삽화 생성
