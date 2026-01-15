@@ -472,66 +472,67 @@ function displayStorybook(storybook) {
                     <p class="text-gray-700">${storybook.educational_content.activity}</p>
                 </div>
 
-                <div class="bg-blue-50 p-6 rounded-xl">
+                <div class="bg-blue-50 p-6 rounded-xl col-span-3">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="text-xl font-bold text-blue-600">
-                            <i class="fas fa-language mr-2"></i>영어 단어
+                            <i class="fas fa-language mr-2"></i>영어 단어 학습 (${storybook.educational_content.vocabulary.length}개)
                         </h4>
-                        <button 
-                            onclick="generateVocabularyImages()"
-                            class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition text-sm"
-                        >
-                            <i class="fas fa-images mr-1"></i>단어 이미지 생성
-                        </button>
+                        <div class="flex gap-2">
+                            <button 
+                                onclick="generateAllVocabularyImages()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm"
+                            >
+                                <i class="fas fa-images mr-1"></i>모든 이미지 생성
+                            </button>
+                            <button 
+                                onclick="downloadAllVocabularyImages()"
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
+                            >
+                                <i class="fas fa-download mr-1"></i>모두 다운로드
+                            </button>
+                        </div>
                     </div>
-                    <ul class="space-y-2" id="vocabulary-list">
-                        ${storybook.educational_content.vocabulary.map((word, idx) => `
-                            <li class="text-gray-700">
-                                <div class="flex items-center justify-between">
-                                    <span>• ${word}</span>
-                                    ${storybook.vocabularyImages && storybook.vocabularyImages[idx] ? 
+                    
+                    <div class="grid md:grid-cols-4 gap-4">
+                        ${storybook.educational_content.vocabulary.map((word, idx) => {
+                            const vocabImg = storybook.vocabularyImages && storybook.vocabularyImages[idx];
+                            return `
+                            <div class="bg-white p-4 rounded-lg border-2 border-blue-200">
+                                <div class="flex justify-between items-center mb-2">
+                                    <p class="font-bold text-gray-700">${word}</p>
+                                    ${vocabImg && vocabImg.imageUrl ? 
                                         `<button 
-                                            onclick="viewVocabularyImage(${idx})"
-                                            class="text-blue-600 hover:text-blue-800 text-xs"
+                                            onclick="downloadImage('${vocabImg.imageUrl}', '단어_${word}.png')"
+                                            class="text-green-600 hover:text-green-800"
+                                            title="다운로드"
                                         >
-                                            <i class="fas fa-eye"></i>
+                                            <i class="fas fa-download"></i>
                                         </button>` : ''
                                     }
                                 </div>
-                            </li>
-                        `).join('')}
-                    </ul>
-                </div>
-            </div>
-            
-            ${storybook.vocabularyImages && storybook.vocabularyImages.length > 0 ? `
-                <div class="mt-8">
-                    <h4 class="text-2xl font-bold text-gray-800 mb-4">
-                        <i class="fas fa-images mr-2"></i>단어 학습 이미지
-                    </h4>
-                    <div class="grid md:grid-cols-4 gap-4">
-                        ${storybook.vocabularyImages.map((vocabImg, idx) => `
-                            <div class="bg-white p-4 rounded-lg border-2 border-blue-200">
-                                <div class="bg-gray-100 rounded-lg mb-2 min-h-[150px] flex items-center justify-center overflow-hidden">
-                                    ${vocabImg.imageUrl ? 
-                                        `<img src="${vocabImg.imageUrl}" alt="${vocabImg.word}" class="w-full h-full object-cover rounded-lg"/>` :
-                                        '<p class="text-gray-400 text-sm">생성 실패</p>'
+                                <div id="vocab-img-${idx}" class="bg-gray-100 rounded-lg mb-2 min-h-[180px] flex items-center justify-center overflow-hidden">
+                                    ${vocabImg && vocabImg.imageUrl ? 
+                                        `<img src="${vocabImg.imageUrl}" alt="${word}" class="w-full h-full object-cover rounded-lg"/>` :
+                                        `<p class="text-gray-400 text-sm text-center p-4">
+                                            <i class="fas fa-image text-3xl mb-2"></i><br>
+                                            이미지 대기중
+                                        </p>`
                                     }
                                 </div>
-                                <p class="text-center font-bold text-gray-700">${vocabImg.word}</p>
-                                ${vocabImg.imageUrl ? 
-                                    `<button 
-                                        onclick="downloadImage('${vocabImg.imageUrl}', '단어_${vocabImg.word}.png')"
-                                        class="w-full mt-2 bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 transition"
+                                <div class="flex gap-2">
+                                    <button 
+                                        onclick="generateSingleVocabularyImage(${idx})"
+                                        class="flex-1 bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition"
                                     >
-                                        <i class="fas fa-download mr-1"></i>다운로드
-                                    </button>` : ''
-                                }
+                                        <i class="fas fa-magic mr-1"></i>${vocabImg && vocabImg.imageUrl ? '재생성' : '생성'}
+                                    </button>
+                                </div>
                             </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 </div>
-            ` : ''}
+            </div>
         </div>
     `;
 
@@ -846,8 +847,64 @@ async function downloadImage(imageUrl, filename) {
     }
 }
 
-// 단어 이미지 생성
-async function generateVocabularyImages() {
+// 단어 이미지 생성 - 개별 단어
+async function generateSingleVocabularyImage(wordIndex) {
+    if (!currentStorybook.educational_content || !currentStorybook.educational_content.vocabulary) {
+        alert('단어 목록이 없습니다.');
+        return;
+    }
+    
+    const word = currentStorybook.educational_content.vocabulary[wordIndex];
+    const vocabImgDiv = document.getElementById(`vocab-img-${wordIndex}`);
+    
+    vocabImgDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-2"></div><p class="text-gray-600 text-xs">생성 중...</p></div>';
+    
+    try {
+        const response = await axios.post('/api/generate-vocabulary-images', {
+            vocabulary: [word],
+            artStyle: currentStorybook.artStyle,
+            settings: imageSettings
+        });
+        
+        if (response.data.success && response.data.images[0].success) {
+            const imageUrl = response.data.images[0].imageUrl;
+            
+            // vocabularyImages 배열 초기화
+            if (!currentStorybook.vocabularyImages) {
+                currentStorybook.vocabularyImages = new Array(currentStorybook.educational_content.vocabulary.length).fill(null);
+            }
+            
+            currentStorybook.vocabularyImages[wordIndex] = {
+                word: word,
+                imageUrl: imageUrl,
+                success: true
+            };
+            
+            saveCurrentStorybook();
+            displayStorybook(currentStorybook);
+        } else {
+            throw new Error(response.data.images[0].error || '이미지 생성 실패');
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        vocabImgDiv.innerHTML = `
+            <div class="p-4 text-center">
+                <p class="text-red-600 text-xs mb-2">⚠️ 생성 실패</p>
+                <p class="text-gray-500 text-xs">${error.message}</p>
+                <button 
+                    onclick="generateSingleVocabularyImage(${wordIndex})"
+                    class="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
+                >
+                    <i class="fas fa-redo mr-1"></i>재시도
+                </button>
+            </div>
+        `;
+    }
+}
+
+// 모든 단어 이미지 생성
+async function generateAllVocabularyImages() {
     if (!currentStorybook.educational_content || !currentStorybook.educational_content.vocabulary) {
         alert('단어 목록이 없습니다.');
         return;
@@ -859,37 +916,67 @@ async function generateVocabularyImages() {
         return;
     }
     
-    const vocabList = document.getElementById('vocabulary-list');
-    const originalHTML = vocabList.innerHTML;
-    vocabList.innerHTML = '<li class="text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div><p class="text-sm text-gray-600 mt-2">단어 이미지 생성 중...</p></li>';
-    
-    try {
-        const response = await axios.post('/api/generate-vocabulary-images', {
-            vocabulary: vocabulary,
-            artStyle: currentStorybook.artStyle,
-            settings: imageSettings
-        });
-        
-        if (response.data.success) {
-            currentStorybook.vocabularyImages = response.data.images;
-            saveCurrentStorybook();
-            displayStorybook(currentStorybook);
-            alert(`${response.data.successful}/${response.data.total}개의 단어 이미지가 생성되었습니다!`);
-        } else {
-            throw new Error(response.data.error);
+    // 순차적으로 생성
+    for (let i = 0; i < vocabulary.length; i++) {
+        await generateSingleVocabularyImage(i);
+        if (i < vocabulary.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
-        
-    } catch (error) {
-        console.error('Error:', error);
-        vocabList.innerHTML = originalHTML;
-        alert('단어 이미지 생성 중 오류가 발생했습니다: ' + error.message);
     }
+    
+    alert('모든 단어 이미지 생성이 완료되었습니다!');
+}
+
+// 모든 단어 이미지 다운로드
+async function downloadAllVocabularyImages() {
+    if (!currentStorybook.vocabularyImages || currentStorybook.vocabularyImages.length === 0) {
+        alert('다운로드할 단어 이미지가 없습니다.');
+        return;
+    }
+    
+    const images = currentStorybook.vocabularyImages
+        .filter(vocab => vocab && vocab.imageUrl)
+        .map(vocab => ({
+            url: vocab.imageUrl,
+            filename: `단어_${vocab.word}.png`
+        }));
+    
+    if (images.length === 0) {
+        alert('다운로드할 단어 이미지가 없습니다.');
+        return;
+    }
+    
+    for (const img of images) {
+        try {
+            const response = await fetch(img.url);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = img.filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+            console.error('Download error:', error);
+        }
+    }
+    
+    alert(`${images.length}개의 단어 이미지를 다운로드했습니다.`);
+}
+
+// 기존 함수 (호환성 유지)
+async function generateVocabularyImages() {
+    await generateAllVocabularyImages();
 }
 
 function viewVocabularyImage(index) {
     if (currentStorybook.vocabularyImages && currentStorybook.vocabularyImages[index]) {
         const vocabImg = currentStorybook.vocabularyImages[index];
-        if (vocabImg.imageUrl) {
+        if (vocabImg && vocabImg.imageUrl) {
             window.open(vocabImg.imageUrl, '_blank');
         }
     }
