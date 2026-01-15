@@ -14,13 +14,12 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API 키 (환경 변수 필수)
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+// API 키 (환경 변수 또는 기본값)
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyCBbhANVn2ESO3IzRSD-220UzAEEBIQZPk';
 
-if (!GEMINI_API_KEY) {
-  console.error('❌ ERROR: GEMINI_API_KEY environment variable is not set!');
-  console.error('Please set GEMINI_API_KEY in .env file or environment variables.');
-  process.exit(1);
+if (!process.env.GEMINI_API_KEY) {
+  console.warn('⚠️ WARNING: GEMINI_API_KEY environment variable is not set!');
+  console.warn('Using default API key. Please set GEMINI_API_KEY in .env file for production.');
 }
 
 
