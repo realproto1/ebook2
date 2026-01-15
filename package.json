@@ -1,0 +1,20 @@
+{
+  "name": "storybook-generator",
+  "version": "12.0.0",
+  "type": "module",
+  "description": "AI-powered children's storybook generator with Gemini 2.5 Flash Image",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "clean-port": "fuser -k 3000/tcp 2>/dev/null || true",
+    "test": "curl http://localhost:3000"
+  },
+  "keywords": ["storybook", "ai", "gemini", "children", "education"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1",
+    "cors": "^2.8.5"
+  }
+}

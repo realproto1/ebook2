@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>동화책 자동 생성기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar { min-height: 100vh; position: sticky; top: 0; }
+        .card { transition: all 0.3s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .page-card { border: 2px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .character-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .book-item { cursor: pointer; transition: all 0.2s; }
+        .book-item:hover { background: #f3f4f6; transform: translateX(5px); }
+        .book-item.active { background: #e0e7ff; border-left: 4px solid #6366f1; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <div class="flex">
+        <!-- 왼쪽 사이드바 -->
+        <div class="sidebar w-80 bg-white shadow-2xl overflow-y-auto">
+            <div class="p-6 border-b-2 border-purple-200">
+                <h2 class="text-2xl font-bold text-purple-600 mb-4">
+                    <i class="fas fa-book mr-2"></i>
+                    내 동화책
+                </h2>
+                <button 
+                    onclick="showCreateForm()"
+                    class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition"
+                >
+                    <i class="fas fa-plus mr-2"></i>새 동화책 만들기
+                </button>
+            </div>
+            
+            <div id="bookList" class="p-4">
+                <!-- 동화책 리스트 -->
+            </div>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="flex-1 p-8">
+            <!-- 헤더 -->
+            <div class="text-center mb-8">
+                <div class="flex justify-between items-start mb-4">
+                    <div></div>
+                    <div class="flex-1">
+                        <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2">
+                            <i class="fas fa-book-open mr-3"></i>
+                            동화책 자동 생성기
+                        </h1>
+                        <p class="text-gray-600 text-lg">AI가 만들어주는 완벽한 동화책</p>
+                    </div>
+                    <button 
+                        onclick="openSettings()"
+                        class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+                        title="이미지 생성 설정"
+                    >
+                        <i class="fas fa-cog mr-2"></i>설정
+                    </button>
+                </div>
+            </div>
+
+            <!-- 동화책 생성 폼 -->
+            <div id="createForm" class="bg-white rounded-3xl shadow-2xl p-10 mb-8">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8">
+                    <i class="fas fa-magic mr-2 text-purple-500"></i>
+                    새 동화책 만들기
+                </h2>
+                
+                <div class="grid md:grid-cols-3 gap-6 mb-8">
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">
+                            <i class="fas fa-heading mr-2"></i>동화책 제목
+                        </label>
+                        <input 
+                            type="text" 
+                            id="bookTitle" 
+                            placeholder="예: 용감한 토끼의 모험"
+                            class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
+                        />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">
+                            <i class="fas fa-child mr-2"></i>타겟 연령
+                        </label>
+                        <select id="targetAge" class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500">
+                            <option value="4-5">만 4-5세 (쉬운 내용)</option>
+                            <option value="5-7" selected>만 5-7세 (권장)</option>
+                            <option value="7-8">만 7-8세 (복잡한 내용)</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">
+                            <i class="fas fa-palette mr-2"></i>그림체
+                        </label>
+                        <select id="artStyle" class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500">
+                            <option value="Modern Illustration" selected>현대 일러스트</option>
+                            <option value="Watercolor">수채화</option>
+                            <option value="Cartoon">카툰</option>
+                            <option value="Storybook">전통 동화책</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button 
+                    onclick="generateStorybook()"
+                    class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold text-xl hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg"
+                >
+                    <i class="fas fa-wand-magic-sparkles mr-2"></i>
+                    동화책 생성하기
+                </button>
+            </div>
+
+            <!-- 로딩 -->
+            <div id="loading" class="hidden text-center py-16">
+                <div class="inline-block animate-spin rounded-full h-24 w-24 border-b-4 border-purple-600"></div>
+                <p class="text-gray-700 mt-6 text-xl font-semibold">AI가 동화책을 만들고 있어요... ✨</p>
+                <p class="text-gray-500 mt-2">스토리, 캐릭터, 페이지를 생성 중입니다.</p>
+            </div>
+
+            <!-- 동화책 결과 -->
+            <div id="storybookResult" class="hidden">
+                <!-- 동적으로 결과 표시 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 설정 모달 -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="closeSettings(event)">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-cog mr-2 text-purple-600"></i>
+                    이미지 생성 설정
+                </h2>
+                <button onclick="closeSettings()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- 이미지 비율 -->
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <label class="block text-gray-800 font-bold mb-2">
+                        <i class="fas fa-expand-arrows-alt mr-2"></i>이미지 비율
+                    </label>
+                    <select id="imageAspectRatio" class="w-full px-4 py-2 border-2 border-purple-300 rounded-lg">
+                        <option value="1:1">1:1 (정사각형)</option>
+                        <option value="4:3">4:3 (가로)</option>
+                        <option value="16:9" selected>16:9 (와이드 가로)</option>
+                        <option value="3:4">3:4 (세로)</option>
+                        <option value="9:16">9:16 (세로)</option>
+                    </select>
+                    <p class="text-sm text-gray-600 mt-2">삽화의 기본 가로세로 비율입니다.</p>
+                </div>
+
+                <!-- 텍스트 제거 강조 -->
+                <div class="bg-pink-50 p-4 rounded-lg">
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" id="enforceNoText" checked class="mr-3 w-5 h-5">
+                        <span class="text-gray-800 font-bold">
+                            <i class="fas fa-ban mr-2"></i>이미지 내 텍스트 제거 강조
+                        </span>
+                    </label>
+                    <p class="text-sm text-gray-600">프롬프트에 "NO TEXT, NO WORDS, NO LETTERS" 강조를 추가합니다.</p>
+                </div>
+
+                <!-- 캐릭터 일관성 강조 -->
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" id="enforceCharacterConsistency" checked class="mr-3 w-5 h-5">
+                        <span class="text-gray-800 font-bold">
+                            <i class="fas fa-user-check mr-2"></i>캐릭터 일관성 강조
+                        </span>
+                    </label>
+                    <p class="text-sm text-gray-600">프롬프트에 "PIXEL-PERFECT accuracy" 강조를 추가합니다.</p>
+                </div>
+
+                <!-- 추가 프롬프트 -->
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <label class="block text-gray-800 font-bold mb-2">
+                        <i class="fas fa-plus-circle mr-2"></i>추가 프롬프트
+                    </label>
+                    <textarea 
+                        id="additionalPrompt" 
+                        class="w-full px-4 py-2 border-2 border-green-300 rounded-lg"
+                        rows="3"
+                        placeholder="모든 이미지 생성 시 추가로 포함할 프롬프트를 입력하세요"
+                    ></textarea>
+                </div>
+
+                <!-- 이미지 품질 -->
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <label class="block text-gray-800 font-bold mb-2">
+                        <i class="fas fa-star mr-2"></i>이미지 품질
+                    </label>
+                    <select id="imageQuality" class="w-full px-4 py-2 border-2 border-yellow-300 rounded-lg">
+                        <option value="standard">표준</option>
+                        <option value="high" selected>고품질 (권장)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-8">
+                <button 
+                    onclick="saveSettings()"
+                    class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-bold hover:from-purple-700 hover:to-pink-700 transition"
+                >
+                    <i class="fas fa-save mr-2"></i>저장
+                </button>
+                <button 
+                    onclick="resetSettings()"
+                    class="flex-1 bg-gray-500 text-white py-3 rounded-lg font-bold hover:bg-gray-600 transition"
+                >
+                    <i class="fas fa-undo mr-2"></i>기본값으로 복원
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>
