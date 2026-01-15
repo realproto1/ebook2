@@ -141,7 +141,7 @@ app.post('/api/generate-storybook', async (req, res) => {
     {
       "pageNumber": 1,
       "text": "페이지 텍스트 (한국어, 2-4문장)",
-      "scene_description": "위 text 필드의 한국어 내용을 정확히 영어로 번역하여 시각적으로 설명",
+      "scene_description": "위 text 필드의 장면을 시각적으로 자세히 설명 (한국어)",
       "scene_structure": {
         "characters": "이 장면에 등장하는 캐릭터들과 그들의 행동/표정 (한국어)",
         "background": "배경 설명 (장소, 시간대 등, 한국어)",
@@ -162,12 +162,12 @@ app.post('/api/generate-storybook', async (req, res) => {
 - 종결어미: ~했어, ~였어, ~구나 사용
 - 밝고 긍정적인 이야기
 - 캐릭터 description은 반드시 영어로
+- **매우 중요**: scene_description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소를 자세히 포함하세요
 - **매우 중요**: 각 페이지에 scene_structure 객체를 반드시 포함하세요
-- **매우 중요**: scene_description은 반드시 해당 페이지의 text(한국어) 내용을 정확히 영어로 번역한 것이어야 합니다
 
 예시:
 - text: "토끼가 숲에서 당근을 발견했어요" 
-- scene_description: "A white rabbit discovered a carrot in the forest"
+- scene_description: "숲속에서 흰 토끼가 오렌지색 당근을 발견하고 깜짝 놀라며 기뻐하는 장면. 토끼의 귀가 쫑긋 서있고 눈이 반짝거립니다."
 - scene_structure: {"characters": "흰 토끼가 기쁜 표정으로 당근을 발견함", "background": "초록색 숲속, 햇살이 비치는 낮", "atmosphere": "밝고 즐거운 분위기"}
 
 JSON만 응답하세요.`;
@@ -284,6 +284,33 @@ app.post('/api/generate-illustration', async (req, res) => {
     const enforceCharacterConsistency = settings.enforceCharacterConsistency !== false;
     const additionalPrompt = settings.additionalPrompt || '';
     
+    // scene_description을 영어로 번역 (한글인 경우)
+    let sceneDescriptionEn = page.scene_description;
+    if (/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(page.scene_description)) {
+      // 한글이 포함되어 있으면 번역
+      console.log('Translating scene description to English...');
+      const translateUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const translateResponse = await fetch(translateUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ 
+            parts: [{ 
+              text: `Translate the following Korean scene description to English for image generation. Keep it detailed and visual:\n\n${page.scene_description}` 
+            }] 
+          }]
+        })
+      });
+      
+      if (translateResponse.ok) {
+        const translateData = await translateResponse.json();
+        sceneDescriptionEn = translateData.candidates[0].content.parts[0].text.trim();
+        console.log('Translated scene description:', sceneDescriptionEn);
+      } else {
+        console.warn('Translation failed, using original description');
+      }
+    }
+    
     // 캐릭터 레퍼런스 이미지 수집
     const referenceImages = [];
     let characterInfo = '';
@@ -311,13 +338,37 @@ app.post('/api/generate-illustration', async (req, res) => {
       }
     }
     
-    // 구조화된 장면 설명 구성
+    // 구조화된 장면 설명 구성 (한글을 영어로 번역)
     let sceneDetails = '';
     if (page.scene_structure) {
-      sceneDetails = `\n\n**Scene Structure:**
+      // scene_structure도 영어로 번역
+      const structureText = `Characters & Actions: ${page.scene_structure.characters}\nBackground Setting: ${page.scene_structure.background}\nMood & Atmosphere: ${page.scene_structure.atmosphere}`;
+      
+      console.log('Translating scene structure to English...');
+      const translateUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const translateResponse = await fetch(translateUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ 
+            parts: [{ 
+              text: `Translate the following Korean scene structure to English for image generation:\n\n${structureText}` 
+            }] 
+          }]
+        })
+      });
+      
+      if (translateResponse.ok) {
+        const translateData = await translateResponse.json();
+        const translated = translateData.candidates[0].content.parts[0].text.trim();
+        sceneDetails = `\n\n**Scene Structure:**\n${translated}`;
+        console.log('Translated scene structure:', translated);
+      } else {
+        sceneDetails = `\n\n**Scene Structure:**
 - **Characters & Actions:** ${page.scene_structure.characters}
 - **Background Setting:** ${page.scene_structure.background}  
 - **Mood & Atmosphere:** ${page.scene_structure.atmosphere}`;
+      }
     }
     
     // 텍스트 제거 강조
@@ -327,7 +378,7 @@ app.post('/api/generate-illustration', async (req, res) => {
     
     const prompt = `Create a beautiful, professional illustration for a children's storybook page.
 
-**Main Scene Description:** ${page.scene_description}
+**Main Scene Description:** ${sceneDescriptionEn}
 ${sceneDetails}
 ${characterInfo}
 
