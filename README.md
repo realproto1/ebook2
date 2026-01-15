@@ -198,12 +198,34 @@ webapp/
 
 ## 🌐 데모
 
-- **프로덕션 URL**: https://3000-it17k9lt7ks5rhs4cq6wl-b237eb32.sandbox.novita.ai
+- **Vercel 프로덕션**: https://ebook2.vercel.app (배포 예정)
 - **GitHub**: https://github.com/realproto1/ebook2
+
+## ⚠️ 중요 안내
+
+### LocalStorage 용량 제한
+- 브라우저 LocalStorage는 5-10MB 제한이 있습니다
+- **이미지는 저장되지 않습니다** (메타데이터만 저장)
+- 각 세션에서 이미지를 다시 생성해야 합니다
+- 또는 "다운로드" 기능으로 이미지를 로컬에 저장하세요
+
+### LocalStorage 초과 시 해결 방법
+브라우저 개발자 도구(F12)에서:
+```javascript
+localStorage.clear()
+location.reload()
+```
 
 ## 🚀 배포
 
-### PM2로 배포
+### Vercel 배포 (권장)
+1. https://vercel.com 접속
+2. GitHub 계정으로 로그인
+3. "Import Project" → `ebook2` 저장소 선택
+4. "Deploy" 클릭
+5. 완료! (약 1-2분 소요)
+
+### PM2로 로컬 배포
 ```bash
 # PM2 설치 (전역)
 npm install -g pm2

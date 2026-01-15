@@ -79,7 +79,50 @@ function loadStorybooks() {
 }
 
 function saveStorybooks() {
-    localStorage.setItem('storybooks', JSON.stringify(storybooks));
+    try {
+        // 이미지를 제외한 경량 버전 저장 (용량 문제 해결)
+        const lightweightBooks = storybooks.map(book => {
+            const lightBook = { ...book };
+            
+            // 캐릭터 레퍼런스 이미지 제외
+            if (lightBook.characters) {
+                lightBook.characters = lightBook.characters.map(char => ({
+                    ...char,
+                    referenceImage: null // 이미지 제외
+                }));
+            }
+            
+            // 페이지 삽화 이미지 제외
+            if (lightBook.pages) {
+                lightBook.pages = lightBook.pages.map(page => ({
+                    ...page,
+                    illustrationImage: null // 이미지 제외
+                }));
+            }
+            
+            // 단어 이미지 제외
+            if (lightBook.vocabularyImages) {
+                lightBook.vocabularyImages = lightBook.vocabularyImages.map(vocab => ({
+                    ...vocab,
+                    imageUrl: null // 이미지 제외
+                }));
+            }
+            
+            return lightBook;
+        });
+        
+        localStorage.setItem('storybooks', JSON.stringify(lightweightBooks));
+    } catch (error) {
+        console.error('LocalStorage save error:', error);
+        // 용량 초과 시 가장 오래된 동화책 삭제
+        if (error.name === 'QuotaExceededError' && storybooks.length > 1) {
+            storybooks.shift(); // 첫 번째 항목 제거
+            saveStorybooks(); // 재시도
+            alert('저장 공간이 부족하여 가장 오래된 동화책이 삭제되었습니다.');
+        } else {
+            alert('저장 공간이 부족합니다. 브라우저 개발자 도구(F12)에서 localStorage.clear()를 실행하세요.');
+        }
+    }
 }
 
 function renderBookList() {
