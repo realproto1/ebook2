@@ -206,6 +206,7 @@ async function generateStorybook() {
     const targetAge = document.getElementById('targetAge').value;
     const artStyleSelect = document.getElementById('artStyleSelect').value;
     const artStyleCustom = document.getElementById('artStyleCustom').value.trim();
+    const referenceContent = document.getElementById('referenceContent').value.trim();
     
     // 그림체 결정: custom이면 직접 입력값 사용, 아니면 선택값 사용
     const artStyle = artStyleSelect === 'custom' ? artStyleCustom : artStyleSelect;
@@ -228,7 +229,8 @@ async function generateStorybook() {
         const response = await axios.post('/api/generate-storybook', {
             title,
             targetAge,
-            artStyle
+            artStyle,
+            referenceContent: referenceContent || null
         });
 
         if (response.data.success) {
@@ -477,7 +479,7 @@ function displayStorybook(storybook) {
                                     onclick="generateIllustration(${idx})"
                                     class="w-full mt-2 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
                                 >
-                                    <i class="fas fa-paint-brush mr-2"></i>삽화 생성
+                                    <i class="fas fa-paint-brush mr-2"></i>${page.illustrationImage ? '삽화 재생성' : '삽화 생성'}
                                 </button>
                             </div>
 
@@ -502,6 +504,24 @@ function displayStorybook(storybook) {
                                         </p>`
                                     }
                                 </div>
+                                
+                                ${page.illustrationImage ? `
+                                <div class="mt-3">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                        <i class="fas fa-edit mr-1"></i>이미지 수정사항 (선택사항)
+                                    </label>
+                                    <textarea 
+                                        id="edit-note-${idx}" 
+                                        class="w-full p-2 border-2 border-yellow-300 rounded-lg text-sm"
+                                        rows="2"
+                                        placeholder="수정할 내용을 입력하세요 (예: 토끼를 더 크게 그려주세요, 배경을 밝게 해주세요)"
+                                    >${page.editNote || ''}</textarea>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        수정사항을 입력하고 '삽화 재생성' 버튼을 누르면 반영됩니다.
+                                    </p>
+                                </div>
+                                ` : ''}
                             </div>
                         </div>
                     </div>
@@ -939,6 +959,10 @@ async function generateIllustration(pageIndex) {
     const artStyle = artStyleElem ? artStyleElem.value : currentStorybook.artStyle;
     const illustrationDiv = document.getElementById(`illustration-${pageIndex}`);
     
+    // 수정사항 입력 필드 읽기
+    const editNoteElem = document.getElementById(`edit-note-${pageIndex}`);
+    const editNote = editNoteElem ? editNoteElem.value.trim() : '';
+    
     const sceneCharElem = document.getElementById(`scene-char-${pageIndex}`);
     const sceneBgElem = document.getElementById(`scene-bg-${pageIndex}`);
     const sceneAtmElem = document.getElementById(`scene-atm-${pageIndex}`);
@@ -973,7 +997,8 @@ async function generateIllustration(pageIndex) {
             },
             artStyle: artStyle,
             characterReferences: characterReferences,
-            settings: imageSettings
+            settings: imageSettings,
+            editNote: editNote // 수정사항 추가
         });
 
         if (response.data.success && response.data.imageUrl) {
@@ -982,10 +1007,11 @@ async function generateIllustration(pageIndex) {
             currentStorybook.pages[pageIndex].scene_description = sceneDesc;
             currentStorybook.pages[pageIndex].scene_structure = sceneStructure;
             currentStorybook.pages[pageIndex].artStyle = artStyle;
+            currentStorybook.pages[pageIndex].editNote = editNote; // 수정사항 저장
             saveCurrentStorybook();
             
-            // displayStorybook을 호출하지 않고 해당 div만 업데이트
-            illustrationDiv.innerHTML = `<img src="${imageUrl}" alt="Page ${page.pageNumber}" class="w-full h-full object-cover rounded-lg"/>`;
+            // displayStorybook을 호출하여 수정사항 입력 필드가 표시되도록 함
+            displayStorybook(currentStorybook);
         } else {
             throw new Error(response.data.error || '이미지 URL을 받지 못했습니다.');
         }

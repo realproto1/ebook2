@@ -103,7 +103,7 @@ async function generateImage(prompt, referenceImages = []) {
 // 1. 동화책 스토리 생성 API
 app.post('/api/generate-storybook', async (req, res) => {
   try {
-    const { title, targetAge, artStyle } = req.body;
+    const { title, targetAge, artStyle, referenceContent } = req.body;
     
     if (!title) {
       return res.status(400).json({ error: '동화책 제목을 입력해주세요.' });
@@ -118,13 +118,20 @@ app.post('/api/generate-storybook', async (req, res) => {
     const settings = ageSettings[targetAge] || ageSettings['5-7'];
 
     // Gemini로 스토리 생성
+    const referenceSection = referenceContent ? `
+
+참고할 동화 내용:
+${referenceContent}
+
+위 내용을 참고하여 새롭게 재해석하거나 유사한 구조로 창작해주세요.` : '';
+
     const prompt = `당신은 유아 교육 전문 동화 작가입니다. 다음 조건으로 동화책을 제작해주세요.
 
 제목: "${title}"
 타겟 연령: ${targetAge}세
 단어 수: ${settings.wordCount}자
 문장 길이: ${settings.sentenceLength}어절
-어휘 수준: ${settings.vocabulary}
+어휘 수준: ${settings.vocabulary}${referenceSection}
 
 다음 형식의 JSON으로 응답해주세요:
 
@@ -341,13 +348,45 @@ ${additionalPrompt ? '\n\n**Additional Requirements:** ' + additionalPrompt : ''
 // 3. 페이지 삽화 생성 (캐릭터 레퍼런스 이미지 참조)
 app.post('/api/generate-illustration', async (req, res) => {
   try {
-    const { page, artStyle, characterReferences, settings = {} } = req.body;
+    const { page, artStyle, characterReferences, settings = {}, editNote = '' } = req.body;
     
     // 설정값 기본값
     const aspectRatio = settings.aspectRatio || '16:9';
     const enforceNoText = settings.enforceNoText !== false;
     const enforceCharacterConsistency = settings.enforceCharacterConsistency !== false;
     const additionalPrompt = settings.additionalPrompt || '';
+    
+    // editNote를 영어로 번역 (한글인 경우)
+    let editNoteEn = '';
+    if (editNote && editNote.trim()) {
+      if (/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(editNote)) {
+        // 한글이 포함되어 있으면 번역
+        console.log('Translating edit note to English...');
+        const translateUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const translateResponse = await fetch(translateUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ 
+              parts: [{ 
+                text: `Translate the following Korean edit note for image modification to English:\n\n${editNote}` 
+              }] 
+            }]
+          })
+        });
+        
+        if (translateResponse.ok) {
+          const translateData = await translateResponse.json();
+          editNoteEn = translateData.candidates[0].content.parts[0].text.trim();
+          console.log('Translated edit note:', editNoteEn);
+        } else {
+          console.warn('Translation failed, using original edit note');
+          editNoteEn = editNote;
+        }
+      } else {
+        editNoteEn = editNote;
+      }
+    }
     
     // scene_description을 영어로 번역 (한글인 경우)
     let sceneDescriptionEn = page.scene_description;
@@ -446,6 +485,7 @@ app.post('/api/generate-illustration', async (req, res) => {
 **Main Scene Description:** ${sceneDescriptionEn}
 ${sceneDetails}
 ${characterInfo}
+${editNoteEn ? `\n\n**Important Modification Request:** ${editNoteEn}` : ''}
 
 **Art Style:** ${artStyle} style for children's book illustration.
 
