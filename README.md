@@ -69,6 +69,13 @@ AI 기반 유아 교육용 동화책 자동 생성 플랫폼
 ### 요구사항
 - Node.js 18 이상
 - npm 또는 yarn
+- **Gemini API 키** (필수)
+
+### API 키 발급
+
+1. **Gemini API 키 발급**: https://makersuite.google.com/app/apikey
+2. "Create API Key" 클릭
+3. 생성된 API 키 복사
 
 ### 설치
 
@@ -79,6 +86,12 @@ cd ebook2
 
 # 의존성 설치
 npm install
+
+# .env 파일 생성
+cp .env.example .env
+
+# .env 파일 편집하여 API 키 입력
+# GEMINI_API_KEY=your_actual_api_key_here
 ```
 
 ### 개발 서버 실행
@@ -92,6 +105,13 @@ pm2 start ecosystem.config.cjs
 ```
 
 서버는 `http://localhost:3000`에서 실행됩니다.
+
+### ⚠️ 중요 보안 주의사항
+
+- **절대 API 키를 Git에 커밋하지 마세요**
+- `.env` 파일은 `.gitignore`에 포함되어 있습니다
+- API 키가 유출되면 즉시 새 키를 발급받으세요
+- 프로덕션 환경에서는 환경 변수로 API 키를 설정하세요
 
 ## 🎯 사용 방법
 
