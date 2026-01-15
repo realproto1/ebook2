@@ -746,7 +746,7 @@ async function generateAllCharacterReferences() {
         if (!char.referenceImage) {
             const refDiv = document.getElementById(`char-ref-${i}`);
             if (refDiv) {
-                refDiv.innerHTML = '<div class="flex items-center justify-center h-full"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div><p class="text-white ml-3 text-sm">AI가 이미지 생성 중...</p></div>';
+                refDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-3"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-2"></div><p class="text-white text-sm font-semibold">AI가 이미지 생성 중...</p><p class="text-white text-xs opacity-75 mt-1">실패 시 자동으로 재시도합니다</p></div>';
             }
         }
     });
@@ -811,7 +811,7 @@ async function generateCharacterReference(charIndex) {
     const promptTextarea = document.getElementById(`char-prompt-${charIndex}`);
     const customPrompt = promptTextarea ? promptTextarea.value.trim() : character.description;
     
-    refDiv.innerHTML = '<div class="flex items-center justify-center h-full"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div><p class="text-white ml-3 text-sm">AI가 이미지 생성 중...</p></div>';
+    refDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-3"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-2"></div><p class="text-white text-sm font-semibold">AI가 이미지 생성 중...</p><p class="text-white text-xs opacity-75 mt-1">실패 시 자동으로 재시도합니다</p></div>';
 
     try {
         const response = await axios.post('/api/generate-character-image', {
@@ -879,7 +879,7 @@ async function generateAllIllustrations() {
         if (!page.illustrationImage) {
             const illustrationDiv = document.getElementById(`illustration-${i}`);
             if (illustrationDiv) {
-                illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-3"></div><p class="text-gray-600 text-sm">AI가 삽화를 생성하는 중...</p></div>';
+                illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-3"></div><p class="text-gray-600 text-sm font-semibold">AI가 삽화를 생성하는 중...</p><p class="text-gray-500 text-xs mt-1">실패 시 자동으로 재시도합니다</p></div>';
             }
         }
     });
@@ -986,7 +986,7 @@ async function generateIllustration(pageIndex) {
         return;
     }
     
-    illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-3"></div><p class="text-gray-600 text-sm">AI가 삽화를 생성하는 중...</p></div>';
+    illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-3"></div><p class="text-gray-600 text-sm font-semibold">AI가 삽화를 생성하는 중...</p><p class="text-gray-500 text-xs mt-1">실패 시 자동으로 재시도합니다</p></div>';
 
     try {
         const response = await axios.post('/api/generate-illustration', {

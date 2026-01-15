@@ -25,10 +25,10 @@ if (!GEMINI_API_KEY) {
 }
 
 
-// Gemini 이미지 생성 함수 (Nano Banana Pro) - 멀티모달 지원
-async function generateImage(prompt, referenceImages = []) {
+// Gemini 이미지 생성 함수 (Nano Banana Pro) - 멀티모달 지원 + 자동 재시도
+async function generateImage(prompt, referenceImages = [], retryCount = 0, maxRetries = 3) {
   try {
-    console.log('Calling Gemini Image Generation API (Nano Banana Pro)...');
+    console.log(`Calling Gemini Image Generation API (Attempt ${retryCount + 1}/${maxRetries})...`);
     console.log('Prompt:', prompt);
     console.log('Reference Images:', referenceImages.length);
     
@@ -72,6 +72,15 @@ async function generateImage(prompt, referenceImages = []) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini API Error:', errorText);
+      
+      // 500 에러이고 재시도 횟수가 남아있으면 재시도
+      if (response.status === 500 && retryCount < maxRetries - 1) {
+        const waitTime = 2000 * (retryCount + 1); // 2초, 4초, 6초
+        console.log(`🔄 500 Error detected. Retrying in ${waitTime/1000} seconds... (Attempt ${retryCount + 2}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        return generateImage(prompt, referenceImages, retryCount + 1, maxRetries);
+      }
+      
       throw new Error(`Gemini API Error: ${response.status}`);
     }
 
