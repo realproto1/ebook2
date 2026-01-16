@@ -754,27 +754,31 @@ async function generateAllCharacterReferences() {
     try {
         // 모든 캐릭터를 병렬로 생성
         const promises = currentStorybook.characters.map(async (char, i) => {
-            if (!char.referenceImage) {
-                try {
-                    const promptTextarea = document.getElementById(`char-prompt-${i}`);
-                    const customPrompt = promptTextarea ? promptTextarea.value.trim() : char.description;
-                    
-                    // 클라이언트에서 직접 Gemini API 호출
-                    const prompt = buildCharacterPrompt(customPrompt, currentStorybook.artStyle, imageSettings);
-                    const result = await generateImageClient(prompt, [], 3); // 최대 3회 재시도
-                    
-                    if (result.success && result.imageUrl) {
-                        currentStorybook.characters[i].referenceImage = result.imageUrl;
-                        return { index: i, success: true, imageUrl: result.imageUrl };
-                    } else {
-                        throw new Error(result.error || '이미지 생성 실패');
-                    }
-                } catch (error) {
-                    console.error(`Error generating character ${i}:`, error);
-                    return { index: i, success: false, error: error.message };
+            try {
+                const promptTextarea = document.getElementById(`char-prompt-${i}`);
+                const customPrompt = promptTextarea ? promptTextarea.value.trim() : char.description;
+                
+                // 재생성 여부 판단
+                const isRegeneration = !!char.referenceImage;
+                
+                // 클라이언트에서 직접 Gemini API 호출
+                const prompt = buildCharacterPrompt(customPrompt, currentStorybook.artStyle, imageSettings, isRegeneration);
+                
+                // 재생성인 경우 기존 이미지를 레퍼런스로 추가
+                const refImageUrls = isRegeneration ? [char.referenceImage] : [];
+                
+                const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
+                
+                if (result.success && result.imageUrl) {
+                    currentStorybook.characters[i].referenceImage = result.imageUrl;
+                    return { index: i, success: true, imageUrl: result.imageUrl };
+                } else {
+                    throw new Error(result.error || '이미지 생성 실패');
                 }
+            } catch (error) {
+                console.error(`Error generating character ${i}:`, error);
+                return { index: i, success: false, error: error.message };
             }
-            return { index: i, success: true, skipped: true };
         });
         
         const results = await Promise.all(promises);
@@ -784,7 +788,7 @@ async function generateAllCharacterReferences() {
         
         // 각 캐릭터의 이미지 div만 업데이트 (텍스트 필드는 유지)
         results.forEach(result => {
-            if (result.success && !result.skipped) {
+            if (result.success) {
                 const refDiv = document.getElementById(`char-ref-${result.index}`);
                 if (refDiv) {
                     const char = currentStorybook.characters[result.index];
@@ -821,13 +825,13 @@ async function generateAllCharacterReferences() {
             }
         });
         
-        const successCount = results.filter(r => r.success && !r.skipped).length;
+        const successCount = results.filter(r => r.success).length;
         const failCount = results.filter(r => !r.success).length;
         
         if (failCount > 0) {
-            alert(`캐릭터 레퍼런스 생성 완료!\n성공: ${successCount}개\n실패: ${failCount}개`);
+            alert(`캐릭터 레퍼런스 생성/재생성 완료!\n성공: ${successCount}개\n실패: ${failCount}개`);
         } else {
-            alert(`모든 캐릭터 레퍼런스 생성이 완료되었습니다! (${successCount}개)`);
+            alert(`모든 캐릭터 레퍼런스 생성/재생성이 완료되었습니다! (${successCount}개)`);
         }
     } catch (error) {
         console.error('Batch generation error:', error);
@@ -847,9 +851,26 @@ async function generateCharacterReference(charIndex) {
     refDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-3"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-2"></div><p class="text-white text-sm font-semibold">AI가 이미지 생성 중...</p><p class="text-white text-xs opacity-75 mt-1">실패 시 자동으로 재시도합니다</p></div>';
 
     try {
+        // 재생성 여부 판단 (기존 이미지가 있으면 재생성 모드)
+        const isRegeneration = !!character.referenceImage;
+        
         // 클라이언트에서 직접 Gemini API 호출
-        const prompt = buildCharacterPrompt(customPrompt, currentStorybook.artStyle, imageSettings);
-        const result = await generateImageClient(prompt, [], 3); // 최대 3회 재시도
+        const prompt = buildCharacterPrompt(customPrompt, currentStorybook.artStyle, imageSettings, isRegeneration);
+        
+        // 재생성인 경우 기존 이미지를 레퍼런스로 추가
+        const refImageUrls = [];
+        if (character.referenceImage) {
+            console.log('🔄 캐릭터 재생성 모드: 기존 이미지를 레퍼런스로 추가');
+            refImageUrls.push(character.referenceImage);
+        }
+        
+        console.log(`🎨 캐릭터 "${character.name}" 이미지 생성 ${isRegeneration ? '(재생성 모드 - 사용자 수정사항 반영)' : '(초기 생성)'}`);
+        console.log('📝 프롬프트:', customPrompt.substring(0, 100) + '...');
+        if (refImageUrls.length > 0) {
+            console.log('🖼️ 참조 이미지:', refImageUrls.length, '개');
+        }
+        
+        const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
 
         if (result.success && result.imageUrl) {
             const imageUrl = result.imageUrl;
@@ -1359,16 +1380,23 @@ function viewVocabularyImage(index) {
  * @param {string} description - 캐릭터 설명
  * @param {string} artStyle - 그림체 스타일
  * @param {object} settings - 이미지 설정
+ * @param {boolean} isRegeneration - 재생성 여부 (기존 이미지가 있는 경우)
  * @returns {string} - 완성된 프롬프트
  */
-function buildCharacterPrompt(description, artStyle, settings) {
+function buildCharacterPrompt(description, artStyle, settings, isRegeneration = false) {
     const noTextPrompt = settings.enforceNoText ? 
         '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, captions, or titles anywhere in the image. Absolutely NO TEXT of any kind.' : 
         '\n\n**NO TEXT:** Do NOT include any text, labels, words, letters, or captions in the image.';
     
+    // 재생성 안내 (기존 이미지가 있는 경우)
+    const regenerationNote = isRegeneration ? 
+        '\n\n**REGENERATION MODE:** You are provided with the previous version of this character reference as a reference image. Use it to understand the character\'s current design, colors, proportions, and style. Then apply any modifications from the updated character description while maintaining overall consistency and recognizability.' : 
+        '';
+    
     const prompt = `Create a professional character design reference sheet for a children's storybook character.
 
 **Character Description:** ${description}
+${regenerationNote}
 
 **Art Style:** ${artStyle} style for children's book illustration, suitable for ages 4-8.
 
