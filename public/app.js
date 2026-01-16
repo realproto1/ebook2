@@ -1041,7 +1041,16 @@ async function generateIllustration(pageIndex) {
         };
         
         const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, editNote);
+        
+        // 레퍼런스 이미지 수집: 캐릭터 + 기존 삽화(있으면)
         const refImageUrls = characterReferences.map(char => char.referenceImage);
+        
+        // 재생성인 경우 기존 이미지를 레퍼런스로 추가
+        if (page.illustrationImage && editNote) {
+            console.log('🔄 재생성 모드: 기존 이미지를 레퍼런스로 추가');
+            refImageUrls.push(page.illustrationImage);
+        }
+        
         const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
 
         if (result.success && result.imageUrl) {
@@ -1429,12 +1438,18 @@ function buildIllustrationPrompt(page, artStyle, characterReferences, settings, 
         '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, captions, titles, speech bubbles, or text overlays in the image. Absolutely NO TEXT of any kind. Pure illustration only.' : 
         '\n\n**IMPORTANT:** Do NOT include any text, labels, words, letters, or captions in the image. No speech bubbles, no titles, no text overlays. Pure illustration only.';
     
+    // 재생성 안내 (기존 이미지가 있고 수정사항이 있는 경우)
+    const regenerationNote = (page.illustrationImage && editNote) ? 
+        '\n\n**REGENERATION MODE:** You are provided with the previous version of this illustration as a reference image. Use it to understand the current composition, layout, and style. Then apply the modification request while maintaining consistency with the overall scene.' : 
+        '';
+    
     const prompt = `Create a beautiful, professional illustration for a children's storybook page.
 
 **Main Scene Description:** ${page.scene_description}
 ${sceneDetails}
 ${characterInfo}
-${editNote ? `\n\n**Important Modification Request:** ${editNote}` : ''}
+${regenerationNote}
+${editNote ? `\n\n**Important Modification Request:** ${editNote}\n**Note:** Apply this modification to the scene while keeping other elements consistent with the reference images.` : ''}
 
 **Art Style:** ${artStyle} style for children's book illustration.
 
