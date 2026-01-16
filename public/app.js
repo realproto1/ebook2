@@ -506,6 +506,20 @@ function displayStorybook(storybook) {
                                 </div>
                                 ` : ''}
 
+                                ${page.illustrationImage ? `
+                                <h5 class="font-bold text-gray-700 mb-2 mt-3">수정사항 (재생성 시)</h5>
+                                <textarea 
+                                    id="edit-note-${idx}" 
+                                    class="w-full p-3 border-2 border-orange-300 rounded-lg text-sm mb-2 bg-orange-50"
+                                    rows="2"
+                                    placeholder="예: 배경을 밤으로 변경, 캐릭터 표정을 더 밝게, 구름 추가 등..."
+                                >${page.editNote || ''}</textarea>
+                                <p class="text-xs text-gray-500 mb-2">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    이미지가 이미 생성된 경우, 여기에 수정하고 싶은 내용을 입력하고 '삽화 재생성'을 누르세요.
+                                </p>
+                                ` : ''}
+
                                 <button 
                                     onclick="generateIllustration(${idx})"
                                     class="w-full mt-2 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
