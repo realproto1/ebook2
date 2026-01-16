@@ -113,8 +113,20 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
                 data.candidates[0].content.parts) {
                 
                 for (const part of data.candidates[0].content.parts) {
-                    if (part.inline_data && part.inline_data.data) {
+                    // inlineData (카멜케이스) 체크
+                    if (part.inlineData && part.inlineData.data) {
                         // Base64 → Blob URL 변환
+                        const imageUrl = base64ToObjectURL(part.inlineData.data, part.inlineData.mimeType);
+                        console.log('✅ 이미지 생성 성공!');
+                        
+                        return {
+                            success: true,
+                            imageUrl: imageUrl,
+                            prompt: prompt
+                        };
+                    }
+                    // inline_data (스네이크케이스) 체크 (하위 호환성)
+                    if (part.inline_data && part.inline_data.data) {
                         const imageUrl = base64ToObjectURL(part.inline_data.data, part.inline_data.mime_type);
                         console.log('✅ 이미지 생성 성공!');
                         
