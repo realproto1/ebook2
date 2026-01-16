@@ -257,10 +257,15 @@ location.reload()
 1. 프로젝트 선택 → "Settings" → "Environment Variables"
 2. 다음 변수 추가:
    - **Name**: `GEMINI_API_KEY`
-   - **Value**: `AIzaSyCBbhANVn2ESO3IzRSD-220UzAEEBIQZPk` (또는 본인의 API 키)
+   - **Value**: `YOUR_GEMINI_API_KEY_HERE` (https://makersuite.google.com/app/apikey에서 발급)
    - **Environment**: Production, Preview, Development 모두 선택
 3. "Save" 클릭
 4. 프로젝트 재배포 (Deployments → ... → Redeploy)
+
+**⚠️ 중요**: 
+- 절대 실제 API 키를 코드나 README에 포함하지 마세요
+- API 키는 Vercel 환경 변수로만 설정하세요
+- 유출된 키는 즉시 재발급 받으세요
 
 #### 3. 배포 완료
 - URL: `https://your-project.vercel.app`
