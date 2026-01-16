@@ -1666,14 +1666,17 @@ async function executeRegenerate() {
             }))
         });
         
-        const newStorybook = response.data;
+        // 응답 형식 확인
+        const newStorybook = response.data.storybook || response.data;
         
         // 기존 캐릭터의 레퍼런스 이미지 복원
-        newStorybook.characters.forEach((char, index) => {
-            if (existingCharacters[index] && existingCharacters[index].referenceImage) {
-                char.referenceImage = existingCharacters[index].referenceImage;
-            }
-        });
+        if (newStorybook && newStorybook.characters) {
+            newStorybook.characters.forEach((char, index) => {
+                if (existingCharacters[index] && existingCharacters[index].referenceImage) {
+                    char.referenceImage = existingCharacters[index].referenceImage;
+                }
+            });
+        }
         
         // 현재 동화책 업데이트
         currentStorybook = newStorybook;

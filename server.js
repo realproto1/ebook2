@@ -286,6 +286,19 @@ JSON만 응답하세요.`;
     }
 
     const data = await response.json();
+    
+    // 에러 응답 체크
+    if (data.error) {
+      console.error('Gemini API Error:', data.error);
+      throw new Error(`Gemini API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+    
+    // 응답 구조 검증
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+      console.error('Unexpected Gemini response structure:', JSON.stringify(data, null, 2));
+      throw new Error('Gemini API returned unexpected response structure');
+    }
+    
     let storyText = data.candidates[0].content.parts[0].text;
     
     // JSON 추출
