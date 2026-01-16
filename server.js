@@ -692,6 +692,21 @@ Create a single, clear image that children can easily understand and associate w
   }
 });
 
+// API 키 제공 엔드포인트 (클라이언트에서 직접 Gemini API 호출용)
+app.get('/api/config', (req, res) => {
+  if (!GEMINI_API_KEY) {
+    return res.status(403).json({
+      success: false,
+      error: 'API 키가 설정되지 않았습니다.'
+    });
+  }
+  
+  res.json({
+    success: true,
+    apiKey: GEMINI_API_KEY
+  });
+});
+
 // 메인 페이지
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

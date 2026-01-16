@@ -759,20 +759,15 @@ async function generateAllCharacterReferences() {
                     const promptTextarea = document.getElementById(`char-prompt-${i}`);
                     const customPrompt = promptTextarea ? promptTextarea.value.trim() : char.description;
                     
-                    const response = await axios.post('/api/generate-character-image', {
-                        character: {
-                            ...char,
-                            description: customPrompt
-                        },
-                        artStyle: currentStorybook.artStyle,
-                        settings: imageSettings
-                    });
+                    // 클라이언트에서 직접 Gemini API 호출
+                    const prompt = buildCharacterPrompt(customPrompt, currentStorybook.artStyle, imageSettings);
+                    const result = await generateImageClient(prompt, [], 3); // 최대 3회 재시도
                     
-                    if (response.data.success && response.data.imageUrl) {
-                        currentStorybook.characters[i].referenceImage = response.data.imageUrl;
-                        return { index: i, success: true, imageUrl: response.data.imageUrl };
+                    if (result.success && result.imageUrl) {
+                        currentStorybook.characters[i].referenceImage = result.imageUrl;
+                        return { index: i, success: true, imageUrl: result.imageUrl };
                     } else {
-                        throw new Error(response.data.error || '이미지 생성 실패');
+                        throw new Error(result.error || '이미지 생성 실패');
                     }
                 } catch (error) {
                     console.error(`Error generating character ${i}:`, error);
@@ -814,24 +809,19 @@ async function generateCharacterReference(charIndex) {
     refDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-3"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-2"></div><p class="text-white text-sm font-semibold">AI가 이미지 생성 중...</p><p class="text-white text-xs opacity-75 mt-1">실패 시 자동으로 재시도합니다</p></div>';
 
     try {
-        const response = await axios.post('/api/generate-character-image', {
-            character: {
-                ...character,
-                description: customPrompt
-            },
-            artStyle: currentStorybook.artStyle,
-            settings: imageSettings
-        });
+        // 클라이언트에서 직접 Gemini API 호출
+        const prompt = buildCharacterPrompt(customPrompt, currentStorybook.artStyle, imageSettings);
+        const result = await generateImageClient(prompt, [], 3); // 최대 3회 재시도
 
-        if (response.data.success && response.data.imageUrl) {
-            const imageUrl = response.data.imageUrl;
+        if (result.success && result.imageUrl) {
+            const imageUrl = result.imageUrl;
             currentStorybook.characters[charIndex].referenceImage = imageUrl;
             saveCurrentStorybook();
             
             refDiv.innerHTML = `<img src="${imageUrl}" alt="${character.name}" class="w-full h-full object-cover rounded-lg"/>`;
             displayStorybook(currentStorybook);
         } else {
-            throw new Error(response.data.error || '이미지 URL을 받지 못했습니다.');
+            throw new Error(result.error || '이미지 URL을 받지 못했습니다.');
         }
 
     } catch (error) {
@@ -902,25 +892,25 @@ async function generateAllIllustrations() {
                         atmosphere: sceneAtmElem ? sceneAtmElem.value : page.scene_structure?.atmosphere || ''
                     };
                     
-                    const response = await axios.post('/api/generate-illustration', {
-                        page: {
-                            ...page,
-                            scene_description: sceneDesc,
-                            scene_structure: sceneStructure
-                        },
-                        artStyle: artStyle,
-                        characterReferences: characterReferences,
-                        settings: imageSettings
-                    });
+                    // 클라이언트에서 직접 Gemini API 호출
+                    const pageData = {
+                        ...page,
+                        scene_description: sceneDesc,
+                        scene_structure: sceneStructure
+                    };
                     
-                    if (response.data.success && response.data.imageUrl) {
-                        currentStorybook.pages[i].illustrationImage = response.data.imageUrl;
+                    const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, '');
+                    const refImageUrls = characterReferences.map(char => char.referenceImage);
+                    const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
+                    
+                    if (result.success && result.imageUrl) {
+                        currentStorybook.pages[i].illustrationImage = result.imageUrl;
                         currentStorybook.pages[i].scene_description = sceneDesc;
                         currentStorybook.pages[i].scene_structure = sceneStructure;
                         currentStorybook.pages[i].artStyle = artStyle;
-                        return { index: i, success: true, imageUrl: response.data.imageUrl };
+                        return { index: i, success: true, imageUrl: result.imageUrl };
                     } else {
-                        throw new Error(response.data.error || '이미지 생성 실패');
+                        throw new Error(result.error || '이미지 생성 실패');
                     }
                 } catch (error) {
                     console.error(`Error generating illustration ${i}:`, error);
@@ -989,20 +979,19 @@ async function generateIllustration(pageIndex) {
     illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-3"></div><p class="text-gray-600 text-sm font-semibold">AI가 삽화를 생성하는 중...</p><p class="text-gray-500 text-xs mt-1">실패 시 자동으로 재시도합니다</p></div>';
 
     try {
-        const response = await axios.post('/api/generate-illustration', {
-            page: {
-                ...page,
-                scene_description: sceneDesc,
-                scene_structure: sceneStructure
-            },
-            artStyle: artStyle,
-            characterReferences: characterReferences,
-            settings: imageSettings,
-            editNote: editNote // 수정사항 추가
-        });
+        // 클라이언트에서 직접 Gemini API 호출
+        const pageData = {
+            ...page,
+            scene_description: sceneDesc,
+            scene_structure: sceneStructure
+        };
+        
+        const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, editNote);
+        const refImageUrls = characterReferences.map(char => char.referenceImage);
+        const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
 
-        if (response.data.success && response.data.imageUrl) {
-            const imageUrl = response.data.imageUrl;
+        if (result.success && result.imageUrl) {
+            const imageUrl = result.imageUrl;
             currentStorybook.pages[pageIndex].illustrationImage = imageUrl;
             currentStorybook.pages[pageIndex].scene_description = sceneDesc;
             currentStorybook.pages[pageIndex].scene_structure = sceneStructure;
@@ -1013,7 +1002,7 @@ async function generateIllustration(pageIndex) {
             // displayStorybook을 호출하여 수정사항 입력 필드가 표시되도록 함
             displayStorybook(currentStorybook);
         } else {
-            throw new Error(response.data.error || '이미지 URL을 받지 못했습니다.');
+            throw new Error(result.error || '이미지 URL을 받지 못했습니다.');
         }
 
     } catch (error) {
@@ -1297,5 +1286,119 @@ function viewVocabularyImage(index) {
         if (vocabImg && vocabImg.imageUrl) {
             window.open(vocabImg.imageUrl, '_blank');
         }
+    }
+}
+
+// ===== 프롬프트 생성 함수들 =====
+
+/**
+ * 캐릭터 이미지 생성 프롬프트 빌드
+ * @param {string} description - 캐릭터 설명
+ * @param {string} artStyle - 그림체 스타일
+ * @param {object} settings - 이미지 설정
+ * @returns {string} - 완성된 프롬프트
+ */
+function buildCharacterPrompt(description, artStyle, settings) {
+    const noTextPrompt = settings.enforceNoText ? 
+        '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, captions, or titles anywhere in the image. Absolutely NO TEXT of any kind.' : 
+        '\n\n**NO TEXT:** Do NOT include any text, labels, words, letters, or captions in the image.';
+    
+    const prompt = `Create a professional character design reference sheet for a children's storybook character.
+
+**Character Description:** ${description}
+
+**Art Style:** ${artStyle} style for children's book illustration, suitable for ages 4-8.
+
+**Reference Sheet Layout:**
+1. **Center (Front View):** Full-body front view of the character in a neutral standing pose. Show all details clearly.
+2. **Side Views:** Three-quarter view and side profile showing the character's proportions and features from different angles.
+3. **Expressions:** Three different facial expressions showing the character's personality and emotional range (happy, surprised, thoughtful).
+4. **Details:** Clear, consistent details of clothing, colors, and distinctive features that make this character unique and recognizable.
+
+**Background:** Clean white background with subtle grid or guidelines.
+
+**Art Quality:** High-detail, professional children's book illustration quality. Vibrant, appealing colors. Clear, consistent character design suitable for multiple illustrations.
+
+**Character Age Range:** Design appropriate for a children's storybook (ages 4-8).
+
+**Image Aspect Ratio:** ${settings.aspectRatio}
+${settings.additionalPrompt ? `\n\n**Additional Instructions:** ${settings.additionalPrompt}` : ''}
+${noTextPrompt}`;
+
+    return prompt;
+}
+
+/**
+ * 페이지 삽화 이미지 생성 프롬프트 빌드
+ * @param {object} page - 페이지 객체
+ * @param {string} artStyle - 그림체 스타일
+ * @param {Array<string>} characterReferences - 캐릭터 레퍼런스 이미지 URL 배열
+ * @param {object} settings - 이미지 설정
+ * @param {string} editNote - 수정사항 (선택)
+ * @returns {string} - 완성된 프롬프트
+ */
+function buildIllustrationPrompt(page, artStyle, characterReferences, settings, editNote = '') {
+    let characterInfo = '';
+    
+    // 캐릭터 레퍼런스 정보 추가
+    if (characterReferences && characterReferences.length > 0 && settings.enforceCharacterConsistency) {
+        characterInfo = '\n\n**Character References (MUST FOLLOW EXACTLY):**\n';
+        characterInfo += 'You have been provided with character reference images. ';
+        
+        if (settings.enforceCharacterConsistency) {
+            characterInfo += '**ABSOLUTE REQUIREMENT:** Recreate each character PIXEL-FOR-PIXEL from the reference images. ';
+            characterInfo += 'Match EXACTLY: facial features, body proportions, clothing, colors, hairstyle, and all visual details. ';
+            characterInfo += 'The characters in this illustration MUST be visually identical to the reference images.\n\n';
+        }
+        
+        currentStorybook.characters.forEach((char, index) => {
+            if (char.referenceImage) {
+                characterInfo += `${index + 1}. **${char.name}:** ${char.description}\n`;
+                if (settings.enforceCharacterConsistency) {
+                    characterInfo += `   - **CRITICAL:** Use reference image to ensure ABSOLUTE PIXEL-PERFECT consistency.\n`;
+                    characterInfo += `   - Match ALL visual details from the reference image exactly.\n`;
+                }
+            }
+        });
+    }
+    
+    // 장면 구조 정보 추가
+    let sceneDetails = '';
+    if (page.scene_structure) {
+        sceneDetails = `\n\n**Scene Structure:**
+- **Characters & Actions:** ${page.scene_structure.characters}
+- **Background Setting:** ${page.scene_structure.background}
+- **Mood & Atmosphere:** ${page.scene_structure.atmosphere}`;
+    }
+    
+    const noTextPrompt = settings.enforceNoText ? 
+        '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, captions, titles, speech bubbles, or text overlays in the image. Absolutely NO TEXT of any kind. Pure illustration only.' : 
+        '\n\n**IMPORTANT:** Do NOT include any text, labels, words, letters, or captions in the image. No speech bubbles, no titles, no text overlays. Pure illustration only.';
+    
+    const prompt = `Create a beautiful, professional illustration for a children's storybook page.
+
+**Main Scene Description:** ${page.scene_description}
+${sceneDetails}
+${characterInfo}
+${editNote ? `\n\n**Important Modification Request:** ${editNote}` : ''}
+
+**Art Style:** ${artStyle} style for children's book illustration.
+
+**Image Aspect Ratio:** ${settings.aspectRatio}
+
+**Composition:** Create a warm, inviting scene that captures the emotion and action of the story moment. Use a horizontal composition suitable for a storybook spread.
+
+**Lighting & Atmosphere:** Soft, warm lighting with gentle shadows. The scene should feel magical yet safe and welcoming for young children.
+
+**Color Palette:** Vibrant, cheerful colors appropriate for children ages 4-8. Use color psychology to enhance the emotional impact of the scene.
+
+**Art Quality:** High-detail, professional children's book illustration quality with painterly texture and depth.
+
+**Target Audience:** Children ages 4-8. The illustration should be engaging, age-appropriate, and emotionally resonant.
+${settings.additionalPrompt ? `\n\n**Additional Instructions:** ${settings.additionalPrompt}` : ''}
+${noTextPrompt}`;
+
+    return prompt;
+}
     }
 }
