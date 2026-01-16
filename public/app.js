@@ -1295,14 +1295,25 @@ async function generateSingleVocabularyImage(wordIndex) {
     vocabImgDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-2"></div><p class="text-gray-600 text-xs">생성 중...</p></div>';
     
     try {
-        const response = await axios.post('/api/generate-vocabulary-images', {
-            vocabulary: [{ word, korean }],
-            artStyle: currentStorybook.artStyle,
-            settings: imageSettings
-        });
+        // 클라이언트에서 직접 Gemini API 호출
+        const prompt = `Create a simple, clear educational illustration of: ${word}${korean ? ` (${korean})` : ''}
+
+Requirements:
+- Single object or concept clearly shown
+- Clean, white background
+- High contrast and vibrant colors
+- Professional, educational style
+- Suitable for children ages 4-8
+- Art style: ${currentStorybook.artStyle}
+
+**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, or captions in the image. Show ONLY the visual representation of the word.
+
+Example: For "Apple", show only a red apple fruit. No text.`;
+
+        const result = await generateImageClient(prompt, [], 3); // 최대 3회 재시도
         
-        if (response.data.success && response.data.images[0].success) {
-            const imageUrl = response.data.images[0].imageUrl;
+        if (result.success && result.imageUrl) {
+            const imageUrl = result.imageUrl;
             
             // vocabularyImages 배열 초기화
             if (!currentStorybook.vocabularyImages) {
@@ -1317,9 +1328,13 @@ async function generateSingleVocabularyImage(wordIndex) {
             };
             
             saveCurrentStorybook();
-            displayStorybook(currentStorybook);
+            
+            // UI만 업데이트 (전체 재렌더링 안 함)
+            vocabImgDiv.innerHTML = `<img src="${imageUrl}" alt="${word}" class="w-full h-full object-cover rounded-lg"/>`;
+            
+            return { index: wordIndex, success: true, imageUrl: imageUrl };
         } else {
-            throw new Error(response.data.images[0].error || '이미지 생성 실패');
+            throw new Error(result.error || '이미지 생성 실패');
         }
         
     } catch (error) {
@@ -1336,10 +1351,11 @@ async function generateSingleVocabularyImage(wordIndex) {
                 </button>
             </div>
         `;
+        return { index: wordIndex, success: false, error: error.message };
     }
 }
 
-// 모든 단어 이미지 생성
+// 모든 단어 이미지 생성 (병렬)
 async function generateAllVocabularyImages() {
     if (!currentStorybook.educational_content || !currentStorybook.educational_content.vocabulary) {
         alert('단어 목록이 없습니다.');
@@ -1348,19 +1364,29 @@ async function generateAllVocabularyImages() {
     
     const vocabulary = currentStorybook.educational_content.vocabulary;
     
-    if (!confirm(`${vocabulary.length}개의 단어 이미지를 생성하시겠습니까?\n\n예상 소요 시간: 약 ${vocabulary.length * 8}초`)) {
+    if (!confirm(`${vocabulary.length}개의 단어 이미지를 병렬로 생성하시겠습니까?\n\n모든 이미지가 동시에 생성되어 빠릅니다.`)) {
         return;
     }
     
-    // 순차적으로 생성
-    for (let i = 0; i < vocabulary.length; i++) {
-        await generateSingleVocabularyImage(i);
-        if (i < vocabulary.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-    }
+    console.log('모든 단어 이미지를 병렬로 생성 시작...');
     
-    alert('모든 단어 이미지 생성이 완료되었습니다!');
+    // 병렬로 모든 이미지 생성
+    const promises = vocabulary.map((_, index) => 
+        generateSingleVocabularyImage(index)
+    );
+    
+    // 모든 생성 완료 대기
+    const results = await Promise.all(promises);
+    
+    // 결과 집계
+    const successCount = results.filter(r => r && r.success).length;
+    const failCount = results.filter(r => r && !r.success).length;
+    
+    if (failCount > 0) {
+        alert(`단어 이미지 생성 완료!\n\n성공: ${successCount}개\n실패: ${failCount}개\n\n실패한 이미지는 개별적으로 재시도할 수 있습니다.`);
+    } else {
+        alert(`모든 단어 이미지 생성이 완료되었습니다! (${successCount}개)`);
+    }
 }
 
 // 모든 단어 이미지 다운로드
