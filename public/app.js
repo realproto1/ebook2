@@ -204,6 +204,7 @@ function showCreateForm() {
 async function generateStorybook() {
     const title = document.getElementById('bookTitle').value.trim();
     const targetAge = document.getElementById('targetAge').value;
+    const totalPages = parseInt(document.getElementById('totalPages').value) || 10;
     const artStyleSelect = document.getElementById('artStyleSelect').value;
     const artStyleCustom = document.getElementById('artStyleCustom').value.trim();
     const referenceContent = document.getElementById('referenceContent').value.trim();
@@ -220,6 +221,11 @@ async function generateStorybook() {
         alert('그림체를 입력해주세요.');
         return;
     }
+    
+    if (totalPages < 5 || totalPages > 20) {
+        alert('페이지 수는 5-20 사이여야 합니다.');
+        return;
+    }
 
     document.getElementById('createForm').style.display = 'none';
     document.getElementById('loading').classList.remove('hidden');
@@ -229,6 +235,7 @@ async function generateStorybook() {
         const response = await axios.post('/api/generate-storybook', {
             title,
             targetAge,
+            totalPages,
             artStyle,
             referenceContent: referenceContent || null
         });
@@ -281,11 +288,22 @@ function displayStorybook(storybook) {
     
     let html = `
         <div class="bg-white rounded-3xl shadow-2xl p-10 mb-8">
-            <h2 class="text-4xl font-bold text-purple-600 mb-2">${storybook.title}</h2>
-            <p class="text-gray-600">
-                <i class="fas fa-child mr-2"></i>${storybook.targetAge}세 
-                <i class="fas fa-palette ml-4 mr-2"></i>${storybook.artStyle}
-            </p>
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h2 class="text-4xl font-bold text-purple-600 mb-2">${storybook.title}</h2>
+                    <p class="text-gray-600">
+                        <i class="fas fa-child mr-2"></i>${storybook.targetAge}세 
+                        <i class="fas fa-palette ml-4 mr-2"></i>${storybook.artStyle}
+                        <i class="fas fa-file-alt ml-4 mr-2"></i>${storybook.pages.length}페이지
+                    </p>
+                </div>
+                <button 
+                    onclick="openRegenerateModal()"
+                    class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-lg font-bold hover:from-orange-600 hover:to-red-600 transition-all shadow-lg"
+                >
+                    <i class="fas fa-redo mr-2"></i>다시 만들기
+                </button>
+            </div>
             <div class="bg-purple-50 p-6 rounded-lg mt-6">
                 <h3 class="text-xl font-bold text-purple-600 mb-2">
                     <i class="fas fa-lightbulb mr-2"></i>주제 및 교훈
@@ -372,12 +390,18 @@ function displayStorybook(storybook) {
                             rows="2"
                             placeholder="프롬프트를 수정하세요"
                         >${char.description}</textarea>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 mb-2">
                             <button 
                                 onclick="generateCharacterReference(${idx})"
                                 class="flex-1 bg-white text-purple-600 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition"
                             >
                                 <i class="fas fa-image mr-2"></i>생성
+                            </button>
+                            <button 
+                                onclick="document.getElementById('upload-char-${idx}').click()"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition"
+                            >
+                                <i class="fas fa-upload mr-2"></i>업로드
                             </button>
                             ${char.referenceImage ? 
                                 `<button 
@@ -388,6 +412,13 @@ function displayStorybook(storybook) {
                                 </button>` : ''
                             }
                         </div>
+                        <input 
+                            type="file" 
+                            id="upload-char-${idx}" 
+                            accept="image/*" 
+                            class="hidden" 
+                            onchange="uploadCharacterImage(${idx}, this)"
+                        />
                     </div>
                 `).join('')}
             </div>
@@ -1496,4 +1527,168 @@ ${settings.additionalPrompt ? `\n\n**Additional Instructions:** ${settings.addit
 ${noTextPrompt}`;
 
     return prompt;
+}
+
+// ===== 캐릭터 이미지 업로드 =====
+async function uploadCharacterImage(charIndex, inputElement) {
+    const file = inputElement.files[0];
+    if (!file) return;
+    
+    // 파일 크기 체크 (5MB 제한)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('파일 크기는 5MB 이하여야 합니다.');
+        return;
+    }
+    
+    // 이미지 파일 체크
+    if (!file.type.startsWith('image/')) {
+        alert('이미지 파일만 업로드 가능합니다.');
+        return;
+    }
+    
+    try {
+        const refDiv = document.getElementById(`char-ref-${charIndex}`);
+        refDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-3"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-2"></div><p class="text-white text-sm font-semibold">이미지 업로드 중...</p></div>';
+        
+        // FileReader로 이미지를 Base64로 변환
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const base64 = e.target.result;
+            
+            // Blob URL로 변환 (로컬 저장용)
+            const response = await fetch(base64);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // 캐릭터 레퍼런스 이미지 저장
+            currentStorybook.characters[charIndex].referenceImage = blobUrl;
+            saveCurrentStorybook();
+            
+            // UI 업데이트
+            refDiv.innerHTML = `<img src="${blobUrl}" alt="${currentStorybook.characters[charIndex].name}" class="w-full h-full object-cover rounded-lg"/>`;
+            
+            // 다운로드 버튼 추가
+            const charCard = refDiv.closest('.character-card');
+            if (charCard) {
+                const existingDownloadBtn = charCard.querySelector('.download-char-btn');
+                if (!existingDownloadBtn) {
+                    const promptTextarea = charCard.querySelector(`#char-prompt-${charIndex}`);
+                    if (promptTextarea) {
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.className = 'w-full bg-green-500 text-white py-2 rounded-lg font-semibold hover:bg-green-600 transition mb-2 download-char-btn';
+                        downloadBtn.innerHTML = '<i class="fas fa-download mr-2"></i>이미지 다운로드';
+                        downloadBtn.onclick = () => downloadImage(blobUrl, `캐릭터_${currentStorybook.characters[charIndex].name}.png`);
+                        promptTextarea.parentNode.insertBefore(downloadBtn, promptTextarea);
+                    }
+                }
+            }
+            
+            console.log(`✅ 캐릭터 "${currentStorybook.characters[charIndex].name}" 이미지 업로드 완료`);
+        };
+        
+        reader.onerror = () => {
+            refDiv.innerHTML = '<div class="p-4 text-center"><p class="text-white text-xs">⚠️ 이미지 업로드 실패</p></div>';
+            alert('이미지 업로드 중 오류가 발생했습니다.');
+        };
+        
+        reader.readAsDataURL(file);
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert('이미지 업로드 중 오류가 발생했습니다: ' + error.message);
+    }
+}
+
+// ===== 다시 만들기 모달 =====
+function openRegenerateModal() {
+    if (!currentStorybook) {
+        alert('동화책이 생성되지 않았습니다.');
+        return;
+    }
+    
+    // 현재 값으로 모달 필드 채우기
+    document.getElementById('regenerateTitle').value = currentStorybook.title;
+    document.getElementById('regenerateAge').value = currentStorybook.targetAge;
+    document.getElementById('regeneratePages').value = currentStorybook.pages.length;
+    document.getElementById('regenerateArtStyle').value = currentStorybook.artStyle;
+    document.getElementById('regenerateNotes').value = '';
+    
+    // 모달 표시
+    document.getElementById('regenerateModal').classList.remove('hidden');
+}
+
+function closeRegenerateModal() {
+    document.getElementById('regenerateModal').classList.add('hidden');
+}
+
+async function executeRegenerate() {
+    const title = document.getElementById('regenerateTitle').value.trim();
+    const targetAge = document.getElementById('regenerateAge').value;
+    const totalPages = parseInt(document.getElementById('regeneratePages').value);
+    const artStyle = document.getElementById('regenerateArtStyle').value.trim();
+    const notes = document.getElementById('regenerateNotes').value.trim();
+    
+    if (!title) {
+        alert('제목을 입력해주세요.');
+        return;
+    }
+    
+    if (totalPages < 5 || totalPages > 20) {
+        alert('페이지 수는 5-20 사이여야 합니다.');
+        return;
+    }
+    
+    if (!confirm('현재 동화책의 캐릭터는 유지하고 스토리만 다시 생성하시겠습니까?')) {
+        return;
+    }
+    
+    try {
+        // 모달 닫기
+        closeRegenerateModal();
+        
+        // 로딩 표시
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('storybookResult').innerHTML = '';
+        
+        // 기존 캐릭터 정보 저장
+        const existingCharacters = currentStorybook.characters;
+        
+        // 서버에 재생성 요청
+        const response = await axios.post('/api/generate-storybook', {
+            title: title,
+            targetAge: targetAge,
+            totalPages: totalPages,
+            artStyle: artStyle,
+            referenceContent: notes, // 수정 요청사항을 참고 내용으로 전달
+            existingCharacters: existingCharacters.map(char => ({
+                name: char.name,
+                role: char.role,
+                description: char.description
+            }))
+        });
+        
+        const newStorybook = response.data;
+        
+        // 기존 캐릭터의 레퍼런스 이미지 복원
+        newStorybook.characters.forEach((char, index) => {
+            if (existingCharacters[index] && existingCharacters[index].referenceImage) {
+                char.referenceImage = existingCharacters[index].referenceImage;
+            }
+        });
+        
+        // 현재 동화책 업데이트
+        currentStorybook = newStorybook;
+        saveCurrentStorybook();
+        
+        // UI 업데이트
+        displayStorybook(currentStorybook);
+        
+        // 로딩 숨기기
+        document.getElementById('loading').classList.add('hidden');
+        
+        alert('동화책이 성공적으로 재생성되었습니다!');
+    } catch (error) {
+        console.error('Regeneration error:', error);
+        document.getElementById('loading').classList.add('hidden');
+        alert('동화책 재생성 중 오류가 발생했습니다: ' + (error.response?.data?.error || error.message));
+    }
 }

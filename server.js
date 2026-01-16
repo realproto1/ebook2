@@ -144,11 +144,14 @@ app.get('/api/debug/env', (req, res) => {
 // 1. 동화책 스토리 생성 API
 app.post('/api/generate-storybook', requireAPIKey, async (req, res) => {
   try {
-    const { title, targetAge, artStyle, referenceContent } = req.body;
+    const { title, targetAge, artStyle, referenceContent, totalPages = 10, existingCharacters } = req.body;
     
     if (!title) {
       return res.status(400).json({ error: '동화책 제목을 입력해주세요.' });
     }
+
+    // 페이지 수 검증
+    const pageCount = Math.min(Math.max(totalPages, 5), 20); // 5-20 범위 제한
 
     // 연령대별 설정
     const ageSettings = {
@@ -158,10 +161,18 @@ app.post('/api/generate-storybook', requireAPIKey, async (req, res) => {
     };
     const settings = ageSettings[targetAge] || ageSettings['5-7'];
 
+    // 기존 캐릭터 섹션 (다시 만들기 시)
+    const existingCharSection = existingCharacters ? `
+
+기존 캐릭터 정보 (이 캐릭터들을 반드시 사용하세요):
+${existingCharacters.map((char, idx) => `${idx + 1}. ${char.name} (${char.role}): ${char.description}`).join('\n')}
+
+**중요**: 위 캐릭터들을 그대로 사용하되, 새로운 스토리에 맞게 역할과 행동을 재구성하세요.` : '';
+
     // Gemini로 스토리 생성
     const referenceSection = referenceContent ? `
 
-참고할 동화 내용:
+참고할 내용:
 ${referenceContent}
 
 위 내용을 참고하여 새롭게 재해석하거나 유사한 구조로 창작해주세요.` : '';
@@ -172,7 +183,7 @@ ${referenceContent}
 타겟 연령: ${targetAge}세
 단어 수: ${settings.wordCount}자
 문장 길이: ${settings.sentenceLength}어절
-어휘 수준: ${settings.vocabulary}${referenceSection}
+어휘 수준: ${settings.vocabulary}${existingCharSection}${referenceSection}
 
 다음 형식의 JSON으로 응답해주세요:
 
@@ -215,7 +226,7 @@ ${referenceContent}
 }
 
 요구사항:
-- 10-12페이지 분량
+- 정확히 ${pageCount}페이지 분량으로 작성
 - 종결어미: ~했어, ~였어, ~구나 사용
 - 밝고 긍정적인 이야기
 - **매우 중요**: 캐릭터 description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소(색상, 크기, 특징 등)를 자세히 포함하세요

@@ -69,7 +69,7 @@
                     새 동화책 만들기
                 </h2>
                 
-                <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="grid md:grid-cols-4 gap-6 mb-8">
                     <div>
                         <label class="block text-gray-700 font-semibold mb-2">
                             <i class="fas fa-heading mr-2"></i>동화책 제목
@@ -91,6 +91,21 @@
                             <option value="5-7" selected>만 5-7세 (권장)</option>
                             <option value="7-8">만 7-8세 (복잡한 내용)</option>
                         </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">
+                            <i class="fas fa-file-alt mr-2"></i>총 페이지 수
+                        </label>
+                        <input 
+                            type="number" 
+                            id="totalPages" 
+                            value="10"
+                            min="5"
+                            max="20"
+                            class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">5-20 페이지</p>
                     </div>
                     
                     <div>
@@ -246,6 +261,94 @@
                     class="flex-1 bg-gray-500 text-white py-3 rounded-lg font-bold hover:bg-gray-600 transition"
                 >
                     <i class="fas fa-undo mr-2"></i>기본값으로 복원
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 다시 만들기 모달 -->
+    <div id="regenerateModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="if(event.target === this) closeRegenerateModal()">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 p-8" onclick="event.stopPropagation()">
+            <h2 class="text-3xl font-bold text-purple-600 mb-6">
+                <i class="fas fa-redo mr-2"></i>동화책 다시 만들기
+            </h2>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">
+                        <i class="fas fa-heading mr-2"></i>제목
+                    </label>
+                    <input 
+                        type="text" 
+                        id="regenerateTitle" 
+                        class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
+                    />
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">
+                        <i class="fas fa-child mr-2"></i>타겟 연령
+                    </label>
+                    <select id="regenerateAge" class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500">
+                        <option value="4-5">만 4-5세 (쉬운 내용)</option>
+                        <option value="5-7">만 5-7세 (권장)</option>
+                        <option value="7-8">만 7-8세 (복잡한 내용)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">
+                        <i class="fas fa-file-alt mr-2"></i>총 페이지 수
+                    </label>
+                    <input 
+                        type="number" 
+                        id="regeneratePages" 
+                        min="5"
+                        max="20"
+                        class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
+                    />
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">
+                        <i class="fas fa-palette mr-2"></i>그림체
+                    </label>
+                    <input 
+                        type="text" 
+                        id="regenerateArtStyle" 
+                        class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
+                    />
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">
+                        <i class="fas fa-edit mr-2"></i>수정 요청사항
+                    </label>
+                    <textarea 
+                        id="regenerateNotes" 
+                        class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
+                        rows="4"
+                        placeholder="예: 말투를 더 부드럽게, 모험 요소를 더 강조, 결말을 해피엔딩으로..."
+                    ></textarea>
+                    <p class="text-sm text-gray-500 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        수정하고 싶은 내용을 입력하세요. 캐릭터는 유지되고 스토리만 재생성됩니다.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex gap-4">
+                <button 
+                    onclick="executeRegenerate()"
+                    class="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg font-bold hover:from-orange-600 hover:to-red-600 transition"
+                >
+                    <i class="fas fa-redo mr-2"></i>다시 만들기
+                </button>
+                <button 
+                    onclick="closeRegenerateModal()"
+                    class="flex-1 bg-gray-500 text-white py-3 rounded-lg font-bold hover:bg-gray-600 transition"
+                >
+                    <i class="fas fa-times mr-2"></i>취소
                 </button>
             </div>
         </div>
