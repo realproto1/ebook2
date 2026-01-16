@@ -124,6 +124,23 @@ async function generateImage(prompt, referenceImages = [], retryCount = 0, maxRe
   }
 }
 
+// 디버깅용 환경 변수 상태 확인 엔드포인트
+app.get('/api/debug/env', (req, res) => {
+  const hasKey = !!GEMINI_API_KEY;
+  const keyLength = GEMINI_API_KEY ? GEMINI_API_KEY.length : 0;
+  const keyPreview = GEMINI_API_KEY ? `${GEMINI_API_KEY.substring(0, 10)}...` : 'NOT SET';
+  
+  res.json({
+    status: 'ok',
+    environment: process.env.NODE_ENV || 'development',
+    hasAPIKey: hasKey,
+    keyLength: keyLength,
+    keyPreview: keyPreview,
+    message: hasKey ? '✅ API 키가 설정되어 있습니다' : '❌ API 키가 설정되지 않았습니다',
+    allEnvKeys: Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('API'))
+  });
+});
+
 // 1. 동화책 스토리 생성 API
 app.post('/api/generate-storybook', requireAPIKey, async (req, res) => {
   try {
