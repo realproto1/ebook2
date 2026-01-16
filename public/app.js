@@ -779,9 +779,47 @@ async function generateAllCharacterReferences() {
         
         const results = await Promise.all(promises);
         
-        // 결과 저장 및 UI 업데이트
+        // 결과 저장
         saveCurrentStorybook();
-        displayStorybook(currentStorybook);
+        
+        // 각 캐릭터의 이미지 div만 업데이트 (텍스트 필드는 유지)
+        results.forEach(result => {
+            if (result.success && !result.skipped) {
+                const refDiv = document.getElementById(`char-ref-${result.index}`);
+                if (refDiv) {
+                    const char = currentStorybook.characters[result.index];
+                    refDiv.innerHTML = `<img src="${result.imageUrl}" alt="${char.name}" class="w-full h-full object-cover rounded-lg"/>`;
+                    
+                    // 다운로드 버튼 추가
+                    const charCard = refDiv.closest('.character-card');
+                    if (charCard) {
+                        const existingDownloadBtn = charCard.querySelector('.download-char-btn');
+                        if (!existingDownloadBtn) {
+                            const promptTextarea = charCard.querySelector(`#char-prompt-${result.index}`);
+                            if (promptTextarea) {
+                                const downloadBtn = document.createElement('button');
+                                downloadBtn.className = 'w-full bg-green-500 text-white py-2 rounded-lg font-semibold hover:bg-green-600 transition mb-2 download-char-btn';
+                                downloadBtn.innerHTML = '<i class="fas fa-download mr-2"></i>이미지 다운로드';
+                                downloadBtn.onclick = () => downloadImage(result.imageUrl, `캐릭터_${char.name}.png`);
+                                promptTextarea.parentNode.insertBefore(downloadBtn, promptTextarea);
+                            }
+                        }
+                    }
+                }
+            } else if (!result.success) {
+                // 실패한 경우 에러 표시
+                const refDiv = document.getElementById(`char-ref-${result.index}`);
+                if (refDiv) {
+                    refDiv.innerHTML = `
+                        <div class="p-4 text-center">
+                            <p class="text-white text-xs mt-2">⚠️ 이미지 생성 실패</p>
+                            <p class="text-white text-xs opacity-75 mt-1">${result.error}</p>
+                            <button onclick="generateCharacterReference(${result.index})" class="mt-2 px-3 py-1 bg-white text-purple-600 rounded text-xs">재시도</button>
+                        </div>
+                    `;
+                }
+            }
+        });
         
         const successCount = results.filter(r => r.success && !r.skipped).length;
         const failCount = results.filter(r => !r.success).length;
@@ -794,7 +832,7 @@ async function generateAllCharacterReferences() {
     } catch (error) {
         console.error('Batch generation error:', error);
         alert('배치 생성 중 오류가 발생했습니다: ' + error.message);
-        displayStorybook(currentStorybook);
+        // 에러 시에도 UI 전체를 다시 그리지 않음
     }
 }
 
@@ -818,8 +856,24 @@ async function generateCharacterReference(charIndex) {
             currentStorybook.characters[charIndex].referenceImage = imageUrl;
             saveCurrentStorybook();
             
+            // 이미지만 업데이트 (UI 전체를 다시 그리지 않음)
             refDiv.innerHTML = `<img src="${imageUrl}" alt="${character.name}" class="w-full h-full object-cover rounded-lg"/>`;
-            displayStorybook(currentStorybook);
+            
+            // 다운로드 버튼이 없으면 추가
+            const charCard = refDiv.closest('.character-card');
+            if (charCard) {
+                const existingDownloadBtn = charCard.querySelector('.download-char-btn');
+                if (!existingDownloadBtn) {
+                    const promptTextarea = charCard.querySelector(`#char-prompt-${charIndex}`);
+                    if (promptTextarea) {
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.className = 'w-full bg-green-500 text-white py-2 rounded-lg font-semibold hover:bg-green-600 transition mb-2 download-char-btn';
+                        downloadBtn.innerHTML = '<i class="fas fa-download mr-2"></i>이미지 다운로드';
+                        downloadBtn.onclick = () => downloadImage(imageUrl, `캐릭터_${character.name}.png`);
+                        promptTextarea.parentNode.insertBefore(downloadBtn, promptTextarea);
+                    }
+                }
+            }
         } else {
             throw new Error(result.error || '이미지 URL을 받지 못했습니다.');
         }
