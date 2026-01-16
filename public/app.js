@@ -1454,5 +1454,3 @@ ${noTextPrompt}`;
 
     return prompt;
 }
-    }
-}
