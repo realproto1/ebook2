@@ -17,11 +17,26 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API 키 (환경 변수 필수)
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+// API 키 체크 (경고만 표시, 서버는 계속 실행)
 if (!GEMINI_API_KEY) {
-  console.error('❌ ERROR: GEMINI_API_KEY environment variable is not set!');
-  console.error('Please set GEMINI_API_KEY in .env file or environment variables.');
-  console.error('Visit: https://makersuite.google.com/app/apikey to get a new API key');
-  process.exit(1);
+  console.warn('⚠️ WARNING: GEMINI_API_KEY environment variable is not set!');
+  console.warn('Please set GEMINI_API_KEY in Vercel Environment Variables.');
+  console.warn('Visit: https://makersuite.google.com/app/apikey to get a new API key');
+  console.warn('Server will start but API calls will fail until key is set.');
+}
+
+// API 키 검증 미들웨어
+function requireAPIKey(req, res, next) {
+  if (!GEMINI_API_KEY) {
+    return res.status(403).json({ 
+      success: false,
+      error: '⚠️ GEMINI_API_KEY가 설정되지 않았습니다.\n\n' +
+             'Vercel Dashboard → Settings → Environment Variables에서\n' +
+             'GEMINI_API_KEY를 추가하고 재배포해주세요.\n\n' +
+             'API 키 발급: https://makersuite.google.com/app/apikey'
+    });
+  }
+  next();
 }
 
 
@@ -110,7 +125,7 @@ async function generateImage(prompt, referenceImages = [], retryCount = 0, maxRe
 }
 
 // 1. 동화책 스토리 생성 API
-app.post('/api/generate-storybook', async (req, res) => {
+app.post('/api/generate-storybook', requireAPIKey, async (req, res) => {
   try {
     const { title, targetAge, artStyle, referenceContent } = req.body;
     
@@ -272,7 +287,7 @@ JSON만 응답하세요.`;
 });
 
 // 2. 캐릭터 레퍼런스 이미지 생성
-app.post('/api/generate-character-image', async (req, res) => {
+app.post('/api/generate-character-image', requireAPIKey, async (req, res) => {
   try {
     const { character, artStyle, settings = {} } = req.body;
     
@@ -365,7 +380,7 @@ ${additionalPrompt ? '\n\n**Additional Requirements:** ' + additionalPrompt : ''
 });
 
 // 3. 페이지 삽화 생성 (캐릭터 레퍼런스 이미지 참조)
-app.post('/api/generate-illustration', async (req, res) => {
+app.post('/api/generate-illustration', requireAPIKey, async (req, res) => {
   try {
     const { page, artStyle, characterReferences, settings = {}, editNote = '' } = req.body;
     
@@ -574,7 +589,7 @@ Make the illustration emotionally engaging and visually captivating while mainta
 });
 
 // 4. 단어 학습용 이미지 생성
-app.post('/api/generate-vocabulary-images', async (req, res) => {
+app.post('/api/generate-vocabulary-images', requireAPIKey, async (req, res) => {
   try {
     const { vocabulary, artStyle, settings = {} } = req.body;
     
