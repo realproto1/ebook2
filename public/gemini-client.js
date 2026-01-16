@@ -65,8 +65,8 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
                 }
             }
 
-            // Gemini API 호출
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`;
+            // Gemini API 호출 - Nano Banana Pro (Gemini 3 Pro Image)
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${GEMINI_API_KEY}`;
             
             const requestBody = {
                 contents: [{ parts }],
