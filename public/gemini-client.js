@@ -44,6 +44,11 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
             };
         }
     }
+    
+    // 사용 중인 API 키 정보 표시
+    const isCustomKey = !!localStorage.getItem('gemini_api_key');
+    const keyPrefix = GEMINI_API_KEY.substring(0, 10);
+    console.log(`🔑 사용 중인 API 키: ${keyPrefix}... (${isCustomKey ? '커스텀 키' : '기본 키'})`);
 
     // 재시도 로직
     for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -98,16 +103,35 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
 
             if (!response.ok) {
                 const errorText = await response.text();
+                const isCustomKey = !!localStorage.getItem('gemini_api_key');
+                const keyPrefix = GEMINI_API_KEY.substring(0, 10);
+                const keyInfo = `\n\n🔑 현재 사용 중인 API 키: ${keyPrefix}... (${isCustomKey ? '커스텀 키' : '기본 키'})`;
+                
                 console.error(`❌ API 오류 ${response.status}:`, errorText);
+                console.error(`🔑 사용 중인 키: ${keyPrefix}... (${isCustomKey ? '커스텀' : '기본'})`);
                 
                 // 429 할당량 오류 처리
                 if (response.status === 429) {
                     const errorMsg = '⚠️ Gemini API 일일 할당량을 초과했습니다.\n\n' +
                         '해결 방법:\n' +
-                        '1. Google AI Studio (https://ai.google.dev/rate-limit)에서 사용량 확인\n' +
-                        '2. Google Cloud Console에서 할당량 증가 요청\n' +
+                        '1. 설정에서 개인 API 키를 입력하세요 (추천)\n' +
+                        '2. Google AI Studio (https://aistudio.google.com/app/apikey)에서 무료 API 키 발급\n' +
                         '3. 몇 시간 후 다시 시도 (UTC 자정에 리셋)\n' +
-                        '4. 이미 생성된 동화책을 복사하여 텍스트만 수정';
+                        '4. 이미 생성된 동화책을 복사하여 텍스트만 수정' +
+                        keyInfo;
+                    
+                    throw new Error(errorMsg);
+                }
+                
+                // 400 에러 (잘못된 API 키)
+                if (response.status === 400 || response.status === 403) {
+                    const errorMsg = `❌ API 키 오류가 발생했습니다.\n\n` +
+                        `HTTP ${response.status}: ${errorText.substring(0, 200)}\n\n` +
+                        `해결 방법:\n` +
+                        `1. 설정에서 API 키를 확인하세요\n` +
+                        `2. Google AI Studio에서 새 API 키를 발급받으세요\n` +
+                        `3. API 키가 올바르게 입력되었는지 확인하세요` +
+                        keyInfo;
                     
                     throw new Error(errorMsg);
                 }
@@ -120,7 +144,7 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
                     continue; // 다음 시도
                 }
                 
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
+                throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}${keyInfo}`);
             }
 
             const data = await response.json();
@@ -162,7 +186,11 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
             throw new Error('응답에서 이미지 데이터를 찾을 수 없습니다.');
 
         } catch (error) {
+            const isCustomKey = !!localStorage.getItem('gemini_api_key');
+            const keyPrefix = GEMINI_API_KEY ? GEMINI_API_KEY.substring(0, 10) : 'N/A';
+            
             console.error(`❌ 이미지 생성 실패 (시도 ${attempt + 1}/${maxRetries}):`, error);
+            console.error(`🔑 사용 중인 키: ${keyPrefix}... (${isCustomKey ? '커스텀' : '기본'})`);
             
             // 마지막 시도가 아니면 재시도
             if (attempt < maxRetries - 1) {
@@ -171,9 +199,10 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
                 await new Promise(resolve => setTimeout(resolve, waitTime));
             } else {
                 // 모든 재시도 실패
+                const keyInfo = `\n\n🔑 사용된 API 키: ${keyPrefix}... (${isCustomKey ? '커스텀 키' : '기본 키'})`;
                 return {
                     success: false,
-                    error: `이미지 생성 실패 (${maxRetries}회 시도): ${error.message}`
+                    error: `이미지 생성 실패 (${maxRetries}회 시도): ${error.message}${keyInfo}`
                 };
             }
         }
