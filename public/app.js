@@ -1246,7 +1246,7 @@ async function generateCharacterReference(charIndex) {
     }
 }
 
-// 한 번에 모든 삽화 생성 (병렬 처리)
+// 한 번에 모든 삽화 생성 (순차 처리 - 전 페이지 참조)
 async function generateAllIllustrations() {
     const hasCharacterReferences = currentStorybook.characters.some(char => char.referenceImage);
     if (!hasCharacterReferences) {
@@ -1261,7 +1261,8 @@ async function generateAllIllustrations() {
         return;
     }
     
-    if (!confirm(`${pagesToGenerate.length}개의 삽화를 동시에 생성하시겠습니까?\n\n예상 소요 시간: 약 8초`)) {
+    const estimatedTime = pagesToGenerate.length * 8; // 페이지당 약 8초
+    if (!confirm(`${pagesToGenerate.length}개의 삽화를 순차적으로 생성하시겠습니까?\n\n⭐ 각 페이지가 바로 전 페이지를 참조하여 더 자연스러운 연속성을 만듭니다.\n\n예상 소요 시간: 약 ${estimatedTime}초`)) {
         return;
     }
     
@@ -1279,70 +1280,104 @@ async function generateAllIllustrations() {
         if (!page.illustrationImage) {
             const illustrationDiv = document.getElementById(`illustration-${i}`);
             if (illustrationDiv) {
-                illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-3"></div><p class="text-gray-600 text-sm font-semibold">AI가 삽화를 생성하는 중...</p><p class="text-gray-500 text-xs mt-1">실패 시 자동으로 재시도합니다</p></div>';
+                illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-gray-400 mb-3"></div><p class="text-gray-600 text-sm font-semibold">대기 중...</p><p class="text-gray-500 text-xs mt-1">순차적으로 생성됩니다</p></div>';
             }
         }
     });
     
     try {
-        // 모든 페이지를 병렬로 생성
-        const promises = currentStorybook.pages.map(async (page, i) => {
-            if (!page.illustrationImage) {
-                try {
-                    const sceneDesc = document.getElementById(`scene-${i}`)?.value || page.scene_description;
-                    const artStyleElem = document.getElementById(`artstyle-${i}`);
-                    const artStyle = artStyleElem ? artStyleElem.value : (page.artStyle || currentStorybook.artStyle);
-                    const sceneCharElem = document.getElementById(`scene-char-${i}`);
-                    const sceneBgElem = document.getElementById(`scene-bg-${i}`);
-                    const sceneAtmElem = document.getElementById(`scene-atm-${i}`);
-                    
-                    const sceneStructure = {
-                        characters: sceneCharElem ? sceneCharElem.value : page.scene_structure?.characters || '',
-                        background: sceneBgElem ? sceneBgElem.value : page.scene_structure?.background || '',
-                        atmosphere: sceneAtmElem ? sceneAtmElem.value : page.scene_structure?.atmosphere || ''
-                    };
-                    
-                    // 클라이언트에서 직접 Gemini API 호출
-                    const pageData = {
-                        ...page,
-                        scene_description: sceneDesc,
-                        scene_structure: sceneStructure
-                    };
-                    
-                    const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, '');
-                    const refImageUrls = characterReferences.map(char => char.referenceImage);
-                    const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
-                    
-                    if (result.success && result.imageUrl) {
-                        currentStorybook.pages[i].illustrationImage = result.imageUrl;
-                        currentStorybook.pages[i].scene_description = sceneDesc;
-                        currentStorybook.pages[i].scene_structure = sceneStructure;
-                        currentStorybook.pages[i].artStyle = artStyle;
-                        return { index: i, success: true, imageUrl: result.imageUrl };
-                    } else {
-                        throw new Error(result.error || '이미지 생성 실패');
+        let successCount = 0;
+        let failCount = 0;
+        
+        // 순차적으로 페이지별 생성 (앞 페이지부터)
+        for (let i = 0; i < currentStorybook.pages.length; i++) {
+            const page = currentStorybook.pages[i];
+            
+            // 이미 이미지가 있으면 건너뛰기
+            if (page.illustrationImage) {
+                continue;
+            }
+            
+            const illustrationDiv = document.getElementById(`illustration-${i}`);
+            if (illustrationDiv) {
+                illustrationDiv.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-3"></div><p class="text-gray-600 text-sm font-semibold">페이지 ${page.pageNumber} 생성 중...</p><p class="text-gray-500 text-xs mt-1">${successCount + failCount + 1}/${pagesToGenerate.length}</p></div>`;
+            }
+            
+            try {
+                const sceneDesc = document.getElementById(`scene-${i}`)?.value || page.scene_description;
+                const artStyleElem = document.getElementById(`artstyle-${i}`);
+                const artStyle = artStyleElem ? artStyleElem.value : (page.artStyle || currentStorybook.artStyle);
+                const sceneCharElem = document.getElementById(`scene-char-${i}`);
+                const sceneBgElem = document.getElementById(`scene-bg-${i}`);
+                const sceneAtmElem = document.getElementById(`scene-atm-${i}`);
+                
+                const sceneStructure = {
+                    characters: sceneCharElem ? sceneCharElem.value : page.scene_structure?.characters || '',
+                    background: sceneBgElem ? sceneBgElem.value : page.scene_structure?.background || '',
+                    atmosphere: sceneAtmElem ? sceneAtmElem.value : page.scene_structure?.atmosphere || ''
+                };
+                
+                // 클라이언트에서 직접 Gemini API 호출
+                const pageData = {
+                    ...page,
+                    scene_description: sceneDesc,
+                    scene_structure: sceneStructure
+                };
+                
+                const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, '');
+                
+                // 레퍼런스 이미지 수집: 캐릭터 + 바로 전 페이지
+                const refImageUrls = characterReferences.map(char => char.referenceImage);
+                
+                // ⭐ 바로 전 페이지의 이미지를 자동으로 참조 (연속성 향상)
+                if (i > 0) {
+                    const previousPage = currentStorybook.pages[i - 1];
+                    if (previousPage && previousPage.illustrationImage) {
+                        console.log(`📖 페이지 ${page.pageNumber}: 바로 전 페이지(${previousPage.pageNumber})의 이미지를 자동 참조`);
+                        refImageUrls.push(previousPage.illustrationImage);
                     }
-                } catch (error) {
-                    console.error(`Error generating illustration ${i}:`, error);
-                    return { index: i, success: false, error: error.message };
+                }
+                
+                const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
+                
+                if (result.success && result.imageUrl) {
+                    currentStorybook.pages[i].illustrationImage = result.imageUrl;
+                    currentStorybook.pages[i].scene_description = sceneDesc;
+                    currentStorybook.pages[i].scene_structure = sceneStructure;
+                    currentStorybook.pages[i].artStyle = artStyle;
+                    saveCurrentStorybook(); // 각 페이지마다 저장
+                    successCount++;
+                    
+                    // 성공 표시
+                    if (illustrationDiv) {
+                        illustrationDiv.innerHTML = `<img src="${result.imageUrl}" alt="Page ${page.pageNumber}" class="w-full h-full object-cover rounded-lg"/>`;
+                    }
+                } else {
+                    throw new Error(result.error || '이미지 생성 실패');
+                }
+            } catch (error) {
+                console.error(`Error generating illustration ${i}:`, error);
+                failCount++;
+                
+                // 실패 표시
+                if (illustrationDiv) {
+                    illustrationDiv.innerHTML = `
+                        <div class="p-6 text-center">
+                            <p class="text-red-600 text-sm mb-2">⚠️ 생성 실패</p>
+                            <p class="text-gray-500 text-xs">${error.message}</p>
+                        </div>
+                    `;
                 }
             }
-            return { index: i, success: true, skipped: true };
-        });
+        }
         
-        const results = await Promise.all(promises);
-        
-        // 결과 저장 및 UI 업데이트
-        saveCurrentStorybook();
+        // 최종 결과 표시 및 UI 업데이트
         displayStorybook(currentStorybook);
         
-        const successCount = results.filter(r => r.success && !r.skipped).length;
-        const failCount = results.filter(r => !r.success).length;
-        
         if (failCount > 0) {
-            alert(`삽화 생성 완료!\n성공: ${successCount}개\n실패: ${failCount}개`);
+            alert(`삽화 생성 완료!\n✅ 성공: ${successCount}개\n❌ 실패: ${failCount}개\n\n실패한 페이지는 개별적으로 재시도해주세요.`);
         } else {
-            alert(`모든 삽화 생성이 완료되었습니다! (${successCount}개)`);
+            showNotification('success', '모든 삽화 생성 완료! 🎉', `${successCount}개의 페이지 삽화가 순차적으로 생성되었습니다.`);
         }
     } catch (error) {
         console.error('Batch generation error:', error);
@@ -1398,8 +1433,17 @@ async function generateIllustration(pageIndex) {
         
         const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, editNote);
         
-        // 레퍼런스 이미지 수집: 캐릭터 + 기존 삽화(있으면) + 사용자 선택 참조 이미지
+        // 레퍼런스 이미지 수집: 캐릭터 + 바로 전 페이지 + 기존 삽화(있으면) + 사용자 선택 참조 이미지
         const refImageUrls = characterReferences.map(char => char.referenceImage);
+        
+        // ⭐ 새로 추가: 바로 전 페이지의 이미지를 자동으로 참조 (연속성 향상)
+        if (pageIndex > 0) {
+            const previousPage = currentStorybook.pages[pageIndex - 1];
+            if (previousPage && previousPage.illustrationImage) {
+                console.log(`📖 바로 전 페이지(${pageIndex})의 이미지를 자동 참조하여 연속성 향상`);
+                refImageUrls.push(previousPage.illustrationImage);
+            }
+        }
         
         // 재생성인 경우 기존 이미지를 레퍼런스로 추가
         if (page.illustrationImage && editNote) {
@@ -1841,6 +1885,7 @@ ${noTextPrompt}`;
 function buildIllustrationPrompt(page, artStyle, characterReferences, settings, editNote = '') {
     // 전체 스토리 맥락 구성 (이전 페이지들)
     let storyContext = '';
+    let previousPageNote = '';
     if (currentStorybook && currentStorybook.pages) {
         const previousPages = currentStorybook.pages
             .filter(p => p.pageNumber < page.pageNumber)
@@ -1852,10 +1897,18 @@ function buildIllustrationPrompt(page, artStyle, characterReferences, settings, 
                 .map(p => `Page ${p.pageNumber}: ${p.text}`)
                 .join('\n');
             
+            // 바로 전 페이지 강조
+            const immediatelyPreviousPage = previousPages[previousPages.length - 1];
+            if (immediatelyPreviousPage && immediatelyPreviousPage.illustrationImage) {
+                previousPageNote = `\n\n**🎨 PREVIOUS PAGE REFERENCE (Page ${immediatelyPreviousPage.pageNumber}):**
+I have provided the illustration from the immediately previous page (Page ${immediatelyPreviousPage.pageNumber}) as a reference image. Use it to maintain visual continuity, consistent lighting, color palette, and art style. The current page should naturally flow from the previous page's visual style and composition.`;
+            }
+            
             storyContext = `\n\n**STORY CONTEXT - What happened before this scene:**
 ${previousTexts}
 
 **CURRENT PAGE ${page.pageNumber}:** ${page.text}
+${previousPageNote}
 
 **⭐ CRITICAL:** The illustration MUST reflect the current page state. If a character has transformed or changed (e.g., mermaid → human with legs, child → adult, cursed → normal), they MUST appear in their NEW form on the current page, NOT their old form. Consider the full story progression when depicting characters and scenes.`;
         }
