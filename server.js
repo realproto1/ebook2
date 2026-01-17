@@ -152,32 +152,48 @@ app.post('/api/generate-storybook', requireAPIKey, async (req, res) => {
 
     // 연령대별 설정 (페이지 수, 단어 수, 문장 길이, 어휘 수준)
     const ageSettings = {
-      '4-5': { 
-        defaultPages: 16,
-        wordCount: '1000-1500', 
-        sentenceLength: '8-12어절',
-        sentenceComplexity: '단순한 문장 구조, 반복적인 패턴',
-        vocabulary: '매우 쉬운 일상 단어',
-        description: '4-5세: 짧고 반복적인 문장, 의성어/의태어 활용, 단순 명료한 표현'
+      '4': { 
+        defaultPages: 12,
+        wordCount: '800-1200', 
+        sentenceLength: '6-8어절',
+        sentenceComplexity: '매우 단순한 문장, 강한 반복 패턴',
+        vocabulary: '초보 단계 일상 단어 (엄마, 아빠, 집, 밥 등)',
+        description: '4세: 매우 짧은 문장, 반복적 리듬, 풍부한 의성어/의태어, 단순한 그림 설명 수준'
       },
-      '5-7': { 
+      '5': { 
         defaultPages: 20,
         wordCount: '2000-3000', 
-        sentenceLength: '12-18어절',
-        sentenceComplexity: '적절한 복문, 인과관계 표현',
-        vocabulary: '일상적인 단어와 쉬운 감정 표현',
-        description: '5-7세(권장): 논리적 연결, 감정 표현 풍부, 다양한 어휘'
+        sentenceLength: '10-14어절',
+        sentenceComplexity: '단순한 문장 구조, 기본적인 연결',
+        vocabulary: '쉬운 일상 단어와 기본 감정 표현 (기쁘다, 슬프다)',
+        description: '5세: 짧고 명료한 문장, 간단한 인과관계, 구체적 상황 묘사, 반복 요소 활용'
       },
-      '7-8': { 
+      '6': { 
         defaultPages: 24,
+        wordCount: '2500-3500', 
+        sentenceLength: '12-18어절',
+        sentenceComplexity: '적절한 복문, 기본적인 인과관계 표현',
+        vocabulary: '일상적 단어와 다양한 감정 표현 (질투하다, 기대하다)',
+        description: '6세: 논리적 흐름, 감정 묘사 확대, 캐릭터 심리 표현, 대화 활용'
+      },
+      '7': { 
+        defaultPages: 28,
         wordCount: '3000-4500', 
+        sentenceLength: '15-22어절',
+        sentenceComplexity: '복잡한 문장, 다양한 연결어미 사용',
+        vocabulary: '추상 개념 일부 포함 (용기, 정직, 우정)',
+        description: '7세: 복합적 스토리, 도덕적 메시지, 캐릭터 변화 표현, 다층적 갈등'
+      },
+      '8': { 
+        defaultPages: 32,
+        wordCount: '4000-5500', 
         sentenceLength: '18-25어절',
-        sentenceComplexity: '복잡한 문장 구조, 은유와 비유 사용',
-        vocabulary: '추상적 개념과 고급 어휘',
-        description: '7-8세: 복잡한 스토리, 추상적 개념, 교훈적 메시지'
+        sentenceComplexity: '고급 문장 구조, 은유와 비유 활용',
+        vocabulary: '추상적 개념과 고급 어휘 (성찰, 희생, 운명)',
+        description: '8세: 깊이 있는 주제, 복잡한 캐릭터 심리, 상징적 요소, 교훈적 통찰'
       }
     };
-    const settings = ageSettings[targetAge] || ageSettings['5-7'];
+    const settings = ageSettings[targetAge] || ageSettings['5'];
 
     // 페이지 수 결정 (0이면 AI가 자동 결정, 아니면 지정된 수)
     let pageCount;
