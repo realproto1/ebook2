@@ -49,6 +49,11 @@ function openSettings() {
     document.getElementById('enforceCharacterConsistency').checked = imageSettings.enforceCharacterConsistency;
     document.getElementById('additionalPrompt').value = imageSettings.additionalPrompt;
     document.getElementById('imageQuality').value = imageSettings.imageQuality;
+    
+    // API 키 로드 (localStorage에서)
+    const savedApiKey = localStorage.getItem('gemini_api_key') || '';
+    document.getElementById('geminiApiKey').value = savedApiKey;
+    
     document.getElementById('settingsModal').classList.remove('hidden');
 }
 
@@ -65,13 +70,31 @@ function saveSettings() {
     imageSettings.additionalPrompt = document.getElementById('additionalPrompt').value;
     imageSettings.imageQuality = document.getElementById('imageQuality').value;
     
+    // API 키 저장 (localStorage에)
+    const apiKey = document.getElementById('geminiApiKey').value.trim();
+    if (apiKey) {
+        localStorage.setItem('gemini_api_key', apiKey);
+        // gemini-client.js의 GEMINI_API_KEY 업데이트
+        if (typeof GEMINI_API_KEY !== 'undefined') {
+            GEMINI_API_KEY = apiKey;
+            console.log('✅ 커스텀 Gemini API 키 적용됨');
+        }
+    } else {
+        localStorage.removeItem('gemini_api_key');
+        // 기본 키로 복원 (서버에서 다시 가져오기)
+        if (typeof initGeminiAPIKey === 'function') {
+            initGeminiAPIKey();
+            console.log('✅ 기본 Gemini API 키로 복원');
+        }
+    }
+    
     saveImageSettings();
     closeSettings();
-    alert('설정이 저장되었습니다!');
+    showNotification('success', '설정 저장 완료', '설정이 성공적으로 저장되었습니다.');
 }
 
 function resetSettings() {
-    if (confirm('모든 설정을 기본값으로 복원하시겠습니까?')) {
+    if (confirm('모든 설정을 기본값으로 복원하시겠습니까?\n\n⚠️ 주의: API 키도 기본값으로 복원됩니다.')) {
         imageSettings = {
             aspectRatio: '16:9',
             enforceNoText: true,
@@ -79,9 +102,19 @@ function resetSettings() {
             additionalPrompt: '',
             imageQuality: 'high'
         };
+        
+        // API 키 초기화
+        localStorage.removeItem('gemini_api_key');
+        document.getElementById('geminiApiKey').value = '';
+        
+        // 기본 키로 복원
+        if (typeof initGeminiAPIKey === 'function') {
+            initGeminiAPIKey();
+        }
+        
         saveImageSettings();
         openSettings();
-        alert('설정이 기본값으로 복원되었습니다.');
+        showNotification('success', '설정 복원 완료', '모든 설정이 기본값으로 복원되었습니다.');
     }
 }
 

@@ -272,6 +272,37 @@
             </div>
 
             <div class="space-y-6">
+                <!-- Gemini API 키 설정 -->
+                <div class="bg-indigo-50 p-4 rounded-lg border-2 border-indigo-200">
+                    <label class="block text-gray-800 font-bold mb-2">
+                        <i class="fas fa-key mr-2 text-indigo-600"></i>Gemini API 키
+                    </label>
+                    <div class="space-y-2">
+                        <input 
+                            type="password" 
+                            id="geminiApiKey" 
+                            class="w-full px-4 py-2 border-2 border-indigo-300 rounded-lg font-mono text-sm"
+                            placeholder="AIzaSy... (비워두면 기본 키 사용)"
+                        />
+                        <div class="flex items-start gap-2 text-xs text-gray-600">
+                            <i class="fas fa-info-circle mt-0.5 text-indigo-500"></i>
+                            <div>
+                                <p class="mb-1">• 비워두면 기본 제공 API 키를 사용합니다.</p>
+                                <p class="mb-1">• 개인 API 키 사용 시 할당량 제한 없이 사용 가능합니다.</p>
+                                <p>• API 키는 브라우저에만 저장되며 서버로 전송되지 않습니다.</p>
+                            </div>
+                        </div>
+                        <a 
+                            href="https://aistudio.google.com/app/apikey" 
+                            target="_blank"
+                            class="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 text-sm font-semibold"
+                        >
+                            <i class="fas fa-external-link-alt"></i>
+                            Google AI Studio에서 API 키 발급받기
+                        </a>
+                    </div>
+                </div>
+
                 <!-- 이미지 비율 -->
                 <div class="bg-purple-50 p-4 rounded-lg">
                     <label class="block text-gray-800 font-bold mb-2">

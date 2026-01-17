@@ -6,11 +6,19 @@ let GEMINI_API_KEY = null;
 // API 키 초기화 함수
 async function initGeminiAPIKey() {
     try {
-        // 서버로부터 API 키 가져오기
+        // 1순위: localStorage에 저장된 커스텀 API 키 확인
+        const customApiKey = localStorage.getItem('gemini_api_key');
+        if (customApiKey && customApiKey.trim()) {
+            GEMINI_API_KEY = customApiKey.trim();
+            console.log('✅ 커스텀 Gemini API 키 로드 성공 (localStorage)');
+            return true;
+        }
+        
+        // 2순위: 서버로부터 기본 API 키 가져오기
         const response = await axios.get('/api/config');
         if (response.data.success && response.data.apiKey) {
             GEMINI_API_KEY = response.data.apiKey;
-            console.log('✅ Gemini API 키 로드 성공');
+            console.log('✅ Gemini API 키 로드 성공 (서버 기본값)');
             return true;
         }
     } catch (error) {
