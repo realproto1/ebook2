@@ -204,7 +204,7 @@ function showCreateForm() {
 async function generateStorybook() {
     const title = document.getElementById('bookTitle').value.trim();
     const targetAge = document.getElementById('targetAge').value;
-    const totalPages = parseInt(document.getElementById('totalPages').value) || 10;
+    const totalPages = parseInt(document.getElementById('totalPages').value) || 0; // 0 = AI 자동 결정
     const artStyleSelect = document.getElementById('artStyleSelect').value;
     const artStyleCustom = document.getElementById('artStyleCustom').value.trim();
     const referenceContent = document.getElementById('referenceContent').value.trim();
@@ -222,8 +222,9 @@ async function generateStorybook() {
         return;
     }
     
-    if (totalPages < 5 || totalPages > 20) {
-        alert('페이지 수는 5-20 사이여야 합니다.');
+    // 페이지 수 검증 (0은 자동, 1-20은 사용자 지정)
+    if (totalPages < 0 || totalPages > 20) {
+        alert('페이지 수는 0(자동) 또는 1-20 사이여야 합니다.');
         return;
     }
 
@@ -1663,7 +1664,7 @@ function closeRegenerateModal() {
 async function executeRegenerate() {
     const title = document.getElementById('regenerateTitle').value.trim();
     const targetAge = document.getElementById('regenerateAge').value;
-    const totalPages = parseInt(document.getElementById('regeneratePages').value);
+    const totalPages = parseInt(document.getElementById('regeneratePages').value) || 0; // 0 = AI 자동 결정
     const artStyle = document.getElementById('regenerateArtStyle').value.trim();
     const notes = document.getElementById('regenerateNotes').value.trim();
     
@@ -1672,8 +1673,9 @@ async function executeRegenerate() {
         return;
     }
     
-    if (totalPages < 5 || totalPages > 20) {
-        alert('페이지 수는 5-20 사이여야 합니다.');
+    // 페이지 수 검증 (0은 자동, 1-20은 사용자 지정)
+    if (totalPages < 0 || totalPages > 20) {
+        alert('페이지 수는 0(자동) 또는 1-20 사이여야 합니다.');
         return;
     }
     

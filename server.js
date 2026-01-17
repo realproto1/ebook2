@@ -150,16 +150,48 @@ app.post('/api/generate-storybook', requireAPIKey, async (req, res) => {
       return res.status(400).json({ error: '동화책 제목을 입력해주세요.' });
     }
 
-    // 페이지 수 검증
-    const pageCount = Math.min(Math.max(totalPages, 5), 20); // 5-20 범위 제한
-
-    // 연령대별 설정
+    // 연령대별 설정 (페이지 수, 단어 수, 문장 길이, 어휘 수준)
     const ageSettings = {
-      '4-5': { wordCount: '400-500', sentenceLength: '5-8', vocabulary: '쉬운' },
-      '5-7': { wordCount: '500-800', sentenceLength: '8-12', vocabulary: '보통' },
-      '7-8': { wordCount: '800-1000', sentenceLength: '10-15', vocabulary: '다소 어려운' }
+      '4-5': { 
+        defaultPages: 8,
+        wordCount: '500-700', 
+        sentenceLength: '6-10어절',
+        sentenceComplexity: '단순한 문장 구조, 반복적인 패턴',
+        vocabulary: '매우 쉬운 일상 단어',
+        description: '4-5세: 짧고 반복적인 문장, 의성어/의태어 활용, 단순 명료한 표현'
+      },
+      '5-7': { 
+        defaultPages: 10,
+        wordCount: '800-1200', 
+        sentenceLength: '10-15어절',
+        sentenceComplexity: '적절한 복문, 인과관계 표현',
+        vocabulary: '일상적인 단어와 쉬운 감정 표현',
+        description: '5-7세(권장): 논리적 연결, 감정 표현 풍부, 다양한 어휘'
+      },
+      '7-8': { 
+        defaultPages: 12,
+        wordCount: '1200-1800', 
+        sentenceLength: '15-20어절',
+        sentenceComplexity: '복잡한 문장 구조, 은유와 비유 사용',
+        vocabulary: '추상적 개념과 고급 어휘',
+        description: '7-8세: 복잡한 스토리, 추상적 개념, 교훈적 메시지'
+      }
     };
     const settings = ageSettings[targetAge] || ageSettings['5-7'];
+
+    // 페이지 수 결정 (0이면 AI가 자동 결정, 아니면 지정된 수)
+    let pageCount;
+    let pageInstruction;
+    
+    if (totalPages === 0 || !totalPages) {
+      // AI가 자동으로 적절한 페이지 수 결정
+      pageCount = settings.defaultPages;
+      pageInstruction = `스토리의 흐름에 맞춰 ${settings.defaultPages - 2}~${settings.defaultPages + 2}페이지 사이에서 적절히 조정하세요`;
+    } else {
+      // 사용자가 지정한 페이지 수 (5-20 범위)
+      pageCount = Math.min(Math.max(totalPages, 5), 20);
+      pageInstruction = `정확히 ${pageCount}페이지로 작성하세요`;
+    }
 
     // 기존 캐릭터 섹션 (다시 만들기 시)
     const existingCharSection = existingCharacters ? `
@@ -180,10 +212,37 @@ ${referenceContent}
     const prompt = `당신은 유아 교육 전문 동화 작가입니다. 다음 조건으로 동화책을 제작해주세요.
 
 제목: "${title}"
-타겟 연령: ${targetAge}세
-단어 수: ${settings.wordCount}자
-문장 길이: ${settings.sentenceLength}어절
+타겟 연령: ${targetAge}세 (${settings.description})
+페이지 수: ${pageInstruction}
+총 단어 수: ${settings.wordCount}자
+문장 길이: ${settings.sentenceLength}
+문장 복잡도: ${settings.sentenceComplexity}
 어휘 수준: ${settings.vocabulary}${existingCharSection}${referenceSection}
+
+**연령대별 작문 가이드라인:**
+${targetAge === '4-5' ? `
+[4-5세 작문 스타일]
+- 짧고 반복적인 문장 사용 (예: "토끼가 뛰어요. 팔짝팔짝 뛰어요.")
+- 의성어/의태어 적극 활용 (예: 팔짝팔짝, 쿵쿵, 반짝반짝)
+- 단순 명료한 표현, 한 문장에 하나의 행동
+- 리듬감 있는 반복 패턴
+- 예시: "토끼가 당근을 찾아요. 여기저기 찾아요. 당근이 어디 있을까요?"
+` : ''}${targetAge === '5-7' ? `
+[5-7세 작문 스타일]
+- 인과관계가 명확한 문장 연결 (예: "~해서", "~때문에", "그래서")
+- 감정 표현이 풍부한 묘사 (예: "기뻐서 웃었어요", "무서워서 떨었어요")
+- 대화체와 지문의 적절한 조합
+- 논리적 순서가 있는 스토리 전개
+- 예시: "토끼는 배가 고팠어요. 그래서 숲속으로 먹을 것을 찾으러 갔어요. '어디 맛있는 게 없을까?' 토끼는 생각했어요."
+` : ''}${targetAge === '7-8' ? `
+[7-8세 작문 스타일]
+- 복잡한 문장 구조와 복문 사용
+- 은유와 비유 표현 활용 (예: "마음이 따뜻해졌어요", "용기가 샘솟았어요")
+- 추상적 개념 포함 (우정, 용기, 정직 등)
+- 다양한 어휘와 고급 표현
+- 심리 묘사와 내면 성찰
+- 예시: "토끼는 홀로 숲길을 걷다가 문득 깨달았어요. 진정한 용기란 두려움이 없는 게 아니라, 두려움을 이겨내는 것이라는 걸요."
+` : ''}
 
 **스토리 개연성 강화 요구사항:**
 1. **명확한 스토리 구조**: 발단(문제 제시) → 전개(갈등 심화) → 위기(클라이맥스) → 결말(해결)
