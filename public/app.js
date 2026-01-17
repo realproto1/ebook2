@@ -570,6 +570,39 @@ function displayStorybook(storybook) {
                                     </p>
                                 </div>
                                 ` : ''}
+                                
+                                <div class="mt-3">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-images mr-1"></i>참조할 다른 페이지 이미지 (선택사항)
+                                    </label>
+                                    <div class="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                                        ${storybook.pages.map((p, pIdx) => {
+                                            if (pIdx === idx || !p.illustrationImage) return '';
+                                            return `
+                                            <div class="relative group cursor-pointer" onclick="toggleReferenceImage(${idx}, ${pIdx})">
+                                                <img 
+                                                    src="${p.illustrationImage}" 
+                                                    alt="페이지 ${p.pageNumber}"
+                                                    class="w-full h-20 object-cover rounded border-2 border-gray-300 hover:border-blue-500 transition"
+                                                    id="ref-img-${idx}-${pIdx}"
+                                                />
+                                                <div class="absolute top-0 right-0 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-bl opacity-0 group-hover:opacity-100 transition">
+                                                    ${p.pageNumber}
+                                                </div>
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="ref-check-${idx}-${pIdx}"
+                                                    class="absolute top-1 left-1 w-4 h-4"
+                                                />
+                                            </div>
+                                            `;
+                                        }).join('') || '<p class="text-gray-400 text-xs col-span-4 text-center py-2">다른 페이지에 이미지가 없습니다</p>'}
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        <i class="fas fa-lightbulb mr-1"></i>
+                                        참조할 이미지를 클릭하면 선택됩니다. 스타일, 색감, 구도를 참고합니다.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1111,13 +1144,22 @@ async function generateIllustration(pageIndex) {
         
         const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, editNote);
         
-        // 레퍼런스 이미지 수집: 캐릭터 + 기존 삽화(있으면)
+        // 레퍼런스 이미지 수집: 캐릭터 + 기존 삽화(있으면) + 사용자 선택 참조 이미지
         const refImageUrls = characterReferences.map(char => char.referenceImage);
         
         // 재생성인 경우 기존 이미지를 레퍼런스로 추가
         if (page.illustrationImage && editNote) {
             console.log('🔄 재생성 모드: 기존 이미지를 레퍼런스로 추가');
             refImageUrls.push(page.illustrationImage);
+        }
+        
+        // 사용자가 선택한 다른 페이지 이미지를 참조로 추가
+        const selectedRefImages = getSelectedReferenceImages(pageIndex);
+        if (selectedRefImages.length > 0) {
+            console.log(`🖼️ ${selectedRefImages.length}개의 참조 이미지 추가 (페이지: ${selectedRefImages.map(img => img.pageNumber).join(', ')})`);
+            selectedRefImages.forEach(refImg => {
+                refImageUrls.push(refImg.imageUrl);
+            });
         }
         
         const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
@@ -1282,6 +1324,46 @@ async function downloadImage(imageUrl, filename) {
         alert('이미지 다운로드에 실패했습니다.');
     }
 }
+
+// 참조 이미지 토글
+function toggleReferenceImage(currentPageIdx, refPageIdx) {
+    const checkbox = document.getElementById(`ref-check-${currentPageIdx}-${refPageIdx}`);
+    const img = document.getElementById(`ref-img-${currentPageIdx}-${refPageIdx}`);
+    
+    if (checkbox && img) {
+        checkbox.checked = !checkbox.checked;
+        
+        if (checkbox.checked) {
+            img.classList.remove('border-gray-300');
+            img.classList.add('border-blue-500', 'ring-2', 'ring-blue-300');
+        } else {
+            img.classList.add('border-gray-300');
+            img.classList.remove('border-blue-500', 'ring-2', 'ring-blue-300');
+        }
+    }
+}
+
+// 선택된 참조 이미지 가져오기
+function getSelectedReferenceImages(pageIndex) {
+    const selectedImages = [];
+    const checkboxes = document.querySelectorAll(`input[id^="ref-check-${pageIndex}-"]:checked`);
+    
+    checkboxes.forEach(checkbox => {
+        const refPageIdx = parseInt(checkbox.id.split('-').pop());
+        const refPage = currentStorybook.pages[refPageIdx];
+        
+        if (refPage && refPage.illustrationImage) {
+            selectedImages.push({
+                pageNumber: refPage.pageNumber,
+                imageUrl: refPage.illustrationImage
+            });
+        }
+    });
+    
+    console.log(`📸 페이지 ${pageIndex + 1} - 선택된 참조 이미지:`, selectedImages.length);
+    return selectedImages;
+}
+
 
 // 단어 이미지 생성 - 개별 단어
 async function generateSingleVocabularyImage(wordIndex) {
