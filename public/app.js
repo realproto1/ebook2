@@ -702,13 +702,23 @@ function displayStorybook(storybook) {
                     <i class="fas fa-book mr-2 text-purple-500"></i>
                     스토리 페이지 (${storybook.pages.length}페이지)
                 </h3>
-                <div class="flex gap-3">
-                    <button 
-                        onclick="generateAllIllustrations()"
-                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-                    >
-                        <i class="fas fa-paint-brush mr-2"></i>모든 삽화 생성
-                    </button>
+                <div class="flex gap-3 flex-wrap">
+                    <div class="flex gap-2">
+                        <button 
+                            onclick="generateAllIllustrationsParallel()"
+                            class="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition shadow-md"
+                            title="병렬로 모든 삽화를 동시에 생성합니다. 빠르지만 연속성이 약할 수 있습니다."
+                        >
+                            <i class="fas fa-bolt mr-2"></i>모든 삽화 생성 (빠르게)
+                        </button>
+                        <button 
+                            onclick="generateAllIllustrationsSequential()"
+                            class="bg-indigo-600 text-white px-5 py-3 rounded-lg hover:bg-indigo-700 transition shadow-md"
+                            title="순차적으로 삽화를 생성합니다. 각 페이지가 이전 페이지를 참조하여 연속성이 뛰어납니다."
+                        >
+                            <i class="fas fa-layer-group mr-2"></i>모든 삽화 생성 (정확하게)
+                        </button>
+                    </div>
                     <button 
                         onclick="downloadAllText()"
                         class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition"
@@ -1246,8 +1256,147 @@ async function generateCharacterReference(charIndex) {
     }
 }
 
-// 한 번에 모든 삽화 생성 (순차 처리 - 전 페이지 참조)
-async function generateAllIllustrations() {
+// 한 번에 모든 삽화 생성 - 병렬 (빠르게)
+async function generateAllIllustrationsParallel() {
+    const hasCharacterReferences = currentStorybook.characters.some(char => char.referenceImage);
+    if (!hasCharacterReferences) {
+        alert('먼저 캐릭터 레퍼런스 이미지를 생성해주세요!');
+        return;
+    }
+    
+    const pagesToGenerate = currentStorybook.pages.filter(page => !page.illustrationImage);
+    
+    if (pagesToGenerate.length === 0) {
+        alert('이미 모든 페이지의 삽화가 생성되었습니다.');
+        return;
+    }
+    
+    const estimatedTime = Math.ceil(pagesToGenerate.length / 5) * 8; // 병렬로 약 5개씩 동시 처리
+    if (!confirm(`${pagesToGenerate.length}개의 삽화를 병렬로 생성하시겠습니까?\n\n⚡ 빠른 생성: 모든 페이지를 동시에 생성합니다.\n⚠️ 주의: 연속성이 순차 생성보다 약할 수 있습니다.\n\n예상 소요 시간: 약 ${estimatedTime}초`)) {
+        return;
+    }
+    
+    // 캐릭터 레퍼런스 준비
+    const characterReferences = currentStorybook.characters
+        .filter(char => char.referenceImage)
+        .map(char => ({
+            name: char.name,
+            description: char.description,
+            referenceImage: char.referenceImage
+        }));
+    
+    // 모든 페이지의 로딩 상태 표시
+    currentStorybook.pages.forEach((page, i) => {
+        if (!page.illustrationImage) {
+            const illustrationDiv = document.getElementById(`illustration-${i}`);
+            if (illustrationDiv) {
+                illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-3"></div><p class="text-gray-600 text-sm font-semibold">생성 중...</p><p class="text-gray-500 text-xs mt-1">병렬 생성 (빠르게)</p></div>';
+            }
+        }
+    });
+    
+    try {
+        const promises = [];
+        
+        // 병렬로 모든 페이지 생성
+        for (let i = 0; i < currentStorybook.pages.length; i++) {
+            const page = currentStorybook.pages[i];
+            
+            // 이미 이미지가 있으면 건너뛰기
+            if (page.illustrationImage) {
+                continue;
+            }
+            
+            const generatePromise = (async (pageIndex) => {
+                try {
+                    const sceneDesc = document.getElementById(`scene-${pageIndex}`)?.value || page.scene_description;
+                    const artStyleElem = document.getElementById(`artstyle-${pageIndex}`);
+                    const artStyle = artStyleElem ? artStyleElem.value : (page.artStyle || currentStorybook.artStyle);
+                    const sceneCharElem = document.getElementById(`scene-char-${pageIndex}`);
+                    const sceneBgElem = document.getElementById(`scene-bg-${pageIndex}`);
+                    const sceneAtmElem = document.getElementById(`scene-atm-${pageIndex}`);
+                    
+                    const sceneStructure = {
+                        characters: sceneCharElem ? sceneCharElem.value : page.scene_structure?.characters || '',
+                        background: sceneBgElem ? sceneBgElem.value : page.scene_structure?.background || '',
+                        atmosphere: sceneAtmElem ? sceneAtmElem.value : page.scene_structure?.atmosphere || ''
+                    };
+                    
+                    // 클라이언트에서 직접 Gemini API 호출
+                    const pageData = {
+                        ...page,
+                        scene_description: sceneDesc,
+                        scene_structure: sceneStructure
+                    };
+                    
+                    const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, '');
+                    
+                    // 레퍼런스 이미지 수집: 캐릭터만 (병렬이므로 전 페이지 참조 없음)
+                    const refImageUrls = characterReferences.map(char => char.referenceImage);
+                    
+                    const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
+                    
+                    if (result.success && result.imageUrl) {
+                        currentStorybook.pages[pageIndex].illustrationImage = result.imageUrl;
+                        currentStorybook.pages[pageIndex].scene_description = sceneDesc;
+                        currentStorybook.pages[pageIndex].scene_structure = sceneStructure;
+                        currentStorybook.pages[pageIndex].artStyle = artStyle;
+                        
+                        // 성공 표시
+                        const illustrationDiv = document.getElementById(`illustration-${pageIndex}`);
+                        if (illustrationDiv) {
+                            illustrationDiv.innerHTML = `<img src="${result.imageUrl}" alt="Page ${page.pageNumber}" class="w-full h-full object-cover rounded-lg"/>`;
+                        }
+                        
+                        return { success: true, pageIndex };
+                    } else {
+                        throw new Error(result.error || '이미지 생성 실패');
+                    }
+                } catch (error) {
+                    console.error(`Error generating illustration ${pageIndex}:`, error);
+                    
+                    // 실패 표시
+                    const illustrationDiv = document.getElementById(`illustration-${pageIndex}`);
+                    if (illustrationDiv) {
+                        illustrationDiv.innerHTML = `
+                            <div class="p-6 text-center">
+                                <p class="text-red-600 text-sm mb-2">⚠️ 생성 실패</p>
+                                <p class="text-gray-500 text-xs">${error.message}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    return { success: false, pageIndex, error: error.message };
+                }
+            })(i);
+            
+            promises.push(generatePromise);
+        }
+        
+        // 모든 병렬 생성 완료 대기
+        const results = await Promise.all(promises);
+        
+        // 결과 저장
+        saveCurrentStorybook();
+        displayStorybook(currentStorybook);
+        
+        const successCount = results.filter(r => r.success).length;
+        const failCount = results.filter(r => !r.success).length;
+        
+        if (failCount > 0) {
+            alert(`삽화 생성 완료!\n✅ 성공: ${successCount}개\n❌ 실패: ${failCount}개\n\n실패한 페이지는 개별적으로 재시도해주세요.`);
+        } else {
+            showNotification('success', '모든 삽화 생성 완료! ⚡', `${successCount}개의 페이지 삽화가 병렬로 생성되었습니다.`);
+        }
+    } catch (error) {
+        console.error('Parallel generation error:', error);
+        alert('병렬 생성 중 오류가 발생했습니다: ' + error.message);
+        displayStorybook(currentStorybook);
+    }
+}
+
+// 한 번에 모든 삽화 생성 - 순차 (정확하게)
+async function generateAllIllustrationsSequential() {
     const hasCharacterReferences = currentStorybook.characters.some(char => char.referenceImage);
     if (!hasCharacterReferences) {
         alert('먼저 캐릭터 레퍼런스 이미지를 생성해주세요!');
@@ -1377,7 +1526,7 @@ async function generateAllIllustrations() {
         if (failCount > 0) {
             alert(`삽화 생성 완료!\n✅ 성공: ${successCount}개\n❌ 실패: ${failCount}개\n\n실패한 페이지는 개별적으로 재시도해주세요.`);
         } else {
-            showNotification('success', '모든 삽화 생성 완료! 🎉', `${successCount}개의 페이지 삽화가 순차적으로 생성되었습니다.`);
+            showNotification('success', '모든 삽화 생성 완료! 🎯', `${successCount}개의 페이지 삽화가 순차적으로 생성되었습니다.`);
         }
     } catch (error) {
         console.error('Batch generation error:', error);
