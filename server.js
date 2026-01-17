@@ -265,7 +265,7 @@ ${targetAge === '4-5' ? `
   "title": "동화책 제목",
   "characters": [
     {
-      "name": "캐릭터 이름 (개별 캐릭터로 작성, 복수형 금지)",
+      "name": "캐릭터 이름 (개별 캐릭터로 작성, 복수형 금지, 숫자 붙이지 말 것)",
       "description": "외모와 성격 상세 설명 (한국어, 개별 특징 포함)",
       "role": "주인공/조력자/악역 등"
     }
@@ -304,7 +304,9 @@ ${targetAge === '4-5' ? `
 - 종결어미: ~했어, ~였어, ~구나 사용
 - 밝고 긍정적인 이야기
 - **매우 중요**: 그룹 캐릭터는 반드시 개별적으로 분리하세요 (예: "일곱 난쟁이" 제목이면 난쟁이1~7을 각각 생성)
-- **매우 중요**: 캐릭터 name은 단수형으로만 작성하세요 (복수형 금지: "난쟁이들" ❌, "난쟁이1" ✅)
+- **매우 중요**: 캐릭터 name은 단수형으로만 작성하세요 (복수형 금지: "난쟁이들" ❌)
+- **매우 중요**: 1명인 캐릭터는 절대 숫자를 붙이지 마세요 (❌ "왕자1", "공주1" → ✅ "왕자", "공주")
+- **매우 중요**: 2명 이상 그룹만 숫자 붙임 (✅ "난쟁이1", "난쟁이2" when 일곱 난쟁이)
 - **매우 중요**: 캐릭터 description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소(색상, 크기, 특징 등)를 자세히 포함하세요
 - **매우 중요**: 각 캐릭터는 구별 가능한 고유 특징을 가져야 합니다 (예: 난쟁이1은 안경, 난쟁이2는 긴 수염)
 - **매우 중요**: scene_description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소를 자세히 포함하세요
@@ -312,8 +314,20 @@ ${targetAge === '4-5' ? `
 - **매우 중요**: vocabulary는 반드시 동화 내용과 관련된 구체적인 명사(noun) 8개를 선정하세요 (예: Apple, Tree, Star, Moon, River, Mountain 등)
 - **매우 중요**: 각 단어는 {"word": "영어명사", "korean": "한글뜻"} 형식으로 작성하세요
 
-캐릭터 예시 (백설공주 스토리):
+캐릭터 명명 예시:
+올바른 예시 ✅:
+- 단일 캐릭터: {"name": "백설공주"}, {"name": "왕자"}, {"name": "왕비"}
+- 그룹 캐릭터: {"name": "난쟁이1"}, {"name": "난쟁이2"}, ..., {"name": "난쟁이7"}
+
+잘못된 예시 ❌:
+- {"name": "왕자1"} ← 1명인데 숫자 붙임
+- {"name": "공주1"} ← 1명인데 숫자 붙임
+- {"name": "난쟁이들"} ← 복수형 사용
+
+캐릭터 상세 예시 (백설공주 스토리):
 - {"name": "백설공주", "description": "긴 검은 머리와 하얀 피부, 빨간 리본을 한 소녀", "role": "주인공"}
+- {"name": "왕자", "description": "잘생긴 금발 머리, 파란 왕자복을 입은 청년", "role": "조력자"}
+- {"name": "왕비", "description": "화려한 검은 드레스, 사악한 표정의 중년 여성", "role": "악역"}
 - {"name": "난쟁이1", "description": "둥근 안경을 쓰고 똑똑해 보이는 작은 난쟁이, 파란 모자", "role": "조력자"}
 - {"name": "난쟁이2", "description": "긴 하얀 수염을 기른 작은 난쟁이, 빨간 모자", "role": "조력자"}
 - {"name": "난쟁이3", "description": "졸린 표정의 작은 난쟁이, 초록 모자", "role": "조력자"}
@@ -400,6 +414,9 @@ JSON만 응답하세요.`;
     // 그룹 캐릭터 자동 확장 (예: "일곱 난쟁이" → 난쟁이1, 난쟁이2, ...)
     const expandedCharacters = [];
     for (const char of storybook.characters) {
+      // AI가 이미 숫자를 붙인 경우 감지 (예: "왕자1", "난쟁이1")
+      const aiNumberedMatch = char.name.match(/^(.+?)(\d+)$/);
+      
       const groupMatch = char.name.match(/^(.*?)\s*[x×X]\s*(\d+)$/); // "도둑 x 3" 형식
       const numberMatch = char.name.match(/(\d+)\s*(명|마리|개|분|분의)/); // "세 명의 도둑" 형식
       const koreanNumberMatch = char.name.match(/(일곱|여섯|다섯|네|셋|두|하나|한)\s*(명의|마리의|개의)?\s*(.+)/); // "일곱 난쟁이" 형식
@@ -420,6 +437,34 @@ JSON만 응답하세요.`;
       
       let count = 1;
       let baseName = char.name;
+      
+      // AI가 이미 숫자를 붙인 경우 (예: "왕자1" → "왕자")
+      if (aiNumberedMatch && !groupMatch && !numberMatch && !koreanNumberMatch) {
+        const possibleBase = aiNumberedMatch[1];
+        const number = parseInt(aiNumberedMatch[2]);
+        
+        // 같은 base name을 가진 다른 캐릭터가 있는지 확인
+        const sameBaseCount = storybook.characters.filter(c => 
+          c.name.startsWith(possibleBase) && c.name.match(/^.+?\d+$/)
+        ).length;
+        
+        if (sameBaseCount > 1) {
+          // 여러 개 있으면 그룹으로 판단
+          baseName = possibleBase;
+          // 이미 개별화되어 있으므로 그대로 추가
+          expandedCharacters.push(char);
+          continue;
+        } else {
+          // 단 1개만 있으면 숫자 제거
+          console.log(`AI가 불필요하게 숫자 붙임: "${char.name}" → "${possibleBase}"`);
+          expandedCharacters.push({
+            name: possibleBase,
+            description: char.description,
+            role: char.role
+          });
+          continue;
+        }
+      }
       
       if (groupMatch) {
         // "도둑 x 3" 형식
