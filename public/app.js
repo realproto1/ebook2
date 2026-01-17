@@ -441,6 +441,53 @@ function showNotification(type, title, message) {
     }, 3000);
 }
 
+// 모달 표시 함수
+function showModal(title, content) {
+    // 기존 모달 제거
+    const existingModal = document.getElementById('custom-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // 모달 생성
+    const modal = document.createElement('div');
+    modal.id = 'custom-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+                <h2 class="text-2xl font-bold text-gray-800">${title}</h2>
+                <button 
+                    onclick="document.getElementById('custom-modal').remove()"
+                    class="text-gray-400 hover:text-gray-600 transition"
+                >
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="px-6 py-6">
+                ${content}
+            </div>
+            <div class="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end rounded-b-2xl border-t border-gray-200">
+                <button 
+                    onclick="document.getElementById('custom-modal').remove()"
+                    class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition"
+                >
+                    닫기
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 배경 클릭 시 닫기
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
 // 그림체 선택 변경 핸들러
 function handleArtStyleChange() {
     const select = document.getElementById('artStyleSelect');
