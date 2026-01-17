@@ -509,20 +509,6 @@ function displayStorybook(storybook) {
                                 </div>
                                 ` : ''}
 
-                                ${page.illustrationImage ? `
-                                <h5 class="font-bold text-gray-700 mb-2 mt-3">수정사항 (재생성 시)</h5>
-                                <textarea 
-                                    id="edit-note-${idx}" 
-                                    class="w-full p-3 border-2 border-orange-300 rounded-lg text-sm mb-2 bg-orange-50"
-                                    rows="2"
-                                    placeholder="예: 배경을 밤으로 변경, 캐릭터 표정을 더 밝게, 구름 추가 등..."
-                                >${page.editNote || ''}</textarea>
-                                <p class="text-xs text-gray-500 mb-2">
-                                    <i class="fas fa-info-circle mr-1"></i>
-                                    이미지가 이미 생성된 경우, 여기에 수정하고 싶은 내용을 입력하고 '삽화 재생성'을 누르세요.
-                                </p>
-                                ` : ''}
-
                                 <button 
                                     onclick="generateIllustration(${idx})"
                                     class="w-full mt-2 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
@@ -575,7 +561,7 @@ function displayStorybook(storybook) {
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                                         <i class="fas fa-images mr-1"></i>참조할 다른 페이지 이미지 (선택사항)
                                     </label>
-                                    <div class="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                                    <div class="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 bg-gray-50">
                                         ${storybook.pages.map((p, pIdx) => {
                                             if (pIdx === idx || !p.illustrationImage) return '';
                                             return `
@@ -596,11 +582,11 @@ function displayStorybook(storybook) {
                                                 />
                                             </div>
                                             `;
-                                        }).join('') || '<p class="text-gray-400 text-xs col-span-4 text-center py-2">다른 페이지에 이미지가 없습니다</p>'}
+                                        }).join('') || '<p class="text-gray-400 text-xs col-span-4 text-center py-4">아직 다른 페이지에 이미지가 없습니다.<br>먼저 다른 페이지의 삽화를 생성해주세요.</p>'}
                                     </div>
                                     <p class="text-xs text-gray-500 mt-1">
                                         <i class="fas fa-lightbulb mr-1"></i>
-                                        참조할 이미지를 클릭하면 선택됩니다. 스타일, 색감, 구도를 참고합니다.
+                                        참조할 이미지를 클릭하면 선택됩니다. 선택한 이미지의 스타일, 색감, 구도를 참고하여 생성합니다.
                                     </p>
                                 </div>
                             </div>
