@@ -16,6 +16,21 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBookList();
 });
 
+// 모바일 사이드바 토글 함수
+function toggleMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    sidebar.classList.toggle('mobile-open');
+    overlay.classList.toggle('active');
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+}
+
 // 이미지 설정 관련 함수
 function loadImageSettings() {
     const saved = localStorage.getItem('imageSettings');
@@ -163,6 +178,8 @@ function selectStorybook(id) {
         displayStorybook(currentStorybook);
         renderBookList();
         document.getElementById('createForm').style.display = 'none';
+        // 모바일에서 사이드바 자동 닫기
+        closeMobileSidebar();
     }
 }
 
@@ -198,6 +215,8 @@ function showCreateForm() {
     document.getElementById('storybookResult').classList.add('hidden');
     currentStorybook = null;
     renderBookList();
+    // 모바일에서 사이드바 자동 닫기
+    closeMobileSidebar();
 }
 
 // 동화책 생성
@@ -290,78 +309,79 @@ function displayStorybook(storybook) {
     const resultDiv = document.getElementById('storybookResult');
     
     let html = `
-        <div class="bg-white rounded-3xl shadow-2xl p-10 mb-8">
-            <div class="flex justify-between items-start mb-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10 mb-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3 md:gap-0 mb-4">
                 <div>
-                    <h2 class="text-4xl font-bold text-purple-600 mb-2">${storybook.title}</h2>
-                    <p class="text-gray-600">
-                        <i class="fas fa-child mr-2"></i>${storybook.targetAge}세 
-                        <i class="fas fa-palette ml-4 mr-2"></i>${storybook.artStyle}
-                        <i class="fas fa-file-alt ml-4 mr-2"></i>${storybook.pages.length}페이지
+                    <h2 class="text-2xl md:text-4xl font-bold text-purple-600 mb-2">${storybook.title}</h2>
+                    <p class="text-sm md:text-base text-gray-600">
+                        <i class="fas fa-child mr-1 md:mr-2"></i>${storybook.targetAge}세 
+                        <i class="fas fa-palette ml-2 md:ml-4 mr-1 md:mr-2"></i><span class="hidden sm:inline">${storybook.artStyle}</span>
+                        <i class="fas fa-file-alt ml-2 md:ml-4 mr-1 md:mr-2"></i>${storybook.pages.length}페이지
                     </p>
                 </div>
                 <button 
                     onclick="openRegenerateModal()"
-                    class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-lg font-bold hover:from-orange-600 hover:to-red-600 transition-all shadow-lg"
+                    class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold hover:from-orange-600 hover:to-red-600 transition-all shadow-lg text-sm md:text-base whitespace-nowrap"
                 >
-                    <i class="fas fa-redo mr-2"></i>다시 만들기
+                    <i class="fas fa-redo mr-1 md:mr-2"></i>다시 만들기
                 </button>
             </div>
-            <div class="bg-purple-50 p-6 rounded-lg mt-6">
-                <h3 class="text-xl font-bold text-purple-600 mb-2">
+            <div class="bg-purple-50 p-4 md:p-6 rounded-lg mt-4 md:mt-6">
+                <h3 class="text-lg md:text-xl font-bold text-purple-600 mb-2">
                     <i class="fas fa-lightbulb mr-2"></i>주제 및 교훈
                 </h3>
-                <p class="text-gray-700">${storybook.theme}</p>
+                <p class="text-sm md:text-base text-gray-700">${storybook.theme}</p>
             </div>
         </div>
 
         <!-- 캐릭터 섹션 -->
-        <div class="bg-white rounded-3xl shadow-2xl p-10 mb-8">
-            <div class="flex justify-between items-center mb-6">
+        <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10 mb-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0 mb-4 md:mb-6">
                 <div>
-                    <h3 class="text-3xl font-bold text-gray-800 mb-2">
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
                         <i class="fas fa-users mr-2 text-purple-500"></i>
                         캐릭터 레퍼런스
                     </h3>
-                    <p class="text-gray-600">
+                    <p class="text-xs md:text-base text-gray-600">
                         <i class="fas fa-info-circle mr-2"></i>
-                        각 캐릭터의 레퍼런스 이미지를 생성하면 삽화에서 일관된 모습을 유지할 수 있어요.
+                        <span class="hidden sm:inline">각 캐릭터의 레퍼런스 이미지를 생성하면 삽화에서 일관된 모습을 유지할 수 있어요.</span>
+                        <span class="sm:hidden">레퍼런스 이미지로 일관성 유지</span>
                     </p>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex gap-2 md:gap-3">
                     <button 
                         onclick="generateAllCharacterReferences()"
-                        class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition whitespace-nowrap"
+                        class="bg-purple-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-lg hover:bg-purple-700 transition whitespace-nowrap text-sm md:text-base"
                     >
-                        <i class="fas fa-images mr-2"></i>모든 레퍼런스 생성
+                        <i class="fas fa-images mr-1 md:mr-2"></i><span class="hidden sm:inline">모든 레퍼런스 생성</span><span class="sm:hidden">전체 생성</span>
                     </button>
                     <button 
                         onclick="downloadAllCharacterReferences()"
-                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
+                        class="bg-blue-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-lg hover:bg-blue-700 transition whitespace-nowrap text-sm md:text-base"
                     >
-                        <i class="fas fa-download mr-2"></i>모두 다운로드
+                        <i class="fas fa-download mr-1 md:mr-2"></i><span class="hidden sm:inline">모두 다운로드</span><span class="sm:hidden">다운</span>
                     </button>
                     <button 
                         onclick="addNewCharacter()"
-                        class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition whitespace-nowrap"
+                        class="bg-green-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-lg hover:bg-green-700 transition whitespace-nowrap text-sm md:text-base"
                     >
-                        <i class="fas fa-plus mr-2"></i>캐릭터 추가
+                        <i class="fas fa-plus mr-1 md:mr-2"></i><span class="hidden sm:inline">캐릭터 추가</span><span class="sm:hidden">추가</span>
                     </button>
                 </div>
             </div>
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 ${storybook.characters.map((char, idx) => `
-                    <div class="character-card card rounded-xl p-6">
-                        <div class="flex justify-between items-start mb-4">
+                    <div class="character-card card rounded-xl p-4 md:p-6">
+                        <div class="flex justify-between items-start mb-3 md:mb-4">
                             <div class="flex-1">
                                 <input 
                                     type="text" 
                                     id="char-name-${idx}" 
                                     value="${char.name}"
                                     onchange="updateCharacterName(${idx}, this.value)"
-                                    class="text-2xl font-bold mb-2 bg-transparent border-b-2 border-white text-white placeholder-white w-full"
+                                    class="text-lg md:text-2xl font-bold mb-2 bg-transparent border-b-2 border-white text-white placeholder-white w-full"
                                 />
-                                <span class="bg-white text-purple-600 px-3 py-1 rounded-full text-sm font-semibold">
+                                <span class="bg-white text-purple-600 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm font-semibold">
                                     ${char.role}
                                 </span>
                             </div>
@@ -369,14 +389,14 @@ function displayStorybook(storybook) {
                                 onclick="deleteCharacter(${idx})"
                                 class="text-white hover:text-red-300 ml-2"
                             >
-                                <i class="fas fa-trash"></i>
+                                <i class="fas fa-trash text-sm md:text-base"></i>
                             </button>
                         </div>
-                        <p class="text-white text-sm mb-4 opacity-90">${char.description.substring(0, 100)}...</p>
-                        <div id="char-ref-${idx}" class="mb-4 min-h-[200px] bg-white bg-opacity-20 rounded-lg flex items-center justify-center overflow-hidden">
+                        <p class="text-white text-xs md:text-sm mb-3 md:mb-4 opacity-90">${char.description.substring(0, 80)}...</p>
+                        <div id="char-ref-${idx}" class="mb-3 md:mb-4 min-h-[150px] md:min-h-[200px] bg-white bg-opacity-20 rounded-lg flex items-center justify-center overflow-hidden">
                             ${char.referenceImage ? 
                                 `<img src="${char.referenceImage}" alt="${char.name}" class="w-full h-full object-cover rounded-lg"/>` :
-                                '<p class="text-white text-sm text-center p-4">이미지 생성 대기중</p>'
+                                '<p class="text-white text-xs md:text-sm text-center p-4">이미지 생성 대기중</p>'
                             }
                         </div>
                         ${char.referenceImage ? 
@@ -459,59 +479,59 @@ function displayStorybook(storybook) {
             <div class="space-y-6">
                 ${storybook.pages.map((page, idx) => `
                     <div class="page-card">
-                        <h4 class="text-2xl font-bold text-purple-600 mb-4">페이지 ${page.pageNumber}</h4>
-                        <div class="grid md:grid-cols-2 gap-6">
+                        <h4 class="text-xl md:text-2xl font-bold text-purple-600 mb-3 md:mb-4">페이지 ${page.pageNumber}</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                             <div>
-                                <h5 class="font-bold text-gray-700 mb-2">텍스트</h5>
+                                <h5 class="font-bold text-gray-700 mb-2 text-sm md:text-base">텍스트</h5>
                                 <textarea 
                                     id="text-${idx}" 
-                                    class="w-full p-4 border-2 border-gray-300 rounded-lg mb-4"
+                                    class="w-full p-3 md:p-4 border-2 border-gray-300 rounded-lg mb-3 md:mb-4 text-sm md:text-base"
                                     rows="3"
                                     onchange="updatePageText(${idx}, this.value)"
                                 >${page.text}</textarea>
 
-                                <h5 class="font-bold text-gray-700 mb-2">장면 설명</h5>
+                                <h5 class="font-bold text-gray-700 mb-2 text-sm md:text-base">장면 설명</h5>
                                 <textarea 
                                     id="scene-${idx}" 
-                                    class="w-full p-3 border-2 border-gray-300 rounded-lg text-sm mb-2"
+                                    class="w-full p-2 md:p-3 border-2 border-gray-300 rounded-lg text-xs md:text-sm mb-2"
                                     rows="2"
                                 >${page.scene_description}</textarea>
                                 
-                                <h5 class="font-bold text-gray-700 mb-2 mt-3">그림체</h5>
+                                <h5 class="font-bold text-gray-700 mb-2 mt-3 text-sm md:text-base">그림체</h5>
                                 <input 
                                     id="artstyle-${idx}" 
                                     value="${page.artStyle || storybook.artStyle}"
                                     placeholder="그림체 (예: 현대 일러스트레이션)"
-                                    class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm mb-2"
+                                    class="w-full p-2 border-2 border-gray-300 rounded-lg text-xs md:text-sm mb-2"
                                 />
                                 
                                 ${page.scene_structure ? `
-                                <h5 class="font-bold text-gray-700 mb-2 mt-3">장면 구조</h5>
+                                <h5 class="font-bold text-gray-700 mb-2 mt-3 text-sm md:text-base">장면 구조</h5>
                                 <div class="space-y-2 mb-2">
                                     <input 
                                         id="scene-char-${idx}" 
                                         value="${page.scene_structure.characters || ''}"
                                         placeholder="캐릭터 & 행동"
-                                        class="w-full p-2 border border-gray-300 rounded text-sm"
+                                        class="w-full p-2 border border-gray-300 rounded text-xs md:text-sm"
                                     />
                                     <input 
                                         id="scene-bg-${idx}" 
                                         value="${page.scene_structure.background || ''}"
                                         placeholder="배경"
-                                        class="w-full p-2 border border-gray-300 rounded text-sm"
+                                        class="w-full p-2 border border-gray-300 rounded text-xs md:text-sm"
                                     />
                                     <input 
                                         id="scene-atm-${idx}" 
                                         value="${page.scene_structure.atmosphere || ''}"
                                         placeholder="분위기"
-                                        class="w-full p-2 border border-gray-300 rounded text-sm"
+                                        class="w-full p-2 border border-gray-300 rounded text-xs md:text-sm"
                                     />
                                 </div>
                                 ` : ''}
 
                                 <button 
                                     onclick="generateIllustration(${idx})"
-                                    class="w-full mt-2 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+                                    class="w-full mt-2 bg-blue-600 text-white py-2 md:py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-sm md:text-base"
                                 >
                                     <i class="fas fa-paint-brush mr-2"></i>${page.illustrationImage ? '삽화 재생성' : '삽화 생성'}
                                 </button>
@@ -519,21 +539,21 @@ function displayStorybook(storybook) {
 
                             <div>
                                 <div class="flex justify-between items-center mb-2">
-                                    <h5 class="font-bold text-gray-700">삽화</h5>
+                                    <h5 class="font-bold text-gray-700 text-sm md:text-base">삽화</h5>
                                     ${page.illustrationImage ?
                                         `<button 
                                             onclick="downloadImage('${page.illustrationImage}', '${storybook.title}_페이지_${page.pageNumber}.png')"
-                                            class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition text-sm"
+                                            class="bg-green-600 text-white px-2 md:px-3 py-1 rounded-lg hover:bg-green-700 transition text-xs md:text-sm"
                                         >
                                             <i class="fas fa-download mr-1"></i>다운로드
                                         </button>` : ''
                                     }
                                 </div>
-                                <div id="illustration-${idx}" class="bg-gray-100 rounded-lg min-h-[300px] flex items-center justify-center overflow-hidden">
+                                <div id="illustration-${idx}" class="bg-gray-100 rounded-lg min-h-[200px] md:min-h-[300px] flex items-center justify-center overflow-hidden">
                                     ${page.illustrationImage ?
                                         `<img src="${page.illustrationImage}" alt="Page ${page.pageNumber}" class="w-full h-full object-cover rounded-lg"/>` :
-                                        `<p class="text-gray-500 text-center p-4">
-                                            <i class="fas fa-image text-4xl mb-2"></i><br>
+                                        `<p class="text-gray-500 text-center p-4 text-sm md:text-base">
+                                            <i class="fas fa-image text-3xl md:text-4xl mb-2"></i><br>
                                             삽화 생성 버튼을 클릭하세요
                                         </p>`
                                     }
@@ -541,12 +561,12 @@ function displayStorybook(storybook) {
                                 
                                 ${page.illustrationImage ? `
                                 <div class="mt-3">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                    <label class="block text-xs md:text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-edit mr-1"></i>이미지 수정사항 (선택사항)
                                     </label>
                                     <textarea 
                                         id="edit-note-${idx}" 
-                                        class="w-full p-2 border-2 border-yellow-300 rounded-lg text-sm"
+                                        class="w-full p-2 border-2 border-yellow-300 rounded-lg text-xs md:text-sm"
                                         rows="2"
                                         placeholder="수정할 내용을 입력하세요 (예: 토끼를 더 크게 그려주세요, 배경을 밝게 해주세요)"
                                     >${page.editNote || ''}</textarea>
@@ -558,10 +578,10 @@ function displayStorybook(storybook) {
                                 ` : ''}
                                 
                                 <div class="mt-3">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <label class="block text-xs md:text-sm font-semibold text-gray-700 mb-2">
                                         <i class="fas fa-images mr-1"></i>참조할 다른 페이지 이미지 (선택사항)
                                     </label>
-                                    <div class="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 bg-gray-50">
+                                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 bg-gray-50">
                                         ${storybook.pages.map((p, pIdx) => {
                                             if (pIdx === idx || !p.illustrationImage) return '';
                                             return `
@@ -569,20 +589,20 @@ function displayStorybook(storybook) {
                                                 <img 
                                                     src="${p.illustrationImage}" 
                                                     alt="페이지 ${p.pageNumber}"
-                                                    class="w-full h-20 object-cover rounded border-2 border-gray-300 hover:border-blue-500 transition"
+                                                    class="w-full h-16 sm:h-20 object-cover rounded border-2 border-gray-300 hover:border-blue-500 transition"
                                                     id="ref-img-${idx}-${pIdx}"
                                                 />
-                                                <div class="absolute top-0 right-0 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-bl opacity-0 group-hover:opacity-100 transition">
+                                                <div class="absolute top-0 right-0 bg-blue-600 text-white text-xs px-1 sm:px-1.5 py-0.5 rounded-bl opacity-0 group-hover:opacity-100 transition">
                                                     ${p.pageNumber}
                                                 </div>
                                                 <input 
                                                     type="checkbox" 
                                                     id="ref-check-${idx}-${pIdx}"
-                                                    class="absolute top-1 left-1 w-4 h-4"
+                                                    class="absolute top-1 left-1 w-3 h-3 sm:w-4 sm:h-4"
                                                 />
                                             </div>
                                             `;
-                                        }).join('') || '<p class="text-gray-400 text-xs col-span-4 text-center py-4">아직 다른 페이지에 이미지가 없습니다.<br>먼저 다른 페이지의 삽화를 생성해주세요.</p>'}
+                                        }).join('') || '<p class="text-gray-400 text-xs col-span-3 sm:col-span-4 text-center py-4">아직 다른 페이지에 이미지가 없습니다.<br>먼저 다른 페이지의 삽화를 생성해주세요.</p>'}
                                     </div>
                                     <p class="text-xs text-gray-500 mt-1">
                                         <i class="fas fa-lightbulb mr-1"></i>
@@ -597,13 +617,13 @@ function displayStorybook(storybook) {
         </div>
 
         <!-- 교육 콘텐츠 -->
-        <div class="bg-white rounded-3xl shadow-2xl p-10">
-            <h3 class="text-3xl font-bold text-gray-800 mb-6">
+        <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10">
+            <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6">
                 <i class="fas fa-graduation-cap mr-2 text-purple-500"></i>
                 교육 콘텐츠
             </h3>
 
-            <div class="grid md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 <div class="bg-purple-50 p-6 rounded-xl">
                     <h4 class="text-xl font-bold text-purple-600 mb-4">
                         <i class="fas fa-question-circle mr-2"></i>상징으로 읽기
