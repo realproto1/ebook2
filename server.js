@@ -153,25 +153,25 @@ app.post('/api/generate-storybook', requireAPIKey, async (req, res) => {
     // 연령대별 설정 (페이지 수, 단어 수, 문장 길이, 어휘 수준)
     const ageSettings = {
       '4-5': { 
-        defaultPages: 8,
-        wordCount: '500-700', 
-        sentenceLength: '6-10어절',
+        defaultPages: 16,
+        wordCount: '1000-1500', 
+        sentenceLength: '8-12어절',
         sentenceComplexity: '단순한 문장 구조, 반복적인 패턴',
         vocabulary: '매우 쉬운 일상 단어',
         description: '4-5세: 짧고 반복적인 문장, 의성어/의태어 활용, 단순 명료한 표현'
       },
       '5-7': { 
-        defaultPages: 10,
-        wordCount: '800-1200', 
-        sentenceLength: '10-15어절',
+        defaultPages: 20,
+        wordCount: '2000-3000', 
+        sentenceLength: '12-18어절',
         sentenceComplexity: '적절한 복문, 인과관계 표현',
         vocabulary: '일상적인 단어와 쉬운 감정 표현',
         description: '5-7세(권장): 논리적 연결, 감정 표현 풍부, 다양한 어휘'
       },
       '7-8': { 
-        defaultPages: 12,
-        wordCount: '1200-1800', 
-        sentenceLength: '15-20어절',
+        defaultPages: 24,
+        wordCount: '3000-4500', 
+        sentenceLength: '18-25어절',
         sentenceComplexity: '복잡한 문장 구조, 은유와 비유 사용',
         vocabulary: '추상적 개념과 고급 어휘',
         description: '7-8세: 복잡한 스토리, 추상적 개념, 교훈적 메시지'
@@ -188,8 +188,8 @@ app.post('/api/generate-storybook', requireAPIKey, async (req, res) => {
       pageCount = settings.defaultPages;
       pageInstruction = `스토리의 흐름에 맞춰 ${settings.defaultPages - 2}~${settings.defaultPages + 2}페이지 사이에서 적절히 조정하세요`;
     } else {
-      // 사용자가 지정한 페이지 수 (5-20 범위)
-      pageCount = Math.min(Math.max(totalPages, 5), 20);
+      // 사용자가 지정한 페이지 수 (5-30 범위)
+      pageCount = Math.min(Math.max(totalPages, 5), 30);
       pageInstruction = `정확히 ${pageCount}페이지로 작성하세요`;
     }
 

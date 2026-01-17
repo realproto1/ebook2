@@ -222,9 +222,9 @@ async function generateStorybook() {
         return;
     }
     
-    // 페이지 수 검증 (0은 자동, 1-20은 사용자 지정)
-    if (totalPages < 0 || totalPages > 20) {
-        alert('페이지 수는 0(자동) 또는 1-20 사이여야 합니다.');
+    // 페이지 수 검증 (0은 자동, 1-30은 사용자 지정)
+    if (totalPages < 0 || totalPages > 30) {
+        alert('페이지 수는 0(자동) 또는 1-30 사이여야 합니다.');
         return;
     }
 
@@ -1673,9 +1673,9 @@ async function executeRegenerate() {
         return;
     }
     
-    // 페이지 수 검증 (0은 자동, 1-20은 사용자 지정)
-    if (totalPages < 0 || totalPages > 20) {
-        alert('페이지 수는 0(자동) 또는 1-20 사이여야 합니다.');
+    // 페이지 수 검증 (0은 자동, 1-30은 사용자 지정)
+    if (totalPages < 0 || totalPages > 30) {
+        alert('페이지 수는 0(자동) 또는 1-30 사이여야 합니다.');
         return;
     }
     
