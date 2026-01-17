@@ -144,7 +144,7 @@ app.get('/api/debug/env', (req, res) => {
 // 1. 동화책 스토리 생성 API
 app.post('/api/generate-storybook', requireAPIKey, async (req, res) => {
   try {
-    const { title, targetAge, artStyle, referenceContent, totalPages = 10, existingCharacters } = req.body;
+    const { title, targetAge, artStyle, referenceContent, totalPages = 10, geminiModel = 'gemini-3-pro-preview', existingCharacters } = req.body;
     
     if (!title) {
       return res.status(400).json({ error: '동화책 제목을 입력해주세요.' });
@@ -341,7 +341,9 @@ ${targetAge === '4-5' ? `
 
 JSON만 응답하세요.`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    // 선택한 Gemini 모델 사용
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${GEMINI_API_KEY}`;
+    console.log(`🤖 Using AI Model: ${geminiModel}`);
     
     const response = await fetch(geminiUrl, {
       method: 'POST',

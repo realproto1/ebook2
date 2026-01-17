@@ -205,6 +205,7 @@ async function generateStorybook() {
     const title = document.getElementById('bookTitle').value.trim();
     const targetAge = document.getElementById('targetAge').value;
     const totalPages = parseInt(document.getElementById('totalPages').value) || 0; // 0 = AI 자동 결정
+    const geminiModel = document.getElementById('geminiModel').value; // AI 모델 선택
     const artStyleSelect = document.getElementById('artStyleSelect').value;
     const artStyleCustom = document.getElementById('artStyleCustom').value.trim();
     const referenceContent = document.getElementById('referenceContent').value.trim();
@@ -237,6 +238,7 @@ async function generateStorybook() {
             title,
             targetAge,
             totalPages,
+            geminiModel, // AI 모델 전달
             artStyle,
             referenceContent: referenceContent || null
         });
@@ -1665,6 +1667,7 @@ async function executeRegenerate() {
     const title = document.getElementById('regenerateTitle').value.trim();
     const targetAge = document.getElementById('regenerateAge').value;
     const totalPages = parseInt(document.getElementById('regeneratePages').value) || 0; // 0 = AI 자동 결정
+    const geminiModel = document.getElementById('regenerateModel').value; // AI 모델 선택
     const artStyle = document.getElementById('regenerateArtStyle').value.trim();
     const notes = document.getElementById('regenerateNotes').value.trim();
     
@@ -1699,6 +1702,7 @@ async function executeRegenerate() {
             title: title,
             targetAge: targetAge,
             totalPages: totalPages,
+            geminiModel: geminiModel, // AI 모델 전달
             artStyle: artStyle,
             referenceContent: notes, // 수정 요청사항을 참고 내용으로 전달
             existingCharacters: existingCharacters.map(char => ({

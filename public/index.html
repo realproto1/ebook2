@@ -111,6 +111,23 @@
                     
                     <div>
                         <label class="block text-gray-700 font-semibold mb-2">
+                            <i class="fas fa-brain mr-2"></i>AI 모델
+                        </label>
+                        <select id="geminiModel" class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500">
+                            <option value="gemini-3-pro-preview" selected>Gemini 3 Pro (최고 품질 ⭐)</option>
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash (최고 가성비 💰)</option>
+                            <option value="gemini-2.5-pro">Gemini 2.5 Pro (균형잡힌 성능 🎯)</option>
+                            <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (최저 비용 💸)</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <span class="font-semibold">Pro:</span> 최고 품질 | 
+                            <span class="font-semibold">Flash:</span> 빠르고 저렴 | 
+                            <span class="font-semibold">Lite:</span> 대량 생성용
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">
                             <i class="fas fa-palette mr-2"></i>그림체
                         </label>
                         <select id="artStyleSelect" onchange="handleArtStyleChange()" class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500 mb-2">
@@ -308,6 +325,18 @@
                         max="20"
                         class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
                     />
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">
+                        <i class="fas fa-brain mr-2"></i>AI 모델
+                    </label>
+                    <select id="regenerateModel" class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500">
+                        <option value="gemini-3-pro-preview" selected>Gemini 3 Pro (최고 품질 ⭐)</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (최고 가성비 💰)</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro (균형잡힌 성능 🎯)</option>
+                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (최저 비용 💸)</option>
+                    </select>
                 </div>
                 
                 <div>
