@@ -185,6 +185,15 @@ ${referenceContent}
 문장 길이: ${settings.sentenceLength}어절
 어휘 수준: ${settings.vocabulary}${existingCharSection}${referenceSection}
 
+**스토리 개연성 강화 요구사항:**
+1. **명확한 스토리 구조**: 발단(문제 제시) → 전개(갈등 심화) → 위기(클라이맥스) → 결말(해결)
+2. **논리적 인과관계**: 각 장면이 다음 장면으로 자연스럽게 이어져야 하며, "왜 그렇게 되었는지" 이유가 명확해야 함
+3. **캐릭터 동기**: 각 캐릭터의 행동에는 명확한 이유와 목적이 있어야 함
+4. **일관된 설정**: 장소, 시간, 세계관이 일관되게 유지되어야 함
+5. **현실적 해결**: 갑작스러운 기적이나 데우스 엑스 마키나 없이, 캐릭터의 노력과 성장으로 문제 해결
+6. **감정의 흐름**: 캐릭터의 감정 변화가 자연스럽고 공감 가능해야 함
+7. **복선과 회수**: 초반에 제시된 요소들이 후반에 의미 있게 활용되어야 함
+
 다음 형식의 JSON으로 응답해주세요:
 
 {
@@ -312,6 +321,63 @@ JSON만 응답하세요.`;
       console.error('Failed to parse text:', storyText.substring(0, 500) + '...');
       throw new Error('Failed to parse AI response as JSON. The AI response may be incomplete or malformed.');
     }
+    
+    // 그룹 캐릭터 자동 확장 (예: "일곱 난쟁이" → 난쟁이1, 난쟁이2, ...)
+    const expandedCharacters = [];
+    for (const char of storybook.characters) {
+      const groupMatch = char.name.match(/^(.*?)\s*[x×X]\s*(\d+)$/); // "도둑 x 3" 형식
+      const numberMatch = char.name.match(/(\d+)\s*(명|마리|개|분|분의)/); // "세 명의 도둑" 형식
+      const koreanNumberMatch = char.name.match(/(일곱|여섯|다섯|네|셋|두|하나|한)\s*(명의|마리의|개의)?\s*(.+)/); // "일곱 난쟁이" 형식
+      
+      // 한글 숫자를 아라비아 숫자로 변환
+      const koreanNumbers = {
+        '하나': 1, '한': 1, '하나의': 1,
+        '둘': 2, '두': 2, '두의': 2,
+        '셋': 3, '세': 3, '세의': 3,
+        '넷': 4, '네': 4, '네의': 4,
+        '다섯': 5, '다섯의': 5,
+        '여섯': 6, '여섯의': 6,
+        '일곱': 7, '일곱의': 7,
+        '여덟': 8, '여덟의': 8,
+        '아홉': 9, '아홉의': 9,
+        '열': 10, '열의': 10
+      };
+      
+      let count = 1;
+      let baseName = char.name;
+      
+      if (groupMatch) {
+        // "도둑 x 3" 형식
+        baseName = groupMatch[1].trim();
+        count = parseInt(groupMatch[2]);
+      } else if (numberMatch) {
+        // "3명의 도둑" 형식
+        count = parseInt(numberMatch[1]);
+        baseName = char.name.replace(numberMatch[0], '').trim();
+      } else if (koreanNumberMatch) {
+        // "일곱 난쟁이" 형식
+        const koreanNum = koreanNumberMatch[1];
+        count = koreanNumbers[koreanNum] || 1;
+        baseName = koreanNumberMatch[3].trim();
+      }
+      
+      // 그룹 캐릭터인 경우 (2명 이상)
+      if (count > 1 && count <= 10) {
+        console.log(`그룹 캐릭터 확장: "${char.name}" → ${count}명`);
+        for (let i = 1; i <= count; i++) {
+          expandedCharacters.push({
+            name: `${baseName}${i}`,
+            description: `${char.description} (${i}번째 ${baseName})`,
+            role: char.role
+          });
+        }
+      } else {
+        // 단일 캐릭터
+        expandedCharacters.push(char);
+      }
+    }
+    
+    storybook.characters = expandedCharacters;
     
     // ID와 메타데이터 추가
     storybook.id = Date.now().toString();
