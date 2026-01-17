@@ -65,7 +65,7 @@ async function generateImage(prompt, referenceImages = [], retryCount = 0, maxRe
       }
     }
     
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -303,7 +303,15 @@ JSON만 응답하세요.`;
     
     // JSON 추출
     storyText = storyText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const storybook = JSON.parse(storyText);
+    
+    let storybook;
+    try {
+      storybook = JSON.parse(storyText);
+    } catch (parseError) {
+      console.error('JSON Parse Error:', parseError);
+      console.error('Failed to parse text:', storyText.substring(0, 500) + '...');
+      throw new Error('Failed to parse AI response as JSON. The AI response may be incomplete or malformed.');
+    }
     
     // ID와 메타데이터 추가
     storybook.id = Date.now().toString();
