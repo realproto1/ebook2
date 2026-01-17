@@ -44,15 +44,14 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
             };
         }
     }
-    
-    // 사용 중인 API 키 정보 표시
-    const isCustomKey = !!localStorage.getItem('gemini_api_key');
-    const keyPrefix = GEMINI_API_KEY.substring(0, 10);
-    console.log(`🔑 사용 중인 API 키: ${keyPrefix}... (${isCustomKey ? '커스텀 키' : '기본 키'})`);
 
     // 재시도 로직
     for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
+            // 사용 중인 API 키 정보 표시 (매 시도마다)
+            const isCustomKey = !!localStorage.getItem('gemini_api_key');
+            const keyPrefix = GEMINI_API_KEY.substring(0, 10);
+            console.log(`\n🔑 사용 중인 API 키: ${keyPrefix}... (${isCustomKey ? '✅ 커스텀 키' : '⚠️ 기본 키'})`);
             console.log(`🎨 이미지 생성 시도 ${attempt + 1}/${maxRetries}`);
             console.log('📝 프롬프트 길이:', prompt.length);
             console.log('🖼️ 레퍼런스 이미지:', referenceImages.length);
@@ -105,16 +104,17 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
                 const errorText = await response.text();
                 const isCustomKey = !!localStorage.getItem('gemini_api_key');
                 const keyPrefix = GEMINI_API_KEY.substring(0, 10);
-                const keyInfo = `\n\n🔑 현재 사용 중인 API 키: ${keyPrefix}... (${isCustomKey ? '커스텀 키' : '기본 키'})`;
+                const keyType = isCustomKey ? '✅ 커스텀 키' : '⚠️ 기본 키 (할당량 제한됨)';
+                const keyInfo = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔑 현재 사용 중인 API 키\n━━━━━━━━━━━━━━━━━━━━━━━━━━\nAPI 키: ${keyPrefix}...\n타입: ${keyType}\n━━━━━━━━━━━━━━━━━━━━━━━━━━`;
                 
-                console.error(`❌ API 오류 ${response.status}:`, errorText);
-                console.error(`🔑 사용 중인 키: ${keyPrefix}... (${isCustomKey ? '커스텀' : '기본'})`);
+                console.error(`\n❌ API 오류 ${response.status}:`, errorText);
+                console.error(`🔑 사용 중인 키: ${keyPrefix}... (${keyType})`);
                 
                 // 429 할당량 오류 처리
                 if (response.status === 429) {
                     const errorMsg = '⚠️ Gemini API 일일 할당량을 초과했습니다.\n\n' +
                         '해결 방법:\n' +
-                        '1. 설정에서 개인 API 키를 입력하세요 (추천)\n' +
+                        '1. 설정에서 개인 API 키를 입력하세요 (추천) ⭐\n' +
                         '2. Google AI Studio (https://aistudio.google.com/app/apikey)에서 무료 API 키 발급\n' +
                         '3. 몇 시간 후 다시 시도 (UTC 자정에 리셋)\n' +
                         '4. 이미 생성된 동화책을 복사하여 텍스트만 수정' +
@@ -140,6 +140,7 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
                 if (response.status === 500 && attempt < maxRetries - 1) {
                     const waitTime = Math.pow(2, attempt) * 1000; // 지수 백오프
                     console.log(`⏳ ${waitTime/1000}초 후 재시도...`);
+                    console.log(`🔑 ${keyPrefix}... (${keyType})`);
                     await new Promise(resolve => setTimeout(resolve, waitTime));
                     continue; // 다음 시도
                 }
