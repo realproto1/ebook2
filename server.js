@@ -455,7 +455,10 @@ ${targetAge === '4-5' ? `
 - 예시: "인어공주" → "인어공주 (인어)" + "인어공주 (인간)"
 - 예시: "개구리 왕자" → "왕자 (개구리)" + "왕자 (인간)"
 - 예시: "백조 공주" → "공주 (백조)" + "공주 (인간)"
-- 변신 캐릭터의 name 형식: "캐릭터명 (형태)" (예: "인어공주 (인어)", "인어공주 (인간)")
+- **⭐ 변장하는 캐릭터도 반드시 "본 모습"과 "변장 모습"을 구분하세요**
+- 예시: "자파" → "자파 (본 모습)" + "자파 (늙은 노인 변장)"
+- 예시: "마녀" → "마녀 (본 모습)" + "마녀 (할머니 변장)"
+- 변신/변장 캐릭터의 name 형식: "캐릭터명 (형태)" (예: "자파 (본 모습)", "자파 (늙은 노인 변장)")
 - 각 형태별로 완전히 다른 외모 설명 필요 (예: 인어 - 물고기 꼬리, 인간 - 다리)
 
 다음 형식의 JSON으로 응답해주세요:
@@ -511,6 +514,16 @@ ${targetAge === '4-5' ? `
 - **매우 중요**: 각 캐릭터는 구별 가능한 고유 특징을 가져야 합니다 (예: 난쟁이1은 안경, 난쟁이2는 긴 수염)
 - **매우 중요**: scene_description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소를 자세히 포함하세요
 - **매우 중요**: 각 페이지에 scene_structure 객체를 반드시 포함하세요
+- **⭐ 절대 필수 - 스토리 개연성 ⭐**: 
+  - 중요한 사물(램프, 반지, 책 등)이 캐릭터 간에 이동할 때는 반드시 명확하게 표현하세요
+  - 예: "자파가 램프를 빼앗음" → 다음 페이지에서 램프는 자파가 가지고 있어야 함
+  - 예: "원숭이가 램프를 다시 가져옴" → 이런 식으로 명확한 이동 과정 필요
+  - 한 페이지에서 A가 빼앗았으면, 다음 페이지에서 갑자기 B가 가지고 있으면 안 됨
+- **⭐ 절대 필수 - 캐릭터 사전 소개 ⭐**:
+  - 중요한 캐릭터는 처음 등장하기 전 또는 등장할 때 반드시 소개해야 함
+  - 예: "자스민 공주"가 등장하기 전 "알라딘은 평소 좋아하던 자스민 공주를..." 같은 사전 언급 필요
+  - 갑자기 새로운 캐릭터가 나타나면 안 됨 (독자가 혼란스러움)
+  - 주요 캐릭터는 초반부터 존재를 암시하거나 소개하세요
 - **⭐ 절대 필수 - 주요 사물 일관성 ⭐**: scene_structure에 key_objects 필드를 포함하세요!
   - 스토리에서 반복적으로 등장하는 중요한 사물(램프, 왕관, 유리 구두, 마법 지팡이 등)은 **상세한 시각적 설명**을 포함하세요
   - **⭐ 매우 중요: 사물이 처음 등장하는 페이지에만 상세한 설명을 작성하세요!**
@@ -554,6 +567,14 @@ ${targetAge === '4-5' ? `
 - {"name": "왕자 (개구리)", "description": "작은 녹색 개구리, 반짝이는 눈, 금빛 왕관을 쓴 개구리", "role": "주인공"}
 - {"name": "왕자 (인간)", "description": "잘생긴 금발 청년, 금빛 왕관, 화려한 왕자복 착용", "role": "주인공"}
 - {"name": "공주", "description": "아름다운 금발 머리, 분홍색 드레스를 입은 소녀", "role": "조력자"}
+
+**변장 캐릭터 예시 (알라딘 스토리):**
+- {"name": "자파 (본 모습)", "description": "검은 수염과 터번을 쓴 사악한 마법사, 검은 로브와 뱀 지팡이를 든 중년 남성", "role": "악역"}
+- {"name": "자파 (늙은 노인 변장)", "description": "구부정한 자세의 늙은 노인, 회색 수염과 누더기 옷, 지팡이를 짚은 할아버지", "role": "악역"}
+- {"name": "알라딘", "description": "갈색 머리의 가난한 소년, 남루한 옷을 입은 청소년", "role": "주인공"}
+- {"name": "원숭이", "description": "작고 귀여운 갈색 원숭이, 빨간 조끼를 입은 알라딘의 친구", "role": "조력자"}
+- {"name": "자스민 공주", "description": "긴 검은 머리, 청록색 의상을 입은 아름다운 공주", "role": "조력자"}
+- {"name": "지니", "description": "거대한 파란 요정, 근육질 몸, 하반신은 연기로 되어있음", "role": "조력자"}
 
 장면 예시:
 
@@ -1123,10 +1144,10 @@ ${previousTexts}
       }
     }
     
-    // 텍스트 제거 강조
+    // 텍스트 제거 강조 (기본적으로도 강력하게 적용)
     const noTextPrompt = enforceNoText ? 
-      '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, captions, titles, speech bubbles, or text overlays in the image. Absolutely NO TEXT of any kind. Pure illustration only.' : 
-      '\n\n**IMPORTANT:** Do NOT include any text, labels, words, letters, or captions in the image. No speech bubbles, no titles, no text overlays. Pure illustration only.';
+      '\n\n**🚫 CRITICAL - ABSOLUTELY NO TEXT 🚫:**\nDo NOT include ANY text, labels, words, letters, captions, titles, speech bubbles, dialogue boxes, or text overlays in the image.\nAbsolutely NO TEXT of any kind - not even a single letter or number.\nNO VISUAL TEXT ELEMENTS WHATSOEVER.\nPure illustration only with zero text content.' : 
+      '\n\n**🚫 IMPORTANT - NO TEXT 🚫:**\nDo NOT include any text, labels, words, letters, captions, titles, speech bubbles, dialogue boxes, or text overlays in the image.\nNo visual text of any kind.\nPure illustration only.';
     
     const prompt = `Create a beautiful, professional illustration for a children's storybook page.
 ${storyContext}
