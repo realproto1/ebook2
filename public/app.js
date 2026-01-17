@@ -1839,6 +1839,28 @@ ${noTextPrompt}`;
  * @returns {string} - 완성된 프롬프트
  */
 function buildIllustrationPrompt(page, artStyle, characterReferences, settings, editNote = '') {
+    // 전체 스토리 맥락 구성 (이전 페이지들)
+    let storyContext = '';
+    if (currentStorybook && currentStorybook.pages) {
+        const previousPages = currentStorybook.pages
+            .filter(p => p.pageNumber < page.pageNumber)
+            .sort((a, b) => a.pageNumber - b.pageNumber);
+        
+        if (previousPages.length > 0) {
+            console.log(`📖 Including story context from ${previousPages.length} previous pages`);
+            const previousTexts = previousPages
+                .map(p => `Page ${p.pageNumber}: ${p.text}`)
+                .join('\n');
+            
+            storyContext = `\n\n**STORY CONTEXT - What happened before this scene:**
+${previousTexts}
+
+**CURRENT PAGE ${page.pageNumber}:** ${page.text}
+
+**⭐ CRITICAL:** The illustration MUST reflect the current page state. If a character has transformed or changed (e.g., mermaid → human with legs, child → adult, cursed → normal), they MUST appear in their NEW form on the current page, NOT their old form. Consider the full story progression when depicting characters and scenes.`;
+        }
+    }
+    
     let characterInfo = '';
     
     // 캐릭터 레퍼런스 정보 추가
@@ -1882,6 +1904,7 @@ function buildIllustrationPrompt(page, artStyle, characterReferences, settings, 
         '';
     
     const prompt = `Create a beautiful, professional illustration for a children's storybook page.
+${storyContext}
 
 **Main Scene Description:** ${page.scene_description}
 ${sceneDetails}

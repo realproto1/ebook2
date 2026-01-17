@@ -800,7 +800,7 @@ ${additionalPrompt ? '\n\n**Additional Requirements:** ' + additionalPrompt : ''
 // 3. 페이지 삽화 생성 (캐릭터 레퍼런스 이미지 참조)
 app.post('/api/generate-illustration', requireAPIKey, async (req, res) => {
   try {
-    const { page, artStyle, characterReferences, settings = {}, editNote = '' } = req.body;
+    const { page, artStyle, characterReferences, settings = {}, editNote = '', previousPages = [] } = req.body;
     
     // 설정값 기본값
     const aspectRatio = settings.aspectRatio || '16:9';
@@ -958,12 +958,33 @@ app.post('/api/generate-illustration', requireAPIKey, async (req, res) => {
       }
     }
     
+    // 전체 스토리 맥락 구성 (이전 페이지들)
+    let storyContext = '';
+    if (previousPages && previousPages.length > 0) {
+      console.log(`Including story context from ${previousPages.length} previous pages`);
+      const previousTexts = previousPages
+        .filter(p => p.pageNumber < page.pageNumber)
+        .sort((a, b) => a.pageNumber - b.pageNumber)
+        .map(p => `Page ${p.pageNumber}: ${p.text}`)
+        .join('\n');
+      
+      if (previousTexts) {
+        storyContext = `\n\n**STORY CONTEXT - What happened before this scene:**
+${previousTexts}
+
+**CURRENT PAGE ${page.pageNumber}:** ${page.text}
+
+**CRITICAL:** The illustration MUST match the current page state. For example, if a character transformed (like mermaid becoming human), they MUST appear in their NEW form on the current page, not their old form.`;
+      }
+    }
+    
     // 텍스트 제거 강조
     const noTextPrompt = enforceNoText ? 
       '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, captions, titles, speech bubbles, or text overlays in the image. Absolutely NO TEXT of any kind. Pure illustration only.' : 
       '\n\n**IMPORTANT:** Do NOT include any text, labels, words, letters, or captions in the image. No speech bubbles, no titles, no text overlays. Pure illustration only.';
     
     const prompt = `Create a beautiful, professional illustration for a children's storybook page.
+${storyContext}
 
 **Main Scene Description:** ${sceneDescriptionEn}
 ${sceneDetails}
