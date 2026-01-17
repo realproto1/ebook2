@@ -151,32 +151,63 @@ function renderBookList() {
     }
 
     listDiv.innerHTML = storybooks.map((book, index) => `
-        <div class="book-item ${currentStorybook && currentStorybook.id === book.id ? 'active' : ''} p-4 rounded-lg mb-2 border border-gray-200"
-             onclick="selectStorybook('${book.id}')">
-            <div class="flex justify-between items-start">
-                <div class="flex-1 min-w-0">
-                    <h3 class="font-bold text-gray-800 mb-1 truncate" title="${book.title}">${book.title}</h3>
-                    <p class="text-xs text-gray-500">
+        <div 
+            class="book-item ${currentStorybook && currentStorybook.id === book.id ? 'active' : ''} p-3 rounded-lg mb-2 border border-gray-200 cursor-move"
+            draggable="true"
+            data-book-id="${book.id}"
+            data-book-index="${index}"
+            ondragstart="handleDragStart(event)"
+            ondragover="handleDragOver(event)"
+            ondragenter="handleDragEnter(event)"
+            ondragleave="handleDragLeave(event)"
+            ondrop="handleDrop(event)"
+            ondragend="handleDragEnd(event)"
+        >
+            <!-- 드래그 핸들 & 제목 -->
+            <div class="flex items-start gap-2 mb-2">
+                <div class="text-gray-400 cursor-move mt-1" title="드래그하여 순서 변경">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <div class="flex-1 min-w-0" onclick="selectStorybook('${book.id}')">
+                    <input 
+                        type="text" 
+                        value="${book.title}"
+                        class="w-full font-bold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-purple-500 outline-none text-sm px-1 -ml-1"
+                        onclick="event.stopPropagation(); this.select();"
+                        onchange="updateBookTitleInList('${book.id}', this.value)"
+                        onblur="this.classList.remove('border-purple-500')"
+                        title="클릭하여 제목 수정"
+                    />
+                    <p class="text-xs text-gray-500 mt-1 px-1">
                         <i class="fas fa-child mr-1"></i>${book.targetAge}세 
                         <i class="fas fa-file-alt ml-2 mr-1"></i>${book.pages.length}p
                     </p>
                 </div>
-                <div class="flex gap-1 ml-2">
-                    <button 
-                        onclick="event.stopPropagation(); duplicateStorybookById('${book.id}')"
-                        class="text-blue-500 hover:text-blue-700"
-                        title="복사"
-                    >
-                        <i class="fas fa-copy"></i>
-                    </button>
-                    <button 
-                        onclick="event.stopPropagation(); deleteStorybook('${book.id}')"
-                        class="text-red-500 hover:text-red-700"
-                        title="삭제"
-                    >
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+            </div>
+            
+            <!-- 버튼 그룹 -->
+            <div class="flex gap-1 mt-2 px-1">
+                <button 
+                    onclick="event.stopPropagation(); selectStorybook('${book.id}')"
+                    class="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs py-1.5 rounded transition"
+                    title="열기"
+                >
+                    <i class="fas fa-folder-open mr-1"></i>열기
+                </button>
+                <button 
+                    onclick="event.stopPropagation(); duplicateStorybookById('${book.id}')"
+                    class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs py-1.5 rounded transition"
+                    title="복사"
+                >
+                    <i class="fas fa-copy mr-1"></i>복사
+                </button>
+                <button 
+                    onclick="event.stopPropagation(); deleteStorybook('${book.id}')"
+                    class="bg-red-100 hover:bg-red-200 text-red-700 text-xs py-1.5 px-3 rounded transition"
+                    title="삭제"
+                >
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
         </div>
     `).join('');
@@ -207,7 +238,109 @@ function deleteStorybook(id) {
     }
 }
 
-// 동화책 제목 업데이트
+// 동화책 제목 업데이트 (사이드바)
+function updateBookTitleInList(id, newTitle) {
+    if (!newTitle.trim()) {
+        showNotification('warning', '제목을 입력해주세요.');
+        renderBookList();
+        return;
+    }
+    
+    const book = storybooks.find(b => b.id === id);
+    if (!book) return;
+    
+    const oldTitle = book.title;
+    book.title = newTitle.trim();
+    
+    // 현재 열려있는 동화책이면 업데이트
+    if (currentStorybook && currentStorybook.id === id) {
+        currentStorybook.title = newTitle.trim();
+        displayStorybook(currentStorybook);
+    }
+    
+    saveStorybooks();
+    
+    console.log(`✅ 제목 변경: "${oldTitle}" → "${newTitle.trim()}"`);
+    showNotification('success', '제목이 저장되었습니다!');
+}
+
+// 드래그 앤 드롭 관련 변수
+let draggedElement = null;
+let draggedIndex = null;
+
+// 드래그 시작
+function handleDragStart(e) {
+    draggedElement = e.currentTarget;
+    draggedIndex = parseInt(e.currentTarget.dataset.bookIndex);
+    e.currentTarget.style.opacity = '0.5';
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
+    
+    console.log('🖐️ 드래그 시작:', draggedIndex);
+}
+
+// 드래그 오버
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+// 드래그 진입
+function handleDragEnter(e) {
+    if (e.currentTarget !== draggedElement) {
+        e.currentTarget.classList.add('border-purple-500', 'bg-purple-50');
+    }
+}
+
+// 드래그 떠남
+function handleDragLeave(e) {
+    e.currentTarget.classList.remove('border-purple-500', 'bg-purple-50');
+}
+
+// 드롭
+function handleDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+    e.preventDefault();
+    
+    if (draggedElement !== e.currentTarget) {
+        const targetIndex = parseInt(e.currentTarget.dataset.bookIndex);
+        
+        // 배열에서 순서 변경
+        const draggedBook = storybooks[draggedIndex];
+        storybooks.splice(draggedIndex, 1);
+        storybooks.splice(targetIndex, 0, draggedBook);
+        
+        console.log(`✅ 순서 변경: ${draggedIndex} → ${targetIndex}`);
+        
+        saveStorybooks();
+        renderBookList();
+        
+        showNotification('success', '순서가 변경되었습니다!');
+    }
+    
+    e.currentTarget.classList.remove('border-purple-500', 'bg-purple-50');
+    return false;
+}
+
+// 드래그 종료
+function handleDragEnd(e) {
+    e.currentTarget.style.opacity = '1';
+    
+    // 모든 요소의 하이라이트 제거
+    document.querySelectorAll('.book-item').forEach(item => {
+        item.classList.remove('border-purple-500', 'bg-purple-50');
+    });
+    
+    draggedElement = null;
+    draggedIndex = null;
+}
+
+// 동화책 제목 업데이트 (메인 페이지)
 function updateStorybookTitle(newTitle) {
     if (!currentStorybook || !newTitle.trim()) {
         alert('제목을 입력해주세요.');
@@ -232,43 +365,13 @@ function updateStorybookTitle(newTitle) {
     showNotification('success', '제목이 저장되었습니다!');
 }
 
-// 동화책 복사
+// 동화책 복사 (현재 동화책)
 function duplicateStorybook() {
     if (!currentStorybook) {
         alert('복사할 동화책이 없습니다.');
         return;
     }
-    
-    if (!confirm('이 동화책을 복사하시겠습니까?\n\n복사본을 만든 후 연령대, 그림체, 페이지 수 등을 수정하여 다른 버전을 만들 수 있습니다.')) {
-        return;
-    }
-    
-    // 깊은 복사 (이미지 URL 포함)
-    const duplicate = JSON.parse(JSON.stringify(currentStorybook));
-    
-    // 새 ID 생성
-    duplicate.id = Date.now().toString();
-    
-    // 제목에 "(복사본)" 추가
-    duplicate.title = `${currentStorybook.title} (복사본)`;
-    
-    // 동화책 목록에 추가
-    storybooks.unshift(duplicate);
-    saveStorybooks();
-    
-    // 복사본 선택
-    currentStorybook = duplicate;
-    renderBookList();
-    displayStorybook(duplicate);
-    
-    console.log(`✅ 동화책 복사 완료: "${duplicate.title}" (ID: ${duplicate.id})`);
-    console.log(`  - 연령: ${duplicate.targetAge}세`);
-    console.log(`  - 그림체: ${duplicate.artStyle}`);
-    console.log(`  - 페이지: ${duplicate.pages.length}개`);
-    console.log(`  - 캐릭터: ${duplicate.characters.length}명`);
-    
-    // 복사 완료 알림
-    showNotification('success', '복사 완료!', `좌측 목록에서 "${duplicate.title}"을 확인하세요.`);
+    duplicateStorybookById(currentStorybook.id);
 }
 
 // ID로 동화책 복사 (사이드바에서 호출)
@@ -453,43 +556,23 @@ function displayStorybook(storybook) {
         <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10 mb-8">
             <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3 md:gap-0 mb-4">
                 <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-2">
-                        <input 
-                            type="text" 
-                            id="storybook-title-edit"
-                            value="${storybook.title}"
-                            onchange="updateStorybookTitle(this.value)"
-                            class="text-2xl md:text-4xl font-bold text-purple-600 bg-transparent border-b-2 border-purple-300 focus:border-purple-600 outline-none flex-1 max-w-2xl"
-                        />
-                        <button 
-                            onclick="updateStorybookTitle(document.getElementById('storybook-title-edit').value)"
-                            class="text-purple-600 hover:text-purple-700 text-sm"
-                            title="제목 저장"
-                        >
-                            <i class="fas fa-check-circle text-xl md:text-2xl"></i>
-                        </button>
-                    </div>
+                    <h2 class="text-2xl md:text-4xl font-bold text-purple-600 mb-2">${storybook.title}</h2>
                     <p class="text-sm md:text-base text-gray-600">
                         <i class="fas fa-child mr-1 md:mr-2"></i>${storybook.targetAge}세 
                         <i class="fas fa-palette ml-2 md:ml-4 mr-1 md:mr-2"></i><span class="hidden sm:inline">${storybook.artStyle}</span>
                         <i class="fas fa-file-alt ml-2 md:ml-4 mr-1 md:mr-2"></i>${storybook.pages.length}페이지
                     </p>
+                    <p class="text-xs text-gray-400 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        좌측 사이드바에서 제목 수정, 복사, 순서 변경이 가능합니다
+                    </p>
                 </div>
-                <div class="flex gap-2">
-                    <button 
-                        onclick="duplicateStorybook()"
-                        class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-3 md:px-5 py-2 md:py-3 rounded-lg font-bold hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg text-sm md:text-base whitespace-nowrap"
-                        title="다른 연령대/그림체로 만들 때 복사하세요"
-                    >
-                        <i class="fas fa-copy mr-1 md:mr-2"></i><span class="hidden sm:inline">복사</span><span class="sm:hidden">복사</span>
-                    </button>
-                    <button 
-                        onclick="openRegenerateModal()"
-                        class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 md:px-5 py-2 md:py-3 rounded-lg font-bold hover:from-orange-600 hover:to-red-600 transition-all shadow-lg text-sm md:text-base whitespace-nowrap"
-                    >
-                        <i class="fas fa-redo mr-1 md:mr-2"></i><span class="hidden sm:inline">다시 만들기</span><span class="sm:hidden">재생성</span>
-                    </button>
-                </div>
+                <button 
+                    onclick="openRegenerateModal()"
+                    class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 md:px-5 py-2 md:py-3 rounded-lg font-bold hover:from-orange-600 hover:to-red-600 transition-all shadow-lg text-sm md:text-base whitespace-nowrap"
+                >
+                    <i class="fas fa-redo mr-1 md:mr-2"></i><span class="hidden sm:inline">다시 만들기</span><span class="sm:hidden">재생성</span>
+                </button>
             </div>
             <div class="bg-purple-50 p-4 md:p-6 rounded-lg mt-4 md:mt-6">
                 <h3 class="text-lg md:text-xl font-bold text-purple-600 mb-2">

@@ -13,8 +13,10 @@
         .page-card { border: 2px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
         .character-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .book-item { cursor: pointer; transition: all 0.2s; }
-        .book-item:hover { background: #f3f4f6; transform: translateX(5px); }
+        .book-item:hover { background: #f9fafb; }
         .book-item.active { background: #e0e7ff; border-left: 4px solid #6366f1; }
+        .book-item.dragging { opacity: 0.5; }
+        .cursor-move { cursor: move; }
         
         /* 알림 애니메이션 */
         @keyframes fade-in {
