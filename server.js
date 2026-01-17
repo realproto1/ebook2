@@ -481,7 +481,8 @@ ${targetAge === '4-5' ? `
         "characters": "이 장면에 등장하는 캐릭터들과 그들의 행동/표정 (한국어)",
         "background": "배경 설명 (장소, 시간대 등, 한국어)",
         "atmosphere": "분위기와 감정 (한국어)",
-        "key_objects": "이 장면의 주요 사물들 - 스토리에 중요한 물건들의 상세한 시각적 설명 (예: 램프, 왕관, 마법 지팡이, 유리 구두, 황금 열쇠 등). 사물이 없으면 빈 문자열."
+        "key_objects": "이 장면의 주요 사물들 - 스토리에 중요한 물건들의 상세한 시각적 설명 (예: 램프, 왕관, 마법 지팡이, 유리 구두, 황금 열쇠 등). 사물이 없으면 빈 문자열.",
+        "spatial_layout": "캐릭터들의 좌우 위치 관계 (예: '빨간 망토는 왼쪽, 늑대는 오른쪽', '알라딘은 중앙, 지니는 오른쪽 위', '공주는 오른쪽, 왕자는 왼쪽'). 연속된 장면에서는 이전 페이지와 일관성 유지 필요."
       }
     }
   ],
@@ -536,6 +537,12 @@ ${targetAge === '4-5' ? `
   (예: "햇살이 비치는 낮", "별이 빛나는 밤", "촛불이 켜진 저녁", "달빛이 비치는 밤")
   ❌ "숲속", "궁전 식당" (시간대 없음)
   ✅ "숲속, 햇살이 비치는 낮", "궁전 식당, 촛불이 켜진 밤"
+- **⭐ 절대 필수 - 공간적 일관성 ⭐**: scene_structure에 spatial_layout 필드를 포함하세요!
+  - 주요 캐릭터들의 좌우 위치 관계를 명시하세요 (예: "빨간 망토는 왼쪽, 늑대는 오른쪽")
+  - **연속된 장면에서는 캐릭터의 좌우 위치를 일관되게 유지하세요!**
+  - 예: Page 5에서 "공주는 왼쪽, 왕자는 오른쪽"이면, Page 6에서도 동일하게 유지
+  - 캐릭터가 이동하거나 장면이 완전히 바뀌는 경우에만 위치 변경 허용
+  - 갑작스러운 좌우 반전은 독자를 혼란스럽게 만들므로 절대 금지!
 - **매우 중요**: vocabulary는 반드시 동화 내용과 관련된 구체적인 명사(noun) 8개를 선정하세요 (예: Apple, Tree, Star, Moon, River, Mountain 등)
 - **매우 중요**: 각 단어는 {"word": "영어명사", "korean": "한글뜻"} 형식으로 작성하세요
 
@@ -589,19 +596,36 @@ ${targetAge === '4-5' ? `
 **예시 1: 낮 장면 (동물 캐릭터)**
 - text: "토끼가 숲에서 당근을 발견했어요" 
 - scene_description: "숲속에서 흰 토끼가 오렌지색 당근을 발견하고 깜짝 놀라며 기뻐하는 장면. 토끼의 귀가 쫑긋 서있고 눈이 반짝거립니다. 햇살이 나뭇잎 사이로 비춥니다."
-- scene_structure: {"characters": "흰 토끼가 기쁜 표정으로 당근을 발견함", "background": "초록색 숲속, 햇살이 비치는 밝은 낮", "atmosphere": "밝고 즐거운 분위기", "key_objects": "크고 싱싱한 오렌지색 당근"}
+- scene_structure: {"characters": "흰 토끼가 기쁜 표정으로 당근을 발견함", "background": "초록색 숲속, 햇살이 비치는 밝은 낮", "atmosphere": "밝고 즐거운 분위기", "key_objects": "크고 싱싱한 오렌지색 당근", "spatial_layout": "토끼는 중앙, 당근은 토끼 앞 오른쪽"}
 
 **예시 2: 밤 장면 (개구리가 등장하는 경우)**
 - text: "개구리가 공주에게 다가와 말했어요. '약속을 지켜주세요.'"
 - ❌ 잘못된 scene_description: "공주가 궁전 안에서 왕과 대화하는 장면"
   → 문제: 개구리가 완전히 누락됨!
 - ✅ 올바른 scene_description: "궁전 안에서 작은 녹색 개구리가 공주 앞에 있고, 공주를 올려다보며 말하고 있습니다. 공주는 놀란 표정으로 개구리를 내려다보고 있습니다. 창밖으로 밤하늘이 보입니다."
-- scene_structure: {"characters": "녹색 개구리가 공주 앞에서 말하고, 공주는 놀란 표정으로 개구리를 봄", "background": "궁전 식당, 촛불이 켜진 저녁 식사 시간", "atmosphere": "놀라움과 긴장감", "key_objects": "황금 공 (공주가 떨어뜨린 황금색으로 빛나는 공)"}
+- scene_structure: {"characters": "녹색 개구리가 공주 앞에서 말하고, 공주는 놀란 표정으로 개구리를 봄", "background": "궁전 식당, 촛불이 켜진 저녁 식사 시간", "atmosphere": "놀라움과 긴장감", "key_objects": "황금 공 (공주가 떨어뜨린 황금색으로 빛나는 공)", "spatial_layout": "공주는 왼쪽, 개구리는 오른쪽"}
 
 **예시 3: 밤 장면 (침실)**
 - text: "밤이 되어 개구리는 공주 침실에서 함께 잤어요"
 - scene_description: "어두운 침실에서 달빛이 창문을 통해 은은히 들어오고, 작은 녹색 개구리가 침대 한쪽에 웅크리고 자고 있습니다."
-- scene_structure: {"characters": "녹색 개구리가 침대에서 자고 있음", "background": "왕궁 침실, 달빛이 비치는 밤", "atmosphere": "고요하고 평화로운 밤", "key_objects": "황금 공 (침대 옆 탁자 위에 놓여진 황금 공)"}
+- scene_structure: {"characters": "녹색 개구리가 침대에서 자고 있음", "background": "왕궁 침실, 달빛이 비치는 밤", "atmosphere": "고요하고 평화로운 밤", "key_objects": "황금 공 (침대 옆 탁자 위에 놓여진 황금 공)", "spatial_layout": "공주는 왼쪽 침대에, 개구리는 오른쪽 침대 끝에"}
+  → ⭐ 중요: 이전 페이지와 동일하게 공주 왼쪽, 개구리 오른쪽 유지!
+
+**예시 3-1: 공간적 일관성 유지 (빨간 망토 예시)**
+
+**Page 5 (처음 만남):**
+- text: "빨간 망토는 숲에서 늑대를 만났어요"
+- scene_structure: {"characters": "빨간 망토가 놀란 표정으로 늑대를 바라봄", "background": "어두운 숲속, 오후 햇살", "atmosphere": "긴장감", "key_objects": "바구니", "spatial_layout": "빨간 망토는 왼쪽, 늑대는 오른쪽"}
+  → ⭐ 첫 만남: 빨간 망토 왼쪽, 늑대 오른쪽
+
+**Page 6 (대화 장면):**
+- text: "늑대가 빨간 망토에게 물었어요. '어디 가니?'"
+- scene_structure: {"characters": "늑대가 말하고, 빨간 망토가 대답함", "background": "숲속 오솔길, 오후 햇살", "atmosphere": "긴장된 대화", "key_objects": "바구니", "spatial_layout": "빨간 망토는 왼쪽, 늑대는 오른쪽"}
+  → ⭐ 중요: Page 5와 동일한 위치 유지! 절대 좌우 반전하지 말 것!
+
+**Page 7 (계속 대화):**
+- scene_structure: {..., "spatial_layout": "빨간 망토는 왼쪽, 늑대는 오른쪽"}
+  → ⭐ 여전히 동일한 위치 유지!
 
 **예시 4: 알라딘 동화 - 램프의 일관성 유지 (매우 중요!)**
 
@@ -1076,19 +1100,20 @@ app.post('/api/generate-illustration', requireAPIKey, async (req, res) => {
           sceneDetails = `\n\n**Scene Structure:**
 - **Characters & Actions:** ${page.scene_structure.characters}
 - **Background Setting:** ${page.scene_structure.background}  
-- **Mood & Atmosphere:** ${page.scene_structure.atmosphere}${page.scene_structure.key_objects ? `\n- **Key Objects:** ${page.scene_structure.key_objects}` : ''}`;
+- **Mood & Atmosphere:** ${page.scene_structure.atmosphere}${page.scene_structure.key_objects ? `\n- **Key Objects:** ${page.scene_structure.key_objects}` : ''}${page.scene_structure.spatial_layout ? `\n- **Spatial Layout:** ${page.scene_structure.spatial_layout}` : ''}`;
         }
       } else {
         sceneDetails = `\n\n**Scene Structure:**
 - **Characters & Actions:** ${page.scene_structure.characters}
 - **Background Setting:** ${page.scene_structure.background}  
-- **Mood & Atmosphere:** ${page.scene_structure.atmosphere}${page.scene_structure.key_objects ? `\n- **Key Objects:** ${page.scene_structure.key_objects}` : ''}`;
+- **Mood & Atmosphere:** ${page.scene_structure.atmosphere}${page.scene_structure.key_objects ? `\n- **Key Objects:** ${page.scene_structure.key_objects}` : ''}${page.scene_structure.spatial_layout ? `\n- **Spatial Layout:** ${page.scene_structure.spatial_layout}` : ''}`;
       }
     }
     
     // 전체 스토리 맥락 구성 (이전 페이지들)
     let storyContext = '';
     let objectConsistencyNote = '';
+    let spatialConsistencyNote = '';
     
     if (previousPages && previousPages.length > 0) {
       console.log(`Including story context from ${previousPages.length} previous pages`);
@@ -1097,6 +1122,30 @@ app.post('/api/generate-illustration', requireAPIKey, async (req, res) => {
         .sort((a, b) => a.pageNumber - b.pageNumber)
         .map(p => `Page ${p.pageNumber}: ${p.text}`)
         .join('\n');
+      
+      // 바로 이전 페이지의 spatial_layout 참조 (공간적 일관성 유지)
+      const previousPage = previousPages
+        .filter(p => p.pageNumber === page.pageNumber - 1)
+        .sort((a, b) => b.pageNumber - a.pageNumber)[0];
+      
+      if (previousPage && previousPage.scene_structure && previousPage.scene_structure.spatial_layout) {
+        const previousLayout = previousPage.scene_structure.spatial_layout;
+        if (previousLayout.trim() && page.scene_structure && page.scene_structure.spatial_layout) {
+          spatialConsistencyNote = `\n\n**⭐ CRITICAL - SPATIAL CONSISTENCY ⭐:**
+The previous page (Page ${previousPage.pageNumber}) had this character layout:
+"${previousLayout}"
+
+The current page (Page ${page.pageNumber}) has this layout:
+"${page.scene_structure.spatial_layout}"
+
+**ABSOLUTE REQUIREMENT - MAINTAIN SPATIAL CONSISTENCY:**
+- If the same characters appear in consecutive pages, they MUST maintain their left-right positions
+- For example: If "Red Riding Hood on left, Wolf on right" in previous page, they must STAY "Red Riding Hood on left, Wolf on right" in current page
+- DO NOT flip/mirror the positions unless there is a clear scene change or character movement
+- Sudden left-right reversal confuses readers and breaks visual continuity
+- Keep characters in their established spatial positions throughout continuous scenes`;
+        }
+      }
       
       // 처음 등장한 key_objects를 찾아서 참조 (일관성 유지)
       // 현재 페이지에 key_objects가 있으면, 이전 페이지들에서 처음 등장한 설명을 찾음
@@ -1140,7 +1189,7 @@ ${previousTexts}
 
 **CURRENT PAGE ${page.pageNumber}:** ${page.text}
 
-**CRITICAL:** The illustration MUST match the current page state. For example, if a character transformed (like mermaid becoming human), they MUST appear in their NEW form on the current page, not their old form.${objectConsistencyNote}`;
+**CRITICAL:** The illustration MUST match the current page state. For example, if a character transformed (like mermaid becoming human), they MUST appear in their NEW form on the current page, not their old form.${objectConsistencyNote}${spatialConsistencyNote}`;
       }
     }
     
