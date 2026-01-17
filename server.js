@@ -510,6 +510,10 @@ ${targetAge === '4-5' ? `
 - **매우 중요**: 각 캐릭터는 구별 가능한 고유 특징을 가져야 합니다 (예: 난쟁이1은 안경, 난쟁이2는 긴 수염)
 - **매우 중요**: scene_description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소를 자세히 포함하세요
 - **매우 중요**: 각 페이지에 scene_structure 객체를 반드시 포함하세요
+- **⭐ 절대 필수 ⭐**: scene_structure의 background에는 반드시 시간대를 명확히 표시하세요! 
+  (예: "햇살이 비치는 낮", "별이 빛나는 밤", "촛불이 켜진 저녁", "달빛이 비치는 밤")
+  ❌ "숲속", "궁전 식당" (시간대 없음)
+  ✅ "숲속, 햇살이 비치는 낮", "궁전 식당, 촛불이 켜진 밤"
 - **매우 중요**: vocabulary는 반드시 동화 내용과 관련된 구체적인 명사(noun) 8개를 선정하세요 (예: Apple, Tree, Star, Moon, River, Mountain 등)
 - **매우 중요**: 각 단어는 {"word": "영어명사", "korean": "한글뜻"} 형식으로 작성하세요
 
@@ -544,26 +548,41 @@ ${targetAge === '4-5' ? `
 
 장면 예시:
 
-**예시 1: 동물 캐릭터**
-- text: "토끼가 숲에서 당근을 발견했어요" 
-- scene_description: "숲속에서 흰 토끼가 오렌지색 당근을 발견하고 깜짝 놀라며 기뻐하는 장면. 토끼의 귀가 쫑긋 서있고 눈이 반짝거립니다."
-- scene_structure: {"characters": "흰 토끼가 기쁜 표정으로 당근을 발견함", "background": "초록색 숲속, 햇살이 비치는 낮", "atmosphere": "밝고 즐거운 분위기"}
+**⭐ 시간대(낮/밤) 구분 규칙 - 매우 중요! ⭐**
+- scene_structure의 background에는 반드시 시간대를 명확히 포함하세요!
+- 낮 장면 표현: "햇살이 비치는 낮", "밝은 아침", "화창한 낮", "오후 햇살", "정오의 밝은 빛"
+- 밤 장면 표현: "별이 빛나는 밤", "달빛이 비치는 밤", "어두운 밤", "자정", "달이 뜬 밤하늘"
+- 석양/새벽 표현: "석양이 지는 저녁", "붉은 노을이 지는 황혼", "동트는 새벽", "새벽녘"
+- ❌ 잘못된 예: "궁전 식당" (시간대 없음)
+- ✅ 올바른 예: "궁전 식당, 촛불이 켜진 밤" 또는 "궁전 식당, 햇살이 비치는 낮"
 
-**예시 2: 개구리가 등장하는 경우 (⭐중요⭐)**
+**예시 1: 낮 장면 (동물 캐릭터)**
+- text: "토끼가 숲에서 당근을 발견했어요" 
+- scene_description: "숲속에서 흰 토끼가 오렌지색 당근을 발견하고 깜짝 놀라며 기뻐하는 장면. 토끼의 귀가 쫑긋 서있고 눈이 반짝거립니다. 햇살이 나뭇잎 사이로 비춥니다."
+- scene_structure: {"characters": "흰 토끼가 기쁜 표정으로 당근을 발견함", "background": "초록색 숲속, 햇살이 비치는 밝은 낮", "atmosphere": "밝고 즐거운 분위기"}
+
+**예시 2: 밤 장면 (개구리가 등장하는 경우)**
 - text: "개구리가 공주에게 다가와 말했어요. '약속을 지켜주세요.'"
 - ❌ 잘못된 scene_description: "공주가 궁전 안에서 왕과 대화하는 장면"
   → 문제: 개구리가 완전히 누락됨!
-- ✅ 올바른 scene_description: "궁전 안에서 작은 녹색 개구리가 공주 앞에 있고, 공주를 올려다보며 말하고 있습니다. 공주는 놀란 표정으로 개구리를 내려다보고 있습니다."
-- scene_structure: {"characters": "녹색 개구리가 공주 앞에서 말하고, 공주는 놀란 표정으로 개구리를 봄", "background": "궁전 식당, 저녁 식사 시간", "atmosphere": "놀라움과 긴장감"}
+- ✅ 올바른 scene_description: "궁전 안에서 작은 녹색 개구리가 공주 앞에 있고, 공주를 올려다보며 말하고 있습니다. 공주는 놀란 표정으로 개구리를 내려다보고 있습니다. 창밖으로 밤하늘이 보입니다."
+- scene_structure: {"characters": "녹색 개구리가 공주 앞에서 말하고, 공주는 놀란 표정으로 개구리를 봄", "background": "궁전 식당, 촛불이 켜진 저녁 식사 시간", "atmosphere": "놀라움과 긴장감"}
 
-**예시 3: 변신 전 모습 유지**
+**예시 3: 밤 장면 (침실)**
+- text: "밤이 되어 개구리는 공주 침실에서 함께 잤어요"
+- scene_description: "어두운 침실에서 달빛이 창문을 통해 은은히 들어오고, 작은 녹색 개구리가 침대 한쪽에 웅크리고 자고 있습니다."
+- scene_structure: {"characters": "녹색 개구리가 침대에서 자고 있음", "background": "왕궁 침실, 달빛이 비치는 밤", "atmosphere": "고요하고 평화로운 밤"}
+
+**예시 4: 변신 전 모습 유지 (밤 장면)**
 - text: "마법이 풀리기 전, 개구리는 공주 옆에서 자고 있었어요."
-- ✅ scene_description: "침실에서 작은 녹색 개구리가 침대 한쪽 구석에 웅크리고 자고 있고, 공주는 침대 반대편에서 불편한 표정으로 누워있습니다."
+- ✅ scene_description: "어두운 침실에서 작은 녹색 개구리가 침대 한쪽 구석에 웅크리고 자고 있고, 공주는 침대 반대편에서 불편한 표정으로 누워있습니다. 달빛이 창문을 통해 들어옵니다."
+- scene_structure: {"characters": "녹색 개구리가 침대에서 자고 있고, 공주는 불편한 표정", "background": "왕궁 침실, 달빛이 비치는 밤", "atmosphere": "불편하고 긴장된 분위기"}
   → 중요: "마법이 풀리기 전"이므로 아직 개구리 상태여야 함!
 
-**예시 4: 변신 후 모습**
+**예시 5: 변신 후 모습 (아침 장면)**
 - text: "아침이 되자 개구리는 멋진 왕자로 변했어요!"
-- ✅ scene_description: "침실에서 햇살이 비치는 아침, 멋진 왕자가 침대 옆에 서있고 공주는 놀란 표정으로 왕자를 바라보는 장면"
+- ✅ scene_description: "침실에서 햇살이 비치는 아침, 멋진 왕자가 침대 옆에 서있고 공주는 놀란 표정으로 왕자를 바라보는 장면. 밝은 햇빛이 창문을 통해 쏟아져 들어옵니다."
+- scene_structure: {"characters": "잘생긴 왕자가 서있고, 공주는 놀란 표정으로 바라봄", "background": "왕궁 침실, 햇살이 비치는 아침", "atmosphere": "놀라움과 기쁨의 순간"}
   → 중요: 이제는 "왕자"로 변했으므로 개구리가 아닌 왕자를 그려야 함!
 
 - vocabulary 예시: [{"word": "Rabbit", "korean": "토끼"}, {"word": "Carrot", "korean": "당근"}, {"word": "Forest", "korean": "숲"}]
@@ -1045,7 +1064,7 @@ ${editNoteEn ? `\n\n**Important Modification Request:** ${editNoteEn}` : ''}
 
 **Composition:** Create a warm, inviting scene that captures the emotion and action of the story moment. Use a horizontal composition suitable for a storybook spread.
 
-**Lighting & Atmosphere:** Soft, warm lighting with gentle shadows. The scene should feel magical yet safe and welcoming for young children.
+**Lighting & Atmosphere:** ${page.scene_structure?.background?.includes('밤') || page.scene_structure?.background?.includes('night') || page.scene_structure?.background?.includes('달빛') || page.scene_structure?.background?.includes('moonlight') || page.scene_structure?.background?.includes('저녁') || page.scene_structure?.background?.includes('evening') ? 'NIGHT SCENE: Dark sky with stars or moonlight. Use cool blue/purple tones for nighttime atmosphere. Include visible moon or stars if outdoors. Indoor scenes should have candles, lanterns, or dim warm lighting.' : 'DAY SCENE: Bright, clear daylight with warm sunlight. Use bright yellows and warm colors for daytime atmosphere. Show clear blue sky if outdoors. Indoor scenes should have natural sunlight streaming through windows.'} The scene should feel magical yet safe and welcoming for young children.
 
 **Quality:** High detail, rich colors, professional children's book illustration quality. The image should be engaging and age-appropriate for children aged 4-8 years.
 
