@@ -154,19 +154,29 @@ function renderBookList() {
         <div class="book-item ${currentStorybook && currentStorybook.id === book.id ? 'active' : ''} p-4 rounded-lg mb-2 border border-gray-200"
              onclick="selectStorybook('${book.id}')">
             <div class="flex justify-between items-start">
-                <div class="flex-1">
-                    <h3 class="font-bold text-gray-800 mb-1">${book.title}</h3>
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-bold text-gray-800 mb-1 truncate" title="${book.title}">${book.title}</h3>
                     <p class="text-xs text-gray-500">
                         <i class="fas fa-child mr-1"></i>${book.targetAge}세 
-                        <i class="fas fa-palette ml-2 mr-1"></i>${book.artStyle}
+                        <i class="fas fa-file-alt ml-2 mr-1"></i>${book.pages.length}p
                     </p>
                 </div>
-                <button 
-                    onclick="event.stopPropagation(); deleteStorybook('${book.id}')"
-                    class="text-red-500 hover:text-red-700 ml-2"
-                >
-                    <i class="fas fa-trash"></i>
-                </button>
+                <div class="flex gap-1 ml-2">
+                    <button 
+                        onclick="event.stopPropagation(); duplicateStorybookById('${book.id}')"
+                        class="text-blue-500 hover:text-blue-700"
+                        title="복사"
+                    >
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button 
+                        onclick="event.stopPropagation(); deleteStorybook('${book.id}')"
+                        class="text-red-500 hover:text-red-700"
+                        title="삭제"
+                    >
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
         </div>
     `).join('');
@@ -195,6 +205,137 @@ function deleteStorybook(id) {
             document.getElementById('createForm').style.display = 'block';
         }
     }
+}
+
+// 동화책 제목 업데이트
+function updateStorybookTitle(newTitle) {
+    if (!currentStorybook || !newTitle.trim()) {
+        alert('제목을 입력해주세요.');
+        return;
+    }
+    
+    const oldTitle = currentStorybook.title;
+    currentStorybook.title = newTitle.trim();
+    
+    // storybooks 배열에서도 업데이트
+    const index = storybooks.findIndex(b => b.id === currentStorybook.id);
+    if (index !== -1) {
+        storybooks[index].title = newTitle.trim();
+    }
+    
+    saveStorybooks();
+    renderBookList();
+    
+    console.log(`✅ 제목 변경: "${oldTitle}" → "${newTitle.trim()}"`);
+    
+    // 제목 업데이트 알림
+    showNotification('success', '제목이 저장되었습니다!');
+}
+
+// 동화책 복사
+function duplicateStorybook() {
+    if (!currentStorybook) {
+        alert('복사할 동화책이 없습니다.');
+        return;
+    }
+    
+    if (!confirm('이 동화책을 복사하시겠습니까?\n\n복사본을 만든 후 연령대, 그림체, 페이지 수 등을 수정하여 다른 버전을 만들 수 있습니다.')) {
+        return;
+    }
+    
+    // 깊은 복사 (이미지 URL 포함)
+    const duplicate = JSON.parse(JSON.stringify(currentStorybook));
+    
+    // 새 ID 생성
+    duplicate.id = Date.now().toString();
+    
+    // 제목에 "(복사본)" 추가
+    duplicate.title = `${currentStorybook.title} (복사본)`;
+    
+    // 동화책 목록에 추가
+    storybooks.unshift(duplicate);
+    saveStorybooks();
+    
+    // 복사본 선택
+    currentStorybook = duplicate;
+    renderBookList();
+    displayStorybook(duplicate);
+    
+    console.log(`✅ 동화책 복사 완료: "${duplicate.title}" (ID: ${duplicate.id})`);
+    console.log(`  - 연령: ${duplicate.targetAge}세`);
+    console.log(`  - 그림체: ${duplicate.artStyle}`);
+    console.log(`  - 페이지: ${duplicate.pages.length}개`);
+    console.log(`  - 캐릭터: ${duplicate.characters.length}명`);
+    
+    // 복사 완료 알림
+    showNotification('success', '복사 완료!', `좌측 목록에서 "${duplicate.title}"을 확인하세요.`);
+}
+
+// ID로 동화책 복사 (사이드바에서 호출)
+function duplicateStorybookById(id) {
+    const book = storybooks.find(b => b.id === id);
+    if (!book) {
+        alert('동화책을 찾을 수 없습니다.');
+        return;
+    }
+    
+    // 깊은 복사 (이미지 URL 포함)
+    const duplicate = JSON.parse(JSON.stringify(book));
+    
+    // 새 ID 생성
+    duplicate.id = Date.now().toString();
+    
+    // 제목에 "(복사본)" 추가
+    duplicate.title = `${book.title} (복사본)`;
+    
+    // 동화책 목록에 추가
+    storybooks.unshift(duplicate);
+    saveStorybooks();
+    
+    // 복사본 선택
+    currentStorybook = duplicate;
+    renderBookList();
+    displayStorybook(duplicate);
+    
+    console.log(`✅ 동화책 복사 완료: "${duplicate.title}" (ID: ${duplicate.id})`);
+    
+    // 복사 완료 알림
+    showNotification('success', '복사 완료!', `"${duplicate.title}"이 생성되었습니다.`);
+}
+
+// 알림 표시 함수
+function showNotification(type, title, message) {
+    const colors = {
+        success: 'bg-green-500',
+        info: 'bg-blue-500',
+        warning: 'bg-yellow-500',
+        error: 'bg-red-500'
+    };
+    
+    const icons = {
+        success: 'fa-check-circle',
+        info: 'fa-info-circle',
+        warning: 'fa-exclamation-triangle',
+        error: 'fa-times-circle'
+    };
+    
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 ${colors[type] || colors.info} text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in max-w-sm`;
+    notification.innerHTML = `
+        <div class="flex items-start gap-3">
+            <i class="fas ${icons[type] || icons.info} text-xl mt-0.5"></i>
+            <div>
+                <strong class="block">${title}</strong>
+                ${message ? `<span class="text-sm block mt-1">${message}</span>` : ''}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 // 그림체 선택 변경 핸들러
@@ -311,20 +452,44 @@ function displayStorybook(storybook) {
     let html = `
         <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10 mb-8">
             <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3 md:gap-0 mb-4">
-                <div>
-                    <h2 class="text-2xl md:text-4xl font-bold text-purple-600 mb-2">${storybook.title}</h2>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <input 
+                            type="text" 
+                            id="storybook-title-edit"
+                            value="${storybook.title}"
+                            onchange="updateStorybookTitle(this.value)"
+                            class="text-2xl md:text-4xl font-bold text-purple-600 bg-transparent border-b-2 border-purple-300 focus:border-purple-600 outline-none flex-1 max-w-2xl"
+                        />
+                        <button 
+                            onclick="updateStorybookTitle(document.getElementById('storybook-title-edit').value)"
+                            class="text-purple-600 hover:text-purple-700 text-sm"
+                            title="제목 저장"
+                        >
+                            <i class="fas fa-check-circle text-xl md:text-2xl"></i>
+                        </button>
+                    </div>
                     <p class="text-sm md:text-base text-gray-600">
                         <i class="fas fa-child mr-1 md:mr-2"></i>${storybook.targetAge}세 
                         <i class="fas fa-palette ml-2 md:ml-4 mr-1 md:mr-2"></i><span class="hidden sm:inline">${storybook.artStyle}</span>
                         <i class="fas fa-file-alt ml-2 md:ml-4 mr-1 md:mr-2"></i>${storybook.pages.length}페이지
                     </p>
                 </div>
-                <button 
-                    onclick="openRegenerateModal()"
-                    class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold hover:from-orange-600 hover:to-red-600 transition-all shadow-lg text-sm md:text-base whitespace-nowrap"
-                >
-                    <i class="fas fa-redo mr-1 md:mr-2"></i>다시 만들기
-                </button>
+                <div class="flex gap-2">
+                    <button 
+                        onclick="duplicateStorybook()"
+                        class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-3 md:px-5 py-2 md:py-3 rounded-lg font-bold hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg text-sm md:text-base whitespace-nowrap"
+                        title="다른 연령대/그림체로 만들 때 복사하세요"
+                    >
+                        <i class="fas fa-copy mr-1 md:mr-2"></i><span class="hidden sm:inline">복사</span><span class="sm:hidden">복사</span>
+                    </button>
+                    <button 
+                        onclick="openRegenerateModal()"
+                        class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 md:px-5 py-2 md:py-3 rounded-lg font-bold hover:from-orange-600 hover:to-red-600 transition-all shadow-lg text-sm md:text-base whitespace-nowrap"
+                    >
+                        <i class="fas fa-redo mr-1 md:mr-2"></i><span class="hidden sm:inline">다시 만들기</span><span class="sm:hidden">재생성</span>
+                    </button>
+                </div>
             </div>
             <div class="bg-purple-50 p-4 md:p-6 rounded-lg mt-4 md:mt-6">
                 <h3 class="text-lg md:text-xl font-bold text-purple-600 mb-2">
