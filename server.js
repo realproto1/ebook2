@@ -513,10 +513,11 @@ ${targetAge === '4-5' ? `
 - **매우 중요**: 각 페이지에 scene_structure 객체를 반드시 포함하세요
 - **⭐ 절대 필수 - 주요 사물 일관성 ⭐**: scene_structure에 key_objects 필드를 포함하세요!
   - 스토리에서 반복적으로 등장하는 중요한 사물(램프, 왕관, 유리 구두, 마법 지팡이 등)은 **상세한 시각적 설명**을 포함하세요
-  - 사물의 **색상, 재질, 모양, 크기, 특징적인 장식**을 명시하여 다음 페이지에서도 동일하게 그려질 수 있도록 하세요
-  - 예시: "마법 램프 (구리색, 곡선형 손잡이, 긴 주둥이, 표면에 아랍 문양이 새겨진 오래된 램프)"
-  - 예시: "유리 구두 (투명하고 반짝이는 크리스탈 구두, 작고 섬세한 굽)"
-  - 예시: "황금 공 (황금색으로 빛나는 작은 공, 표면이 매끄러움)"
+  - **⭐ 매우 중요: 사물이 처음 등장하는 페이지에만 상세한 설명을 작성하세요!**
+  - **처음 등장 시:** 색상, 재질, 모양, 크기, 특징적인 장식을 모두 포함한 완전한 설명
+  - **이후 등장 시:** 간단한 언급만 (예: "마법 램프", "유리 구두") - 시스템이 자동으로 처음 설명을 참조함
+  - 예시 (처음 등장): "마법 램프 (구리색, 곡선형 손잡이, 긴 주둥이, 표면에 아랍 문양이 새겨진 오래된 램프)"
+  - 예시 (이후 등장): "마법 램프 - 알라딘의 손에 들려있음" 또는 "마법 램프 - 바닥에 놓여있음"
   - 사물이 등장하지 않는 페이지는 빈 문자열 "" 사용
 - **⭐ 절대 필수 ⭐**: scene_structure의 background에는 반드시 시간대를 명확히 표시하세요! 
   (예: "햇살이 비치는 낮", "별이 빛나는 밤", "촛불이 켜진 저녁", "달빛이 비치는 밤")
@@ -582,23 +583,35 @@ ${targetAge === '4-5' ? `
 - scene_structure: {"characters": "녹색 개구리가 침대에서 자고 있음", "background": "왕궁 침실, 달빛이 비치는 밤", "atmosphere": "고요하고 평화로운 밤", "key_objects": "황금 공 (침대 옆 탁자 위에 놓여진 황금 공)"}
 
 **예시 4: 알라딘 동화 - 램프의 일관성 유지 (매우 중요!)**
+
+**Page 3 (처음 등장):**
 - text: "알라딘이 신비한 램프를 발견했어요"
 - scene_description: "어두운 동굴 속에서 알라딘이 오래되고 먼지가 쌓인 구리색 램프를 발견하는 장면. 램프는 특이한 곡선 모양의 손잡이와 긴 주둥이를 가지고 있습니다."
 - scene_structure: {"characters": "알라딘이 놀란 표정으로 램프를 쳐다봄", "background": "어두운 동굴, 보물들이 쌓여있음", "atmosphere": "신비롭고 긴장감 넘치는 분위기", "key_objects": "**마법 램프** (구리색, 곡선형 손잡이, 긴 주둥이, 표면에 아랍 문양이 새겨진 오래된 램프)"}
-  → ⭐ 중요: key_objects에 램프의 상세한 시각적 특징을 명시하여 이후 페이지에서도 동일한 모습으로 유지
+  → ⭐ 중요: 처음 등장이므로 상세한 시각적 특징을 모두 명시!
 
+**Page 4 (두 번째 등장):**
 - text: "알라딘이 램프를 문질렀어요"
 - scene_description: "알라딘이 램프를 손으로 문지르자 연기가 피어오르는 장면"
-- scene_structure: {"characters": "알라딘이 램프를 문지르고 있음", "background": "동굴 안, 빛이 번쩍이는 순간", "atmosphere": "놀라움과 마법적인 순간", "key_objects": "**마법 램프** (구리색, 곡선형 손잡이, 긴 주둥이, 표면에 아랍 문양) - 알라딘의 손에 들려있음"}
-  → ⭐ 중요: 이전 페이지와 동일한 램프 묘사 유지!
+- scene_structure: {"characters": "알라딘이 램프를 문지르고 있음", "background": "동굴 안, 빛이 번쩍이는 순간", "atmosphere": "놀라움과 마법적인 순간", "key_objects": "마법 램프 - 알라딘의 손에 들려있음"}
+  → ⭐ 중요: 이미 등장했으므로 간단히 언급만! 시스템이 자동으로 Page 3의 상세 설명 참조
+
+**Page 5 (세 번째 등장):**
+- text: "램프에서 지니가 나왔어요!"
+- scene_structure: {"characters": "거대한 지니가 램프에서 나오고 있음", "background": "동굴 안, 마법의 연기로 가득함", "atmosphere": "경이롭고 놀라운 순간", "key_objects": "마법 램프 - 바닥에 놓여있음"}
+  → ⭐ 중요: 여전히 간단히 언급만! 시스템이 자동으로 Page 3의 상세 설명 참조
 
 **예시 5: 신데렐라 - 유리 구두의 일관성**
+
+**Page 7 (처음 등장):**
 - text: "신데렐라는 무도회에서 왕자와 춤을 췄어요"
 - scene_structure: {"characters": "신데렐라와 왕자가 춤을 추고 있음", "background": "화려한 무도회장, 촛불이 켜진 밤", "atmosphere": "로맨틱하고 황홀한 분위기", "key_objects": "**유리 구두** (투명하고 반짝이는 크리스탈 구두, 작고 섬세한 굽)"}
+  → ⭐ 처음 등장: 상세한 설명 포함
 
+**Page 8 (두 번째 등장):**
 - text: "자정이 되자 신데렐라는 계단을 내려가다 구두 한 짝을 잃어버렸어요"
-- scene_structure: {"characters": "신데렐라가 급하게 계단을 내려가고 있음", "background": "궁전 계단, 달빛이 비치는 자정", "atmosphere": "긴박하고 아쉬운 순간", "key_objects": "**유리 구두** (투명하고 반짝이는 크리스탈 구두, 작고 섬세한 굽) - 한 짝은 계단에 남겨짐"}
-  → ⭐ 중요: 이전 페이지의 유리 구두와 동일한 모습!
+- scene_structure: {"characters": "신데렐라가 급하게 계단을 내려가고 있음", "background": "궁전 계단, 달빛이 비치는 자정", "atmosphere": "긴박하고 아쉬운 순간", "key_objects": "유리 구두 - 한 짝은 계단에 남겨짐"}
+  → ⭐ 이미 등장: 간단히 언급만, 시스템이 Page 7의 설명 자동 참조
 
 **예시 4: 변신 전 모습 유지 (밤 장면)**
 - text: "마법이 풀리기 전, 개구리는 공주 옆에서 자고 있었어요."
@@ -1064,22 +1077,39 @@ app.post('/api/generate-illustration', requireAPIKey, async (req, res) => {
         .map(p => `Page ${p.pageNumber}: ${p.text}`)
         .join('\n');
       
-      // 이전 페이지(바로 직전)의 key_objects 추출하여 일관성 유지
-      const previousPage = previousPages
-        .filter(p => p.pageNumber === page.pageNumber - 1)
-        .sort((a, b) => b.pageNumber - a.pageNumber)[0];
-      
-      if (previousPage && previousPage.scene_structure && previousPage.scene_structure.key_objects) {
-        const previousObjects = previousPage.scene_structure.key_objects;
-        if (previousObjects.trim()) {
-          objectConsistencyNote = `\n\n**⭐ CRITICAL - OBJECT CONSISTENCY ⭐:**
-The previous page (Page ${previousPage.pageNumber}) featured these key objects:
-${previousObjects}
+      // 처음 등장한 key_objects를 찾아서 참조 (일관성 유지)
+      // 현재 페이지에 key_objects가 있으면, 이전 페이지들에서 처음 등장한 설명을 찾음
+      if (page.scene_structure && page.scene_structure.key_objects && page.scene_structure.key_objects.trim()) {
+        // 현재 페이지의 key_objects에서 사물 이름 추출 (예: "마법 램프", "유리 구두" 등)
+        const currentObjects = page.scene_structure.key_objects;
+        
+        // 이전 페이지들을 순서대로 순회하며 처음 등장한 key_objects 찾기
+        const sortedPreviousPages = previousPages
+          .filter(p => p.pageNumber < page.pageNumber && p.scene_structure && p.scene_structure.key_objects)
+          .sort((a, b) => a.pageNumber - b.pageNumber);
+        
+        if (sortedPreviousPages.length > 0) {
+          // 처음 등장한 페이지의 key_objects
+          const firstAppearance = sortedPreviousPages[0];
+          const firstObjects = firstAppearance.scene_structure.key_objects;
+          
+          if (firstObjects.trim()) {
+            objectConsistencyNote = `\n\n**⭐ CRITICAL - OBJECT CONSISTENCY ⭐:**
+These key objects FIRST appeared on Page ${firstAppearance.pageNumber} with this description:
+${firstObjects}
 
-**IMPORTANT:** If any of these objects appear in the current page, they MUST look EXACTLY THE SAME as described above. Maintain the same colors, shapes, materials, decorations, and visual characteristics. For example:
-- If a "golden lamp with curved handle" appeared before, it must be golden with a curved handle again
-- If a "transparent crystal shoe with delicate heel" appeared before, it must be transparent crystal with delicate heel again
-- Keep the EXACT same visual design for recurring objects to maintain story continuity`;
+**ABSOLUTE REQUIREMENT:** The objects in the current page MUST look EXACTLY THE SAME as when they first appeared on Page ${firstAppearance.pageNumber}. Use the EXACT same:
+- Colors (same color tones and shades)
+- Shapes (same geometric forms and proportions)
+- Materials (same textures and finishes)
+- Decorations (same patterns and ornaments)
+- Size and proportions (same relative sizes)
+
+For example:
+- If a "copper-colored lamp with curved handle and Arab patterns" appeared first, it must ALWAYS be copper-colored with curved handle and Arab patterns
+- If a "transparent crystal shoe with delicate heel" appeared first, it must ALWAYS be transparent crystal with delicate heel
+- Keep PIXEL-PERFECT consistency with the first appearance to maintain story continuity`;
+          }
         }
       }
       
