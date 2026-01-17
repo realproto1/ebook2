@@ -704,20 +704,36 @@ function displayStorybook(storybook) {
                 </h3>
                 <div class="flex gap-3 flex-wrap">
                     <div class="flex gap-2">
-                        <button 
-                            onclick="generateAllIllustrationsParallel()"
-                            class="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition shadow-md"
-                            title="병렬로 모든 삽화를 동시에 생성합니다. 빠르지만 연속성이 약할 수 있습니다."
-                        >
-                            <i class="fas fa-bolt mr-2"></i>모든 삽화 생성 (빠르게)
-                        </button>
-                        <button 
-                            onclick="generateAllIllustrationsSequential()"
-                            class="bg-indigo-600 text-white px-5 py-3 rounded-lg hover:bg-indigo-700 transition shadow-md"
-                            title="순차적으로 삽화를 생성합니다. 각 페이지가 이전 페이지를 참조하여 연속성이 뛰어납니다."
-                        >
-                            <i class="fas fa-layer-group mr-2"></i>모든 삽화 생성 (정확하게)
-                        </button>
+                        <div class="relative inline-flex">
+                            <button 
+                                onclick="generateAllIllustrationsParallel()"
+                                class="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition shadow-md"
+                            >
+                                <i class="fas fa-bolt mr-2"></i>모든 삽화 생성 (빠르게)
+                            </button>
+                            <button 
+                                onclick="showGenerationModeHelp('parallel')"
+                                class="absolute -top-2 -right-2 bg-white text-blue-600 w-6 h-6 rounded-full hover:bg-blue-50 transition shadow-md flex items-center justify-center"
+                                title="병렬 생성 모드에 대한 자세한 설명 보기"
+                            >
+                                <i class="fas fa-question text-xs"></i>
+                            </button>
+                        </div>
+                        <div class="relative inline-flex">
+                            <button 
+                                onclick="generateAllIllustrationsSequential()"
+                                class="bg-indigo-600 text-white px-5 py-3 rounded-lg hover:bg-indigo-700 transition shadow-md"
+                            >
+                                <i class="fas fa-layer-group mr-2"></i>모든 삽화 생성 (정확하게)
+                            </button>
+                            <button 
+                                onclick="showGenerationModeHelp('sequential')"
+                                class="absolute -top-2 -right-2 bg-white text-indigo-600 w-6 h-6 rounded-full hover:bg-indigo-50 transition shadow-md flex items-center justify-center"
+                                title="순차 생성 모드에 대한 자세한 설명 보기"
+                            >
+                                <i class="fas fa-question text-xs"></i>
+                            </button>
+                        </div>
                     </div>
                     <button 
                         onclick="downloadAllText()"
@@ -1254,6 +1270,90 @@ async function generateCharacterReference(charIndex) {
             </div>
         `;
     }
+}
+
+// 병렬/순차 생성 모드 설명 표시
+function showGenerationModeHelp(mode) {
+    const helpContent = mode === 'parallel' ? `
+        <div class="space-y-4">
+            <h3 class="text-xl font-bold text-blue-600 mb-3">
+                <i class="fas fa-bolt mr-2"></i>병렬 생성 (빠르게)
+            </h3>
+            
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-800 mb-2">✨ 특징</h4>
+                <ul class="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                    <li>모든 페이지를 <strong>동시에</strong> 생성</li>
+                    <li>캐릭터 레퍼런스만 참조</li>
+                    <li>빠른 속도로 전체 완성</li>
+                </ul>
+            </div>
+            
+            <div class="bg-green-50 p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-800 mb-2">⚡ 추천 상황</h4>
+                <ul class="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                    <li><strong>초안 확인:</strong> 스토리 전개와 장면 구성을 빠르게 확인</li>
+                    <li><strong>테스트 생성:</strong> 그림체나 설정을 테스트</li>
+                    <li><strong>시간 제약:</strong> 빠른 결과가 필요할 때</li>
+                    <li><strong>독립적인 장면:</strong> 각 페이지가 독립적일 때</li>
+                </ul>
+            </div>
+            
+            <div class="bg-yellow-50 p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-800 mb-2">⚠️ 주의사항</h4>
+                <ul class="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                    <li>장면 간 연속성이 약할 수 있음</li>
+                    <li>캐릭터 포즈나 분위기 변화가 급격할 수 있음</li>
+                </ul>
+            </div>
+            
+            <div class="text-center text-sm text-gray-600 mt-4">
+                <i class="fas fa-clock mr-1"></i>
+                예상 시간: 약 <strong>${Math.ceil(currentStorybook.pages.filter(p => !p.illustrationImage).length / 5) * 8}초</strong>
+            </div>
+        </div>
+    ` : `
+        <div class="space-y-4">
+            <h3 class="text-xl font-bold text-indigo-600 mb-3">
+                <i class="fas fa-layer-group mr-2"></i>순차 생성 (정확하게)
+            </h3>
+            
+            <div class="bg-indigo-50 p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-800 mb-2">✨ 특징</h4>
+                <ul class="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                    <li>페이지를 <strong>하나씩 순서대로</strong> 생성</li>
+                    <li>각 페이지가 <strong>바로 전 페이지를 자동 참조</strong></li>
+                    <li>캐릭터 레퍼런스 + 전 페이지 이미지 조합</li>
+                </ul>
+            </div>
+            
+            <div class="bg-green-50 p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-800 mb-2">🎯 추천 상황</h4>
+                <ul class="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                    <li><strong>최종 출판물:</strong> 출판하거나 공유할 완성본</li>
+                    <li><strong>연속성 중요:</strong> 인어공주처럼 변신 스토리나 시간 흐름</li>
+                    <li><strong>일관성 중시:</strong> 캐릭터 포즈, 색감, 분위기의 연속성</li>
+                    <li><strong>프로페셔널:</strong> 전문적인 품질이 필요할 때</li>
+                </ul>
+            </div>
+            
+            <div class="bg-purple-50 p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-800 mb-2">🌟 장점</h4>
+                <ul class="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                    <li>높은 시각적 연속성</li>
+                    <li>자연스러운 장면 전환</li>
+                    <li>스토리 몰입도 향상</li>
+                </ul>
+            </div>
+            
+            <div class="text-center text-sm text-gray-600 mt-4">
+                <i class="fas fa-clock mr-1"></i>
+                예상 시간: 약 <strong>${currentStorybook.pages.filter(p => !p.illustrationImage).length * 8}초</strong>
+            </div>
+        </div>
+    `;
+    
+    showModal('생성 모드 가이드', helpContent);
 }
 
 // 한 번에 모든 삽화 생성 - 병렬 (빠르게)
