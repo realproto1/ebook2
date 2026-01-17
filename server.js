@@ -512,6 +512,12 @@ ${targetAge === '4-5' ? `
 - **매우 중요**: 1명인 캐릭터는 절대 숫자를 붙이지 마세요 (❌ "왕자1", "공주1" → ✅ "왕자", "공주")
 - **매우 중요**: 2명 이상 그룹만 숫자 붙임 (✅ "난쟁이1", "난쟁이2" when 일곱 난쟁이)
 - **매우 중요**: 캐릭터 description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소(색상, 크기, 특징 등)를 자세히 포함하세요
+- **⭐ 절대 필수 - 캐릭터 의상 명시 ⭐**: 
+  - 각 캐릭터의 description에 **의상의 색상과 스타일을 명확히 포함**하세요
+  - 예: "파란색 드레스와 흰색 앞치마", "빨간색 망토와 파란색 상의", "청록색 의상"
+  - 의상 색상은 매우 구체적으로 명시 (예: "파란색" 대신 "짙은 남색", "연한 하늘색" 등)
+  - **특별한 의상 변경 장면이 아닌 한, 같은 의상을 스토리 전체에서 유지해야 함**
+  - 변신/변장 캐릭터는 각 형태별로 다른 의상 명시 가능
 - **매우 중요**: 각 캐릭터는 구별 가능한 고유 특징을 가져야 합니다 (예: 난쟁이1은 안경, 난쟁이2는 긴 수염)
 - **매우 중요**: scene_description은 한국어로 작성하되, 이미지 생성에 필요한 시각적 요소를 자세히 포함하세요
 - **매우 중요**: 각 페이지에 scene_structure 객체를 반드시 포함하세요
@@ -582,6 +588,13 @@ ${targetAge === '4-5' ? `
 - {"name": "원숭이", "description": "작고 귀여운 갈색 원숭이, 빨간 조끼를 입은 알라딘의 친구", "role": "조력자"}
 - {"name": "자스민 공주", "description": "긴 검은 머리, 청록색 의상을 입은 아름다운 공주", "role": "조력자"}
 - {"name": "지니", "description": "거대한 파란 요정, 근육질 몸, 하반신은 연기로 되어있음", "role": "조력자"}
+
+**⭐ 의상 일관성 예시 (미녀와 야수 스토리) - 매우 중요! ⭐:**
+- {"name": "벨", "description": "갈색 머리를 뒤로 묶은 아름다운 소녀, **파란색 드레스**와 흰색 앞치마 착용", "role": "주인공"}
+- {"name": "야수", "description": "갈색 털을 가진 거대한 짐승, **빨간색 망토**와 **파란색 상의** 착용, 날카로운 뿔과 이빨", "role": "주인공"}
+→ ⭐ 중요: 벨은 **항상 파란색 드레스**, 야수는 **항상 빨간색 망토와 파란색 상의**를 입어야 함!
+→ ⚠️ 금지: 벨이 갑자기 흰색 드레스나 노란색 드레스를 입으면 안 됨 (특별한 의상 변경 장면이 아닌 한)
+→ ⚠️ 금지: 야수가 갑자기 다른 색 옷을 입으면 안 됨
 
 장면 예시:
 
@@ -1044,8 +1057,8 @@ app.post('/api/generate-illustration', requireAPIKey, async (req, res) => {
     
     if (characterReferences && characterReferences.length > 0) {
       const consistencyLevel = enforceCharacterConsistency ? 
-        '\n\n**Character Consistency - ABSOLUTE REQUIREMENT:** The characters in this scene MUST match EXACTLY the appearance shown in the reference images I provided above with PIXEL-PERFECT accuracy.\n\n' :
-        '\n\n**Character Consistency:** The characters in this scene should match the appearance shown in the reference images I provided above.\n\n';
+        '\n\n**🎯 Character Consistency - ABSOLUTE CRITICAL REQUIREMENT 🎯:**\nThe characters in this scene MUST match EXACTLY the appearance shown in the reference images with PIXEL-PERFECT accuracy.\nThis is NOT optional - this is MANDATORY.\n\n' :
+        '\n\n**🎯 Character Consistency - MANDATORY REQUIREMENT 🎯:**\nThe characters in this scene MUST match the reference images exactly.\n\n';
       
       characterInfo = consistencyLevel;
       
@@ -1053,15 +1066,32 @@ app.post('/api/generate-illustration', requireAPIKey, async (req, res) => {
         if (char.referenceImage) {
           referenceImages.push(char.referenceImage);
           if (enforceCharacterConsistency) {
-            characterInfo += `**Reference Image ${index + 1}:** This is ${char.name}. Copy this character's EXACT appearance with PIXEL-PERFECT accuracy (colors, fur/clothing patterns, facial features, body proportions, eye shape and color, accessories, every single detail) from the reference image.\n`;
+            characterInfo += `**Reference Image ${index + 1} - ${char.name}:**
+COPY THIS CHARACTER WITH PIXEL-PERFECT ACCURACY:
+- Face: EXACT same facial features, eye shape, eye color, nose, mouth
+- Hair: EXACT same hairstyle, hair color, hair length
+- Clothing: EXACT same outfit colors, style, patterns, accessories
+- Body: EXACT same body proportions, height, build
+- Skin tone: EXACT same skin color and texture
+- EVERY SINGLE DETAIL must match the reference image
+
+**⚠️ CRITICAL - CLOTHING CONSISTENCY:**
+DO NOT change the character's clothing/outfit between pages unless the story explicitly mentions a costume change.
+If the reference shows a blue dress, it MUST be blue in ALL pages.
+If the reference shows a red cape, it MUST be red in ALL pages.
+Keep the EXACT SAME clothing throughout the story.\n\n`;
           } else {
-            characterInfo += `**Reference Image ${index + 1}:** This is ${char.name} - ${char.description}\n`;
+            characterInfo += `**Reference Image ${index + 1} - ${char.name}:**
+Match this character's appearance: ${char.description}
+**IMPORTANT:** Keep the same clothing/outfit in all scenes.\n\n`;
           }
         }
       });
       
       if (enforceCharacterConsistency) {
-        characterInfo += '\n**ABSOLUTE REQUIREMENT:** Look at the reference images above and recreate each character with PIXEL-PERFECT accuracy. Same colors, same features, same proportions, same EVERYTHING. Do NOT deviate from the reference images by even 1%.';
+        characterInfo += '\n**🚨 ABSOLUTE REQUIREMENT - NO EXCEPTIONS 🚨:**\nLook at EVERY reference image above and recreate EACH character with PIXEL-PERFECT accuracy.\nSame face, same hair, same clothing, same colors, same features, same proportions, same EVERYTHING.\nDo NOT deviate from the reference images by even 0.1%.\nDo NOT change clothing colors, styles, or patterns.\nDo NOT modify hairstyles or facial features.\nPERFECT REPLICATION REQUIRED.';
+      } else {
+        characterInfo += '\n**IMPORTANT REQUIREMENT:**\nMatch the reference images carefully, especially clothing and facial features.\nKeep the same outfit colors and styles throughout the story.';
       }
     }
     
