@@ -92,6 +92,18 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
                 const errorText = await response.text();
                 console.error(`❌ API 오류 ${response.status}:`, errorText);
                 
+                // 429 할당량 오류 처리
+                if (response.status === 429) {
+                    const errorMsg = '⚠️ Gemini API 일일 할당량을 초과했습니다.\n\n' +
+                        '해결 방법:\n' +
+                        '1. Google AI Studio (https://ai.google.dev/rate-limit)에서 사용량 확인\n' +
+                        '2. Google Cloud Console에서 할당량 증가 요청\n' +
+                        '3. 몇 시간 후 다시 시도 (UTC 자정에 리셋)\n' +
+                        '4. 이미 생성된 동화책을 복사하여 텍스트만 수정';
+                    
+                    throw new Error(errorMsg);
+                }
+                
                 // 500 에러는 재시도
                 if (response.status === 500 && attempt < maxRetries - 1) {
                     const waitTime = Math.pow(2, attempt) * 1000; // 지수 백오프
