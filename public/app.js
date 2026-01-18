@@ -2301,31 +2301,57 @@ ${previousPageNote}
     const isRegeneration = !!page.illustrationImage;
     const regenerationNote = isRegeneration ? 
         '\n\n**🔄 REGENERATION MODE - CRITICAL INSTRUCTIONS:**\n' +
-        '**YOU MUST USE THE PROVIDED ILLUSTRATION REFERENCE IMAGE AS YOUR PRIMARY GUIDE.**\n' +
-        '1. CAREFULLY ANALYZE the reference illustration to understand:\n' +
+        '**YOU MUST USE THE PROVIDED ILLUSTRATION REFERENCE IMAGE AS YOUR PRIMARY GUIDE.**\n\n' +
+        '**STEP 1 - ANALYZE REFERENCE ILLUSTRATION:**\n' +
+        '1. CAREFULLY study the reference illustration:\n' +
         '   - Overall composition and layout\n' +
         '   - Character positions and poses\n' +
         '   - Color palette and lighting\n' +
         '   - Art style, line work, and shading technique\n' +
-        '   - Background details and atmosphere\n' +
-        '2. MAINTAIN these exact elements from the reference:\n' +
-        '   - Core composition and visual structure\n' +
-        '   - Character appearances (must match reference sheet)\n' +
-        '   - Color scheme and lighting mood\n' +
-        '   - Art style consistency\n' +
+        '   - Background details and atmosphere\n\n' +
+        '**STEP 2 - ANALYZE CHARACTER REFERENCE SHEETS:**\n' +
+        '2. CRITICALLY examine each character reference image:\n' +
+        '   - Facial features (eyes, nose, mouth, face shape)\n' +
+        '   - Body proportions and build\n' +
+        '   - Clothing style, colors, and patterns\n' +
+        '   - Hairstyle, color, and texture\n' +
+        '   - Distinctive accessories or features\n' +
+        '   - Character age and personality expression\n\n' +
+        '**STEP 3 - UNDERSTAND SCENE DESCRIPTION:**\n' +
+        '3. READ the Scene Structure carefully:\n' +
+        '   - Which characters are present and what they are doing\n' +
+        '   - The setting and background environment\n' +
+        '   - The mood and atmosphere of the scene\n' +
+        '   - Key actions and interactions\n\n' +
+        '**STEP 4 - MAINTAIN CONSISTENCY:**\n' +
+        '4. PRESERVE these exact elements:\n' +
+        '   - ✅ Characters MUST look IDENTICAL to their reference sheets\n' +
+        '   - ✅ Core composition from reference illustration\n' +
+        '   - ✅ Color scheme and lighting mood\n' +
+        '   - ✅ Art style consistency\n' +
+        '   - ✅ Scene elements described in Scene Structure\n\n' +
+        '**STEP 5 - APPLY CHANGES (if any):**\n' +
         (editNote ? 
-        '3. APPLY ONLY these specific modifications:\n' +
+        '5. APPLY ONLY these specific modifications:\n' +
         `   ${editNote}\n` +
-        '4. Keep everything else EXACTLY THE SAME as the reference illustration.\n' : 
-        '3. Create a SIMILAR BUT SLIGHTLY DIFFERENT variation:\n' +
-        '   - Same composition and character positions\n' +
-        '   - Slightly different angles, expressions, or minor details\n' +
-        '   - Maintain overall scene consistency and recognizability\n') +
-        '5. The goal is to maintain scene consistency, not create a completely new illustration.\n\n' +
-        '**Priority Order:**\n' +
-        '1st: Reference Illustration (base composition)\n' +
-        (editNote ? '2nd: Modification Request (specific changes only)\n' : '2nd: Scene Description (guide for variation)\n') +
-        '3rd: Art Style (already established in reference)' : 
+        '   - Make ONLY the requested changes\n' +
+        '   - Keep everything else EXACTLY THE SAME\n\n' : 
+        '5. Create a SIMILAR BUT SLIGHTLY DIFFERENT variation:\n' +
+        '   - Keep same composition and character positions\n' +
+        '   - Vary only minor details (angle, expression, small elements)\n' +
+        '   - Ensure characters STILL match their reference sheets EXACTLY\n' +
+        '   - Maintain scene consistency and recognizability\n\n') +
+        '**⚠️ CRITICAL REQUIREMENTS:**\n' +
+        '• Characters MUST be visually IDENTICAL to reference sheets (facial features, clothing, proportions)\n' +
+        '• Scene MUST reflect the Scene Structure description accurately\n' +
+        '• Composition SHOULD follow the reference illustration layout\n' +
+        '• Any modifications MUST be explicitly requested in the modification note\n\n' +
+        '**Priority Order (STRICTLY FOLLOW):**\n' +
+        '1st: Character Reference Sheets (ABSOLUTE PRIORITY - characters must match 100%)\n' +
+        '2nd: Scene Structure Description (what\'s happening in the scene)\n' +
+        '3rd: Reference Illustration (composition and style guide)\n' +
+        (editNote ? '4th: Modification Request (specific changes only)\n' : '4th: Subtle Variation (minor details only)\n') +
+        '5th: Art Style (already established)\n' : 
         '';
     
     const prompt = `Create a beautiful, professional illustration for a children's storybook page.
