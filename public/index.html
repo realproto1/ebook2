@@ -217,6 +217,24 @@
                             class="hidden w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
                         />
                     </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">
+                            <i class="fas fa-robot mr-2"></i>이미지 AI 모델
+                        </label>
+                        <select id="imageModelSelect" class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500">
+                            <option value="gemini-3-pro-image-preview" selected>Nano Banana Pro (Gemini 3 Pro Image) - 최고 품질 ⭐</option>
+                            <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash - 빠르고 효율적 ⚡</option>
+                            <option value="gemini-2.5-flash-preview-04">Gemini 2.5 Flash Preview - 최신 기능 🆕</option>
+                            <option value="gemini-1.5-flash">Gemini 1.5 Flash - 안정적 ✅</option>
+                            <option value="gemini-1.5-pro">Gemini 1.5 Pro - 고품질 💎</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <span class="font-semibold">Nano Banana Pro:</span> 최고 이미지 품질 (권장) | 
+                            <span class="font-semibold">2.0 Flash:</span> 빠른 생성 | 
+                            <span class="font-semibold">1.5 Pro:</span> 복잡한 이미지
+                        </p>
+                    </div>
                 </div>
                 
                 <div class="mb-8">
@@ -359,14 +377,16 @@
                         <i class="fas fa-robot mr-2 text-indigo-600"></i>이미지 AI 모델
                     </label>
                     <select id="imageModel" class="w-full px-4 py-2 border-2 border-indigo-300 rounded-lg">
-                        <option value="gemini-2.0-flash-exp" selected>Gemini 2.0 Flash (빠름, 권장)</option>
-                        <option value="gemini-2.5-flash-preview-04">Gemini 2.5 Flash Preview (최신)</option>
-                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (안정적)</option>
-                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (고품질)</option>
+                        <option value="gemini-3-pro-image-preview" selected>Nano Banana Pro (Gemini 3 Pro Image) - 최고 품질 ⭐</option>
+                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (빠름, 효율적) ⚡</option>
+                        <option value="gemini-2.5-flash-preview-04">Gemini 2.5 Flash Preview (최신) 🆕</option>
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (안정적) ✅</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (고품질) 💎</option>
                     </select>
                     <div class="flex items-start gap-2 text-xs text-gray-600 mt-2">
                         <i class="fas fa-info-circle mt-0.5 text-indigo-500"></i>
                         <div>
+                            <p class="mb-1"><strong>Nano Banana Pro:</strong> Gemini 3 Pro 이미지 모델, 최고 품질 (권장)</p>
                             <p class="mb-1"><strong>2.0 Flash:</strong> 가장 빠르고 효율적, 일반적인 사용에 권장</p>
                             <p class="mb-1"><strong>2.5 Flash Preview:</strong> 최신 기능, 더 나은 이해력</p>
                             <p class="mb-1"><strong>1.5 Flash:</strong> 안정적이고 검증된 모델</p>
@@ -507,7 +527,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-    <script src="/gemini-client.js?v=20250118-03"></script>
-    <script src="/app.js?v=20250118-03"></script>
+    <script src="/gemini-client.js?v=20250118-04"></script>
+    <script src="/app.js?v=20250118-04"></script>
 </body>
 </html>

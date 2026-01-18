@@ -7,7 +7,7 @@ let imageSettings = {
     enforceCharacterConsistency: true,
     additionalPrompt: '',
     imageQuality: 'high',
-    imageModel: 'gemini-2.0-flash-exp'  // 기본값: Gemini 2.0 Flash
+    imageModel: 'gemini-3-pro-image-preview'  // 기본값: Nano Banana Pro
 };
 
 // 페이지 로드 시 초기화
@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadImageSettings();
     loadStorybooks();
     renderBookList();
+    
+    // 이미지 모델 선택값 복원
+    if (document.getElementById('imageModelSelect')) {
+        document.getElementById('imageModelSelect').value = imageSettings.imageModel || 'gemini-3-pro-image-preview';
+    }
 });
 
 // 모바일 사이드바 토글 함수
@@ -50,7 +55,7 @@ function openSettings() {
     document.getElementById('enforceCharacterConsistency').checked = imageSettings.enforceCharacterConsistency;
     document.getElementById('additionalPrompt').value = imageSettings.additionalPrompt;
     document.getElementById('imageQuality').value = imageSettings.imageQuality;
-    document.getElementById('imageModel').value = imageSettings.imageModel || 'gemini-2.0-flash-exp';
+    document.getElementById('imageModel').value = imageSettings.imageModel || 'gemini-3-pro-image-preview';
     
     // API 키 로드 (localStorage에서)
     const savedApiKey = localStorage.getItem('gemini_api_key') || '';
@@ -106,7 +111,7 @@ function resetSettings() {
             enforceCharacterConsistency: true,
             additionalPrompt: '',
             imageQuality: 'high',
-            imageModel: 'gemini-2.0-flash-exp'
+            imageModel: 'gemini-3-pro-image-preview'  // Nano Banana Pro
         };
         
         // API 키 초기화
@@ -558,6 +563,14 @@ async function generateStorybook() {
     const artStyleSelect = document.getElementById('artStyleSelect').value;
     const artStyleCustom = document.getElementById('artStyleCustom').value.trim();
     const referenceContent = document.getElementById('referenceContent').value.trim();
+    
+    // 이미지 AI 모델 선택 (동화책 생성 폼에서)
+    const imageModelSelect = document.getElementById('imageModelSelect');
+    if (imageModelSelect) {
+        imageSettings.imageModel = imageModelSelect.value;
+        saveImageSettings();
+        console.log('🤖 이미지 AI 모델 설정됨:', imageSettings.imageModel);
+    }
     
     // 그림체 결정: custom이면 직접 입력값 사용, 아니면 선택값 사용
     const artStyle = artStyleSelect === 'custom' ? artStyleCustom : artStyleSelect;
