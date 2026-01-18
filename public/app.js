@@ -1774,8 +1774,8 @@ async function generateIllustration(pageIndex) {
             }
         }
         
-        // 재생성인 경우 기존 이미지를 레퍼런스로 추가
-        if (page.illustrationImage && editNote) {
+        // 재생성인 경우 기존 이미지를 레퍼런스로 추가 (수정사항 유무 무관)
+        if (page.illustrationImage) {
             console.log('🔄 재생성 모드: 기존 이미지를 레퍼런스로 추가');
             refImageUrls.push(page.illustrationImage);
         }
@@ -2297,9 +2297,35 @@ ${previousPageNote}
         '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, captions, titles, speech bubbles, or text overlays in the image. Absolutely NO TEXT of any kind. Pure illustration only.' : 
         '\n\n**IMPORTANT:** Do NOT include any text, labels, words, letters, or captions in the image. No speech bubbles, no titles, no text overlays. Pure illustration only.';
     
-    // 재생성 안내 (기존 이미지가 있고 수정사항이 있는 경우)
-    const regenerationNote = (page.illustrationImage && editNote) ? 
-        '\n\n**REGENERATION MODE:** You are provided with the previous version of this illustration as a reference image. Use it to understand the current composition, layout, and style. Then apply the modification request while maintaining consistency with the overall scene.' : 
+    // 재생성 안내 (기존 이미지가 있는 경우)
+    const isRegeneration = !!page.illustrationImage;
+    const regenerationNote = isRegeneration ? 
+        '\n\n**🔄 REGENERATION MODE - CRITICAL INSTRUCTIONS:**\n' +
+        '**YOU MUST USE THE PROVIDED ILLUSTRATION REFERENCE IMAGE AS YOUR PRIMARY GUIDE.**\n' +
+        '1. CAREFULLY ANALYZE the reference illustration to understand:\n' +
+        '   - Overall composition and layout\n' +
+        '   - Character positions and poses\n' +
+        '   - Color palette and lighting\n' +
+        '   - Art style, line work, and shading technique\n' +
+        '   - Background details and atmosphere\n' +
+        '2. MAINTAIN these exact elements from the reference:\n' +
+        '   - Core composition and visual structure\n' +
+        '   - Character appearances (must match reference sheet)\n' +
+        '   - Color scheme and lighting mood\n' +
+        '   - Art style consistency\n' +
+        (editNote ? 
+        '3. APPLY ONLY these specific modifications:\n' +
+        `   ${editNote}\n` +
+        '4. Keep everything else EXACTLY THE SAME as the reference illustration.\n' : 
+        '3. Create a SIMILAR BUT SLIGHTLY DIFFERENT variation:\n' +
+        '   - Same composition and character positions\n' +
+        '   - Slightly different angles, expressions, or minor details\n' +
+        '   - Maintain overall scene consistency and recognizability\n') +
+        '5. The goal is to maintain scene consistency, not create a completely new illustration.\n\n' +
+        '**Priority Order:**\n' +
+        '1st: Reference Illustration (base composition)\n' +
+        (editNote ? '2nd: Modification Request (specific changes only)\n' : '2nd: Scene Description (guide for variation)\n') +
+        '3rd: Art Style (already established in reference)' : 
         '';
     
     const prompt = `Create a beautiful, professional illustration for a children's storybook page.
