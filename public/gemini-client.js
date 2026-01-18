@@ -32,9 +32,10 @@ async function initGeminiAPIKey() {
  * @param {string} prompt - 이미지 생성 프롬프트
  * @param {Array<string>} referenceImages - 레퍼런스 이미지 URL 배열 (선택)
  * @param {number} maxRetries - 최대 재시도 횟수
+ * @param {string} modelOverride - 모델 오버라이드 (선택, 기본값은 imageSettings.imageModel)
  * @returns {Promise<{success: boolean, imageUrl?: string, error?: string}>}
  */
-async function generateImageClient(prompt, referenceImages = [], maxRetries = 3) {
+async function generateImageClient(prompt, referenceImages = [], maxRetries = 3, modelOverride = null) {
     if (!GEMINI_API_KEY) {
         const initialized = await initGeminiAPIKey();
         if (!initialized) {
@@ -45,6 +46,11 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
         }
     }
 
+    // 모델 선택: 오버라이드 > imageSettings > 기본값
+    const selectedModel = modelOverride || 
+                         (typeof imageSettings !== 'undefined' ? imageSettings.imageModel : null) || 
+                         'gemini-2.0-flash-exp';
+
     // 재시도 로직
     for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
@@ -52,6 +58,7 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
             const isCustomKey = !!localStorage.getItem('gemini_api_key');
             const keyPrefix = GEMINI_API_KEY.substring(0, 10);
             console.log(`\n🔑 사용 중인 API 키: ${keyPrefix}... (${isCustomKey ? '✅ 커스텀 키' : '⚠️ 기본 키'})`);
+            console.log(`🤖 이미지 AI 모델: ${selectedModel}`);
             console.log(`🎨 이미지 생성 시도 ${attempt + 1}/${maxRetries}`);
             console.log('📝 프롬프트 길이:', prompt.length);
             console.log('🖼️ 레퍼런스 이미지:', referenceImages.length);
@@ -77,8 +84,8 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3)
                 }
             }
 
-            // Gemini API 호출 - Nano Banana Pro (Gemini 3 Pro Image)
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${GEMINI_API_KEY}`;
+            // Gemini API 호출 - 선택한 모델 사용
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${GEMINI_API_KEY}`;
             
             const requestBody = {
                 contents: [{ parts }],

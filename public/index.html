@@ -353,6 +353,28 @@
                     ></textarea>
                 </div>
 
+                <!-- 이미지 AI 모델 선택 -->
+                <div class="bg-indigo-50 p-4 rounded-lg border-2 border-indigo-200">
+                    <label class="block text-gray-800 font-bold mb-2">
+                        <i class="fas fa-robot mr-2 text-indigo-600"></i>이미지 AI 모델
+                    </label>
+                    <select id="imageModel" class="w-full px-4 py-2 border-2 border-indigo-300 rounded-lg">
+                        <option value="gemini-2.0-flash-exp" selected>Gemini 2.0 Flash (빠름, 권장)</option>
+                        <option value="gemini-2.5-flash-preview-04">Gemini 2.5 Flash Preview (최신)</option>
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (안정적)</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (고품질)</option>
+                    </select>
+                    <div class="flex items-start gap-2 text-xs text-gray-600 mt-2">
+                        <i class="fas fa-info-circle mt-0.5 text-indigo-500"></i>
+                        <div>
+                            <p class="mb-1"><strong>2.0 Flash:</strong> 가장 빠르고 효율적, 일반적인 사용에 권장</p>
+                            <p class="mb-1"><strong>2.5 Flash Preview:</strong> 최신 기능, 더 나은 이해력</p>
+                            <p class="mb-1"><strong>1.5 Flash:</strong> 안정적이고 검증된 모델</p>
+                            <p><strong>1.5 Pro:</strong> 최고 품질, 복잡한 이미지에 적합</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 이미지 품질 -->
                 <div class="bg-yellow-50 p-4 rounded-lg">
                     <label class="block text-gray-800 font-bold mb-2">
@@ -485,7 +507,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-    <script src="/gemini-client.js?v=20250118-02"></script>
-    <script src="/app.js?v=20250118-02"></script>
+    <script src="/gemini-client.js?v=20250118-03"></script>
+    <script src="/app.js?v=20250118-03"></script>
 </body>
 </html>

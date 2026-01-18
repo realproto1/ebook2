@@ -6,7 +6,8 @@ let imageSettings = {
     enforceNoText: true,
     enforceCharacterConsistency: true,
     additionalPrompt: '',
-    imageQuality: 'high'
+    imageQuality: 'high',
+    imageModel: 'gemini-2.0-flash-exp'  // 기본값: Gemini 2.0 Flash
 };
 
 // 페이지 로드 시 초기화
@@ -49,6 +50,7 @@ function openSettings() {
     document.getElementById('enforceCharacterConsistency').checked = imageSettings.enforceCharacterConsistency;
     document.getElementById('additionalPrompt').value = imageSettings.additionalPrompt;
     document.getElementById('imageQuality').value = imageSettings.imageQuality;
+    document.getElementById('imageModel').value = imageSettings.imageModel || 'gemini-2.0-flash-exp';
     
     // API 키 로드 (localStorage에서)
     const savedApiKey = localStorage.getItem('gemini_api_key') || '';
@@ -69,6 +71,9 @@ function saveSettings() {
     imageSettings.enforceCharacterConsistency = document.getElementById('enforceCharacterConsistency').checked;
     imageSettings.additionalPrompt = document.getElementById('additionalPrompt').value;
     imageSettings.imageQuality = document.getElementById('imageQuality').value;
+    imageSettings.imageModel = document.getElementById('imageModel').value;
+    
+    console.log('💾 이미지 설정 저장:', imageSettings);
     
     // API 키 저장 (localStorage에)
     const apiKey = document.getElementById('geminiApiKey').value.trim();
@@ -100,7 +105,8 @@ function resetSettings() {
             enforceNoText: true,
             enforceCharacterConsistency: true,
             additionalPrompt: '',
-            imageQuality: 'high'
+            imageQuality: 'high',
+            imageModel: 'gemini-2.0-flash-exp'
         };
         
         // API 키 초기화
