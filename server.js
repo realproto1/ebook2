@@ -574,14 +574,14 @@ ${targetAge === '4-5' ? `
     "symbols": ["상징 해석 질문 3-4개"],
     "activity": "창의 활동 아이디어",
     "vocabulary": [
-      {"word": "영어명사1", "korean": "한글뜻1"},
-      {"word": "영어명사2", "korean": "한글뜻2"},
-      {"word": "영어명사3", "korean": "한글뜻3"},
-      {"word": "영어명사4", "korean": "한글뜻4"},
-      {"word": "영어명사5", "korean": "한글뜻5"},
-      {"word": "영어명사6", "korean": "한글뜻6"},
-      {"word": "영어명사7", "korean": "한글뜻7"},
-      {"word": "영어명사8", "korean": "한글뜻8"}
+      {"word": "영어명사1", "korean": "한글뜻1", "definition": "단어의 뜻을 쉽게 설명", "example": "예문 (한글)"},
+      {"word": "영어명사2", "korean": "한글뜻2", "definition": "단어의 뜻을 쉽게 설명", "example": "예문 (한글)"},
+      {"word": "영어명사3", "korean": "한글뜻3", "definition": "단어의 뜻을 쉽게 설명", "example": "예문 (한글)"},
+      {"word": "영어명사4", "korean": "한글뜻4", "definition": "단어의 뜻을 쉽게 설명", "example": "예문 (한글)"},
+      {"word": "영어명사5", "korean": "한글뜻5", "definition": "단어의 뜻을 쉽게 설명", "example": "예문 (한글)"},
+      {"word": "영어명사6", "korean": "한글뜻6", "definition": "단어의 뜻을 쉽게 설명", "example": "예문 (한글)"},
+      {"word": "영어명사7", "korean": "한글뜻7", "definition": "단어의 뜻을 쉽게 설명", "example": "예문 (한글)"},
+      {"word": "영어명사8", "korean": "한글뜻8", "definition": "단어의 뜻을 쉽게 설명", "example": "예문 (한글)"}
     ]
   }
 }
@@ -795,10 +795,26 @@ ${targetAge === '4-5' ? `
   → 중요: 이제는 "왕자"로 변했으므로 개구리가 아닌 왕자를 그려야 함!
 
 - vocabulary 예시 (우선순위대로 선정): 
-  1순위 주요 캐릭터: [{"word": "Rabbit", "korean": "토끼"}]
-  2순위 핵심 사물: [{"word": "Carrot", "korean": "당근"}]
-  3순위 배경 요소: [{"word": "Forest", "korean": "숲"}, {"word": "Tree", "korean": "나무"}]
-  나머지: [{"word": "Flower", "korean": "꽃"}, {"word": "Sun", "korean": "해"}, {"word": "Moon", "korean": "달"}, {"word": "Star", "korean": "별"}]
+  1순위 주요 캐릭터: [{"word": "Rabbit", "korean": "토끼", "definition": "귀가 길고 뒷다리로 깡충깡충 뛰는 동물", "example": "토끼가 당근을 먹어요"}]
+  2순위 핵심 사물: [{"word": "Carrot", "korean": "당근", "definition": "주황색이고 땅속에서 자라는 채소", "example": "토끼는 당근을 좋아해요"}]
+  3순위 배경 요소: [{"word": "Forest", "korean": "숲", "definition": "나무가 많이 모여 있는 곳", "example": "숲속에는 동물들이 살아요"}, {"word": "Tree", "korean": "나무", "definition": "땅에 뿌리를 내리고 자라는 큰 식물", "example": "나무 아래에서 쉬었어요"}]
+  나머지: [{"word": "Flower", "korean": "꽃", "definition": "예쁜 색깔과 향기가 나는 식물", "example": "예쁜 꽃이 피었어요"}, {"word": "Sun", "korean": "해", "definition": "하늘에서 밝게 빛나는 뜨거운 별", "example": "해가 밝게 빛나요"}, {"word": "Moon", "korean": "달", "definition": "밤하늘에 떠 있는 밝은 천체", "example": "밤에 달을 봤어요"}, {"word": "Star", "korean": "별", "definition": "밤하늘에서 반짝이는 작은 빛", "example": "별이 반짝반짝 빛나요"}]
+
+⭐ **vocabulary 작성 규칙:**
+1. **word**: 영어 명사 (대문자 시작)
+2. **korean**: 한글 뜻
+3. **definition**: 아이들이 이해하기 쉬운 설명 (1-2문장, ~는/은 ~이다/예요 형식)
+4. **example**: 동화 내용이나 일상에서 사용하는 간단한 예문 (한 문장, ~해요/~이에요 형식)
+
+**예시 (백설공주 스토리):**
+- {"word": "Princess", "korean": "공주", "definition": "왕과 왕비의 딸로 궁전에 사는 여자아이", "example": "공주는 궁전에서 살아요"}
+- {"word": "Queen", "korean": "왕비", "definition": "왕의 아내로 왕국을 다스리는 여자", "example": "왕비는 마법 거울을 가지고 있어요"}
+- {"word": "Apple", "korean": "사과", "definition": "빨갛고 둥근 과일", "example": "빨간 사과가 맛있어요"}
+- {"word": "Mirror", "korean": "거울", "definition": "자기 모습을 비춰볼 수 있는 물건", "example": "거울을 보며 웃었어요"}
+- {"word": "Forest", "korean": "숲", "definition": "나무가 많이 모여 있는 곳", "example": "숲속에서 길을 잃었어요"}
+- {"word": "House", "korean": "집", "definition": "사람이나 동물이 사는 곳", "example": "작은 집을 발견했어요"}
+- {"word": "Prince", "korean": "왕자", "definition": "왕과 왕비의 아들로 궁전에 사는 남자아이", "example": "왕자가 말을 타고 왔어요"}
+- {"word": "Dwarf", "korean": "난쟁이", "definition": "키가 작고 수염이 있는 작은 사람", "example": "난쟁이들이 노래를 불러요"}
 
 JSON만 응답하세요.`;
 

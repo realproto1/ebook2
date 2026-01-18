@@ -1041,6 +1041,8 @@ function displayStorybook(storybook) {
                             // vocabulary가 객체 형식인지 문자열인지 확인
                             const word = typeof vocabItem === 'object' ? vocabItem.word : vocabItem;
                             const korean = typeof vocabItem === 'object' ? vocabItem.korean : '';
+                            const definition = typeof vocabItem === 'object' ? vocabItem.definition : '';
+                            const example = typeof vocabItem === 'object' ? vocabItem.example : '';
                             const vocabImg = storybook.vocabularyImages && storybook.vocabularyImages[idx];
                             return `
                             <div class="bg-white p-4 rounded-lg border-2 border-blue-200">
@@ -1060,9 +1062,32 @@ function displayStorybook(storybook) {
                                             id="vocab-korean-${idx}" 
                                             value="${korean}"
                                             onchange="updateVocabularyWord(${idx}, this.value, 'korean')"
-                                            class="text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-blue-400 focus:outline-none w-full"
+                                            class="text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-blue-400 focus:outline-none w-full mb-2"
                                             placeholder="한글 뜻"
                                         />` : ''}
+                                        ${definition ? `
+                                        <div class="mt-2">
+                                            <label class="text-xs text-gray-400 block mb-1">설명:</label>
+                                            <textarea 
+                                                id="vocab-definition-${idx}" 
+                                                onchange="updateVocabularyWord(${idx}, this.value, 'definition')"
+                                                class="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded p-2 focus:border-blue-400 focus:outline-none w-full"
+                                                placeholder="단어 설명"
+                                                rows="2"
+                                            >${definition}</textarea>
+                                        </div>` : ''}
+                                        ${example ? `
+                                        <div class="mt-2">
+                                            <label class="text-xs text-gray-400 block mb-1">예문:</label>
+                                            <input 
+                                                type="text" 
+                                                id="vocab-example-${idx}" 
+                                                value="${example}"
+                                                onchange="updateVocabularyWord(${idx}, this.value, 'example')"
+                                                class="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded px-2 py-1 focus:border-blue-400 focus:outline-none w-full"
+                                                placeholder="예문"
+                                            />
+                                        </div>` : ''}
                                     </div>
                                     ${vocabImg && vocabImg.imageUrl ? 
                                         `<button 
