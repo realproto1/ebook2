@@ -2173,7 +2173,24 @@ function buildCharacterPrompt(description, artStyle, settings, isRegeneration = 
     
     // 재생성 안내 (기존 이미지가 있는 경우)
     const regenerationNote = isRegeneration ? 
-        '\n\n**REGENERATION MODE:** You are provided with the previous version of this character reference as a reference image. Use it to understand the character\'s current design, colors, proportions, and style. Then apply any modifications from the updated character description while maintaining overall consistency and recognizability.' : 
+        '\n\n**🔄 REGENERATION MODE - CRITICAL INSTRUCTIONS:**\n' +
+        '**YOU MUST USE THE PROVIDED REFERENCE IMAGE AS YOUR PRIMARY GUIDE.**\n' +
+        '1. CAREFULLY ANALYZE the reference image to understand:\n' +
+        '   - Current character design, facial features, body proportions\n' +
+        '   - Exact colors (clothing, hair, skin tone, accessories)\n' +
+        '   - Art style, line work, and shading technique\n' +
+        '   - Overall visual identity and character personality\n' +
+        '2. MAINTAIN these exact elements from the reference:\n' +
+        '   - Core character design and recognizability\n' +
+        '   - Color palette (unless explicitly changed in description)\n' +
+        '   - Art style consistency\n' +
+        '3. ONLY modify what is explicitly mentioned in the updated character description below.\n' +
+        '4. Keep everything else EXACTLY THE SAME as the reference image.\n' +
+        '5. The goal is to make a recognizable update, not create a completely new character.\n\n' +
+        '**Priority Order:**\n' +
+        '1st: Reference Image (base design)\n' +
+        '2nd: Updated Character Description (modifications only)\n' +
+        '3rd: Art Style (already established in reference)' : 
         '';
     
     const prompt = `Create a professional character design reference sheet for a children's storybook character.
