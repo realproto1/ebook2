@@ -1130,6 +1130,74 @@ function displayStorybook(storybook) {
                         }).join('')}
                     </div>
                 </div>
+                
+                <!-- 퀴즈 섹션 -->
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 shadow-lg border-2 border-purple-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-xl font-bold text-purple-800">
+                            <i class="fas fa-question-circle mr-2"></i>독해 퀴즈
+                            ${storybook.quizzes && storybook.quizzes.length > 0 ? ` (${storybook.quizzes.length}개)` : ''}
+                        </h4>
+                        <button 
+                            onclick="generateQuiz()"
+                            class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition text-sm"
+                        >
+                            <i class="fas fa-plus mr-1"></i>퀴즈 ${storybook.quizzes && storybook.quizzes.length > 0 ? '더 ' : ''}만들기
+                        </button>
+                    </div>
+                    
+                    <div id="quiz-container" class="space-y-4">
+                        ${storybook.quizzes && storybook.quizzes.length > 0 ? 
+                            storybook.quizzes.map((quiz, qIdx) => `
+                            <div class="bg-white p-5 rounded-lg border-2 border-purple-200 shadow-sm">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h5 class="font-bold text-gray-800 flex-1">
+                                        <span class="inline-block bg-purple-500 text-white rounded-full w-7 h-7 text-center leading-7 text-sm mr-2">
+                                            ${qIdx + 1}
+                                        </span>
+                                        ${quiz.question}
+                                    </h5>
+                                    <button 
+                                        onclick="deleteQuiz(${qIdx})"
+                                        class="text-red-500 hover:text-red-700 ml-2"
+                                        title="삭제"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="space-y-2 mb-3">
+                                    ${quiz.options.map((option, oIdx) => `
+                                    <div class="flex items-start p-3 rounded-lg ${oIdx === quiz.answer ? 'bg-green-50 border-2 border-green-400' : 'bg-gray-50 border border-gray-200'} cursor-pointer hover:bg-opacity-80 transition"
+                                         onclick="showQuizAnswer(${qIdx})">
+                                        <span class="inline-block ${oIdx === quiz.answer ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'} rounded-full w-6 h-6 text-center leading-6 text-sm mr-3 flex-shrink-0">
+                                            ${oIdx + 1}
+                                        </span>
+                                        <span class="${oIdx === quiz.answer ? 'font-semibold text-green-800' : 'text-gray-700'}">
+                                            ${option}
+                                            ${oIdx === quiz.answer ? '<i class="fas fa-check-circle ml-2 text-green-600"></i>' : ''}
+                                        </span>
+                                    </div>
+                                    `).join('')}
+                                </div>
+                                
+                                <div id="quiz-explanation-${qIdx}" class="hidden mt-3 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                                    <p class="text-sm text-blue-800">
+                                        <i class="fas fa-lightbulb mr-1"></i>
+                                        <strong>정답 설명:</strong> ${quiz.explanation}
+                                    </p>
+                                </div>
+                            </div>
+                            `).join('') 
+                        : 
+                            `<div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-question-circle text-4xl mb-3"></i>
+                                <p>아직 퀴즈가 없습니다.</p>
+                                <p class="text-sm mt-1">위의 "퀴즈 만들기" 버튼을 눌러 퀴즈를 생성하세요.</p>
+                            </div>`
+                        }
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -2694,5 +2762,88 @@ async function executeRegenerate() {
         console.error('Regeneration error:', error);
         document.getElementById('loading').classList.add('hidden');
         alert('동화책 재생성 중 오류가 발생했습니다: ' + (error.response?.data?.error || error.message));
+    }
+}
+
+// ==================== 퀴즈 관련 함수 ====================
+
+// 퀴즈 생성
+async function generateQuiz(count = 5) {
+    if (!currentStorybook || !currentStorybook.pages || currentStorybook.pages.length === 0) {
+        alert('동화책을 먼저 생성해주세요.');
+        return;
+    }
+    
+    const quizContainer = document.getElementById('quiz-container');
+    if (!quizContainer) return;
+    
+    // 로딩 표시
+    quizContainer.innerHTML = `
+        <div class="text-center py-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">퀴즈를 생성하고 있습니다...</p>
+        </div>
+    `;
+    
+    try {
+        console.log(`🎯 Generating ${count} quiz questions...`);
+        
+        const response = await axios.post('/api/generate-quiz', {
+            storybook: currentStorybook,
+            count: count
+        });
+        
+        if (response.data.success && response.data.quizzes) {
+            // quizzes 배열 초기화 (없으면)
+            if (!currentStorybook.quizzes) {
+                currentStorybook.quizzes = [];
+            }
+            
+            // 새로운 퀴즈 추가
+            currentStorybook.quizzes.push(...response.data.quizzes);
+            
+            // 저장
+            saveCurrentStorybook();
+            
+            // UI 업데이트
+            displayStorybook(currentStorybook);
+            
+            console.log(`✅ Generated ${response.data.quizzes.length} quiz questions`);
+        } else {
+            throw new Error('퀴즈 생성 실패');
+        }
+    } catch (error) {
+        console.error('퀴즈 생성 오류:', error);
+        
+        quizContainer.innerHTML = `
+            <div class="text-center py-8 text-red-600">
+                <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                <p>퀴즈 생성 중 오류가 발생했습니다.</p>
+                <p class="text-sm mt-2">${error.response?.data?.error || error.message}</p>
+                <button 
+                    onclick="generateQuiz()"
+                    class="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+                >
+                    <i class="fas fa-redo mr-1"></i>다시 시도
+                </button>
+            </div>
+        `;
+    }
+}
+
+// 퀴즈 정답 보기
+function showQuizAnswer(quizIndex) {
+    const explanationDiv = document.getElementById(`quiz-explanation-${quizIndex}`);
+    if (explanationDiv) {
+        explanationDiv.classList.toggle('hidden');
+    }
+}
+
+// 퀴즈 삭제
+function deleteQuiz(quizIndex) {
+    if (confirm('이 퀴즈를 삭제하시겠습니까?')) {
+        currentStorybook.quizzes.splice(quizIndex, 1);
+        saveCurrentStorybook();
+        displayStorybook(currentStorybook);
     }
 }

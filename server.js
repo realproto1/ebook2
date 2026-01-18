@@ -1601,6 +1601,109 @@ Create a single, clear image that children can easily understand and associate w
   }
 });
 
+// 퀴즈 생성 API
+app.post('/api/generate-quiz', requireAPIKey, async (req, res) => {
+  try {
+    const { storybook, count = 5 } = req.body;
+    
+    if (!storybook || !storybook.pages || !storybook.title) {
+      return res.status(400).json({
+        success: false,
+        error: '동화책 데이터가 필요합니다.'
+      });
+    }
+    
+    console.log(`\n📝 Generating ${count} quiz questions for: ${storybook.title}`);
+    
+    // 스토리 텍스트 추출
+    const storyText = storybook.pages.map((page, idx) => 
+      `페이지 ${idx + 1}: ${page.text}`
+    ).join('\n\n');
+    
+    // 캐릭터 정보 추출
+    const characterInfo = storybook.characters ? 
+      storybook.characters.map(char => `${char.name}: ${char.role}`).join(', ') : '';
+    
+    const prompt = `다음 동화책을 읽고 어린이를 위한 독해 퀴즈 ${count}개를 만들어주세요.
+
+**동화 제목:** ${storybook.title}
+
+**캐릭터:** ${characterInfo}
+
+**동화 내용:**
+${storyText}
+
+**퀴즈 생성 규칙:**
+1. 타깃 연령: ${storybook.targetAge || '6'}세 수준
+2. 각 퀴즈는 다음 형식으로 작성:
+   - question: 질문 (간단하고 명확하게)
+   - options: 4개의 선택지 (배열)
+   - answer: 정답 번호 (0, 1, 2, 3 중 하나)
+   - explanation: 정답 설명 (왜 이게 정답인지 간단히)
+3. 퀴즈 유형을 다양하게:
+   - 스토리 순서 (무엇을 먼저 했나요?)
+   - 캐릭터 행동 (누가 ~했나요?)
+   - 원인과 결과 (왜 ~했나요?)
+   - 감정 이해 (어떻게 느꼈을까요?)
+   - 교훈 이해 (이 이야기가 알려주는 것은?)
+4. 모든 선택지는 그럴듯해야 하지만 명확히 하나만 정답
+5. 쉬운 질문부터 조금씩 어려운 질문 순서로
+
+**JSON 형식으로만 응답하세요:**
+{
+  "quizzes": [
+    {
+      "question": "질문",
+      "options": ["선택지1", "선택지2", "선택지3", "선택지4"],
+      "answer": 0,
+      "explanation": "정답 설명"
+    }
+  ]
+}
+
+JSON만 응답하세요. 다른 텍스트는 포함하지 마세요.`;
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const response = await axios.post(url, {
+      contents: [{
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      }
+    }, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 60000
+    });
+
+    let quizText = response.data.candidates[0].content.parts[0].text;
+    
+    // JSON 추출
+    quizText = quizText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    const quizData = JSON.parse(quizText);
+    
+    console.log(`✅ Generated ${quizData.quizzes.length} quiz questions`);
+    
+    res.json({
+      success: true,
+      quizzes: quizData.quizzes,
+      count: quizData.quizzes.length
+    });
+
+  } catch (error) {
+    console.error('퀴즈 생성 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: '퀴즈 생성 실패: ' + error.message
+    });
+  }
+});
+
 // API 키 제공 엔드포인트 (클라이언트에서 직접 Gemini API 호출용)
 app.get('/api/config', (req, res) => {
   if (!GEMINI_API_KEY) {
