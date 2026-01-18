@@ -1992,7 +1992,7 @@ function getSelectedReferenceImages(pageIndex) {
 }
 
 
-// 단어 이미지 생성 - 개별 단어
+// 단어 이미지 생성 - 개별 단어 (캐릭터와 사물 일관성 강화)
 async function generateSingleVocabularyImage(wordIndex) {
     if (!currentStorybook.educational_content || !currentStorybook.educational_content.vocabulary) {
         alert('단어 목록이 없습니다.');
@@ -2007,8 +2007,104 @@ async function generateSingleVocabularyImage(wordIndex) {
     vocabImgDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-2"></div><p class="text-gray-600 text-xs">생성 중...</p></div>';
     
     try {
-        // 클라이언트에서 직접 Gemini API 호출
-        const prompt = `Create a simple, clear educational illustration of: ${word}${korean ? ` (${korean})` : ''}
+        // 이 단어가 캐릭터인지 확인
+        const matchingCharacter = currentStorybook.characters.find(char => 
+            char.name && (
+                char.name.toLowerCase().includes(korean.toLowerCase()) ||
+                korean.toLowerCase().includes(char.name.toLowerCase()) ||
+                char.role === '주인공' ||
+                char.role === '조력자' ||
+                char.role === '악역'
+            )
+        );
+        
+        // 이 단어가 주요 사물인지 확인
+        const allKeyObjects = [];
+        currentStorybook.pages.forEach(page => {
+            if (page.scene_structure && page.scene_structure.key_objects) {
+                allKeyObjects.push(page.scene_structure.key_objects);
+            }
+        });
+        const isKeyObject = allKeyObjects.some(objDesc => 
+            objDesc && objDesc.toLowerCase().includes(korean.toLowerCase())
+        );
+        
+        let prompt;
+        let referenceImages = [];
+        
+        // 캐릭터인 경우 - 캐릭터 레퍼런스 이미지 사용
+        if (matchingCharacter) {
+            console.log(`📚 Character found for "${word}" (${korean}): ${matchingCharacter.name}`);
+            
+            if (matchingCharacter.referenceImage) {
+                referenceImages.push(matchingCharacter.referenceImage);
+                console.log(`  🎨 Using character reference image`);
+            }
+            
+            prompt = `Create a simple, clear, educational illustration for a children's vocabulary learning card showing a character.
+
+**Character to Illustrate:** ${word}${korean ? ` (${korean})` : ''}
+
+**CRITICAL - Character Appearance (MUST FOLLOW EXACTLY):**
+${matchingCharacter.description}
+
+**Character Role:** ${matchingCharacter.role}
+
+**Art Style:** ${currentStorybook.artStyle} style for children's book illustration.
+
+**Requirements:**
+- Show the character in a simple, clear, frontal pose
+- Clean white or simple background (no complex scenes)
+- **EXACT appearance matching the character description above**
+- Bright, vibrant colors
+- Child-friendly, appealing design
+- Age-appropriate for 4-8 years old
+- Focus on the character's distinctive features
+- Make it easy for children to recognize this character
+
+**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, or captions in the image. Absolutely NO TEXT of any kind. Pure illustration only.
+
+${matchingCharacter.referenceImage ? '**IMPORTANT:** Use the provided reference image to maintain EXACT visual consistency with the character\'s appearance in the storybook. Match ALL visual details precisely.' : ''}
+
+Create a single, clear character portrait that children can easily recognize.`;
+        }
+        // 주요 사물인 경우 - scene_structure의 key_objects 설명 활용
+        else if (isKeyObject) {
+            console.log(`🔑 Key object found for "${word}" (${korean})`);
+            
+            // key_objects에서 관련 설명 찾기
+            const objectDescription = allKeyObjects.find(objDesc => 
+                objDesc && objDesc.toLowerCase().includes(korean.toLowerCase())
+            );
+            
+            prompt = `Create a simple, clear, educational illustration for a children's vocabulary learning card showing an important story object.
+
+**Object to Illustrate:** ${word}${korean ? ` (${korean})` : ''}
+
+**Object Description from Story:**
+${objectDescription || '이 동화에서 중요한 역할을 하는 사물입니다.'}
+
+**Art Style:** ${currentStorybook.artStyle} style for children's book illustration.
+
+**Requirements:**
+- Show the object clearly and simply
+- Clean white background
+- **Match the visual description from the story above**
+- Bright, vibrant colors
+- Child-friendly, appealing design
+- Age-appropriate for 4-8 years old
+- Focus on the object's distinctive features as described
+- Make it consistent with how it appears in the storybook illustrations
+
+**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, or captions in the image. Show ONLY the visual representation.
+
+Create a single, clear object illustration that matches the storybook's visual style.`;
+        }
+        // 일반 단어인 경우 - 기본 프롬프트
+        else {
+            console.log(`📝 General word: "${word}" (${korean})`);
+            
+            prompt = `Create a simple, clear educational illustration of: ${word}${korean ? ` (${korean})` : ''}
 
 Requirements:
 - Single object or concept clearly shown
@@ -2021,8 +2117,9 @@ Requirements:
 **CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, or captions in the image. Show ONLY the visual representation of the word.
 
 Example: For "Apple", show only a red apple fruit. No text.`;
+        }
 
-        const result = await generateImageClient(prompt, [], 3); // 최대 3회 재시도
+        const result = await generateImageClient(prompt, referenceImages, 3); // 최대 3회 재시도
         
         if (result.success && result.imageUrl) {
             const imageUrl = result.imageUrl;
@@ -2036,13 +2133,17 @@ Example: For "Apple", show only a red apple fruit. No text.`;
                 word: word,
                 korean: korean,
                 imageUrl: imageUrl,
-                success: true
+                success: true,
+                isCharacter: !!matchingCharacter,
+                isKeyObject: isKeyObject
             };
             
             saveCurrentStorybook();
             
             // UI만 업데이트 (전체 재렌더링 안 함)
-            vocabImgDiv.innerHTML = `<img src="${imageUrl}" alt="${word}" class="w-full h-full object-cover rounded-lg"/>`;
+            const badge = matchingCharacter ? '<span class="absolute top-1 right-1 bg-purple-500 text-white text-xs px-2 py-0.5 rounded">캐릭터</span>' :
+                         isKeyObject ? '<span class="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded">핵심사물</span>' : '';
+            vocabImgDiv.innerHTML = `<div class="relative">${badge}<img src="${imageUrl}" alt="${word}" class="w-full h-full object-cover rounded-lg"/></div>`;
             
             return { index: wordIndex, success: true, imageUrl: imageUrl };
         } else {

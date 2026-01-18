@@ -549,8 +549,36 @@ ${targetAge === '4-5' ? `
   - 예: Page 5에서 "공주는 왼쪽, 왕자는 오른쪽"이면, Page 6에서도 동일하게 유지
   - 캐릭터가 이동하거나 장면이 완전히 바뀌는 경우에만 위치 변경 허용
   - 갑작스러운 좌우 반전은 독자를 혼란스럽게 만들므로 절대 금지!
-- **매우 중요**: vocabulary는 반드시 동화 내용과 관련된 구체적인 명사(noun) 8개를 선정하세요 (예: Apple, Tree, Star, Moon, River, Mountain 등)
-- **매우 중요**: 각 단어는 {"word": "영어명사", "korean": "한글뜻"} 형식으로 작성하세요
+- **⭐ 매우 중요 - vocabulary 선정 규칙 ⭐**: vocabulary는 반드시 동화에 등장하는 중요한 **사물**과 **사람(캐릭터)**을 우선적으로 선정하세요!
+  
+  **우선순위 1: 주요 캐릭터 (사람)**
+  - 동화의 주인공과 주요 인물들을 먼저 포함하세요
+  - 예: Princess(공주), Prince(왕자), Witch(마녀), Dwarf(난쟁이), Wolf(늑대), Grandmother(할머니) 등
+  
+  **우선순위 2: 스토리의 핵심 사물**
+  - 스토리 전개에 중요한 역할을 하는 물건들
+  - scene_structure의 key_objects에 반복적으로 등장하는 사물들
+  - 예: Apple(사과), Mirror(거울), Crown(왕관), Lamp(램프), Slipper(구두), Basket(바구니) 등
+  
+  **우선순위 3: 자주 등장하는 배경 사물**
+  - 여러 페이지에 걸쳐 등장하는 배경 요소
+  - 예: Castle(성), Forest(숲), Tree(나무), House(집), River(강) 등
+  
+  **⭐ 중요한 캐릭터·사물이 8개 미만인 경우:**
+  - 위 우선순위대로 먼저 선정하고, 남은 자리는 일반적인 구체적 명사로 채우세요
+  - 예: Star(별), Moon(달), Sun(해), Flower(꽃), Mountain(산) 등
+  
+  **형식**: 각 단어는 {"word": "영어명사", "korean": "한글뜻"} 형식으로 작성하세요
+  
+  **예시 (백설공주 스토리):**
+  1. {"word": "Princess", "korean": "공주"} ← 주인공
+  2. {"word": "Queen", "korean": "왕비"} ← 주요 악역
+  3. {"word": "Prince", "korean": "왕자"} ← 주요 인물
+  4. {"word": "Dwarf", "korean": "난쟁이"} ← 주요 조력자
+  5. {"word": "Apple", "korean": "사과"} ← 핵심 사물 (독이 든 사과)
+  6. {"word": "Mirror", "korean": "거울"} ← 핵심 사물 (마법 거울)
+  7. {"word": "Castle", "korean": "성"} ← 주요 배경
+  8. {"word": "Forest", "korean": "숲"} ← 주요 배경
 
 캐릭터 명명 예시:
 올바른 예시 ✅:
@@ -683,7 +711,11 @@ ${targetAge === '4-5' ? `
 - scene_structure: {"characters": "잘생긴 왕자가 서있고, 공주는 놀란 표정으로 바라봄", "background": "왕궁 침실, 햇살이 비치는 아침", "atmosphere": "놀라움과 기쁨의 순간"}
   → 중요: 이제는 "왕자"로 변했으므로 개구리가 아닌 왕자를 그려야 함!
 
-- vocabulary 예시: [{"word": "Rabbit", "korean": "토끼"}, {"word": "Carrot", "korean": "당근"}, {"word": "Forest", "korean": "숲"}]
+- vocabulary 예시 (우선순위대로 선정): 
+  1순위 주요 캐릭터: [{"word": "Rabbit", "korean": "토끼"}]
+  2순위 핵심 사물: [{"word": "Carrot", "korean": "당근"}]
+  3순위 배경 요소: [{"word": "Forest", "korean": "숲"}, {"word": "Tree", "korean": "나무"}]
+  나머지: [{"word": "Flower", "korean": "꽃"}, {"word": "Sun", "korean": "해"}, {"word": "Moon", "korean": "달"}, {"word": "Star", "korean": "별"}]
 
 JSON만 응답하세요.`;
 
@@ -1272,10 +1304,10 @@ Make the illustration emotionally engaging and visually captivating while mainta
   }
 });
 
-// 4. 단어 학습용 이미지 생성
+// 4. 단어 학습용 이미지 생성 (캐릭터와 사물 일관성 강화)
 app.post('/api/generate-vocabulary-images', requireAPIKey, async (req, res) => {
   try {
-    const { vocabulary, artStyle, settings = {} } = req.body;
+    const { vocabulary, artStyle, settings = {}, storybook = {} } = req.body;
     
     if (!vocabulary || vocabulary.length === 0) {
       return res.status(400).json({ error: '단어 목록이 필요합니다.' });
@@ -1284,6 +1316,19 @@ app.post('/api/generate-vocabulary-images', requireAPIKey, async (req, res) => {
     const aspectRatio = settings.aspectRatio || '1:1';
     const enforceNoText = settings.enforceNoText !== false;
     const additionalPrompt = settings.additionalPrompt || '';
+    
+    // 동화책의 캐릭터와 key_objects 정보 수집
+    const characters = storybook.characters || [];
+    const allKeyObjects = [];
+    
+    // 모든 페이지에서 key_objects 수집
+    if (storybook.pages && Array.isArray(storybook.pages)) {
+      storybook.pages.forEach(page => {
+        if (page.scene_structure && page.scene_structure.key_objects) {
+          allKeyObjects.push(page.scene_structure.key_objects);
+        }
+      });
+    }
     
     const images = [];
     
@@ -1297,7 +1342,102 @@ app.post('/api/generate-vocabulary-images', requireAPIKey, async (req, res) => {
           '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, or captions in the image. Absolutely NO TEXT of any kind. Pure illustration only.' :
           '\n\n**IMPORTANT:** Do NOT include any text, labels, words, or letters in the image.';
         
-        const prompt = `Create a simple, clear, educational illustration for a children's vocabulary learning card.
+        // 이 단어가 캐릭터인지 확인
+        const matchingCharacter = characters.find(char => 
+          char.name && (
+            char.name.toLowerCase().includes(korean.toLowerCase()) ||
+            korean.toLowerCase().includes(char.name.toLowerCase()) ||
+            char.role === '주인공' ||
+            char.role === '조력자' ||
+            char.role === '악역'
+          )
+        );
+        
+        // 이 단어가 주요 사물인지 확인
+        const isKeyObject = allKeyObjects.some(objDesc => 
+          objDesc && objDesc.toLowerCase().includes(korean.toLowerCase())
+        );
+        
+        let prompt;
+        let referenceImages = [];
+        
+        // 캐릭터인 경우 - 캐릭터 레퍼런스 이미지 사용
+        if (matchingCharacter) {
+          console.log(`📚 Character found for "${word}" (${korean}): ${matchingCharacter.name}`);
+          
+          if (matchingCharacter.referenceImage) {
+            referenceImages.push(matchingCharacter.referenceImage);
+            console.log(`  🎨 Using character reference image`);
+          }
+          
+          prompt = `Create a simple, clear, educational illustration for a children's vocabulary learning card showing a character.
+
+**Character to Illustrate:** ${word}${korean ? ` (${korean})` : ''}
+
+**CRITICAL - Character Appearance (MUST FOLLOW EXACTLY):**
+${matchingCharacter.description}
+
+**Character Role:** ${matchingCharacter.role}
+
+**Art Style:** ${artStyle} style for children's book illustration.
+
+**Image Aspect Ratio:** ${aspectRatio}
+
+**Requirements:**
+- Show the character in a simple, clear, frontal pose
+- Clean white or simple background (no complex scenes)
+- **EXACT appearance matching the character description above**
+- Bright, vibrant colors
+- Child-friendly, appealing design
+- Age-appropriate for 4-8 years old
+- Focus on the character's distinctive features
+- Make it easy for children to recognize this character
+${noTextPrompt}
+${additionalPrompt ? '\n\n**Additional Requirements:** ' + additionalPrompt : ''}
+
+${matchingCharacter.referenceImage ? '**IMPORTANT:** Use the provided reference image to maintain EXACT visual consistency with the character\'s appearance in the storybook. Match ALL visual details precisely.' : ''}
+
+Create a single, clear character portrait that children can easily recognize.`;
+        }
+        // 주요 사물인 경우 - scene_structure의 key_objects 설명 활용
+        else if (isKeyObject) {
+          console.log(`🔑 Key object found for "${word}" (${korean})`);
+          
+          // key_objects에서 관련 설명 찾기
+          const objectDescription = allKeyObjects.find(objDesc => 
+            objDesc && objDesc.toLowerCase().includes(korean.toLowerCase())
+          );
+          
+          prompt = `Create a simple, clear, educational illustration for a children's vocabulary learning card showing an important story object.
+
+**Object to Illustrate:** ${word}${korean ? ` (${korean})` : ''}
+
+**Object Description from Story:**
+${objectDescription || '이 동화에서 중요한 역할을 하는 사물입니다.'}
+
+**Art Style:** ${artStyle} style for children's book illustration.
+
+**Image Aspect Ratio:** ${aspectRatio}
+
+**Requirements:**
+- Show the object clearly and simply
+- Clean white background
+- **Match the visual description from the story above**
+- Bright, vibrant colors
+- Child-friendly, appealing design
+- Age-appropriate for 4-8 years old
+- Focus on the object's distinctive features as described
+- Make it consistent with how it appears in the storybook illustrations
+${noTextPrompt}
+${additionalPrompt ? '\n\n**Additional Requirements:** ' + additionalPrompt : ''}
+
+Create a single, clear object illustration that matches the storybook's visual style.`;
+        }
+        // 일반 단어인 경우 - 기본 프롬프트
+        else {
+          console.log(`📝 General word: "${word}" (${korean})`);
+          
+          prompt = `Create a simple, clear, educational illustration for a children's vocabulary learning card.
 
 **Word to Illustrate:** ${word}${korean ? ` (${korean})` : ''}
 
@@ -1317,15 +1457,18 @@ ${noTextPrompt}
 ${additionalPrompt ? '\n\n**Additional Requirements:** ' + additionalPrompt : ''}
 
 Create a single, clear image that children can easily understand and associate with the word.`;
+        }
 
         console.log(`Generating vocabulary image for: ${word}${korean ? ` (${korean})` : ''}`);
-        const imageUrl = await generateImage(prompt);
+        const imageUrl = await generateImage(prompt, referenceImages);
         
         images.push({
           word: word,
           korean: korean,
           imageUrl: imageUrl,
-          success: true
+          success: true,
+          isCharacter: !!matchingCharacter,
+          isKeyObject: isKeyObject
         });
         
         await new Promise(resolve => setTimeout(resolve, 500));
