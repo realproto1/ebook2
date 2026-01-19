@@ -2362,19 +2362,8 @@ async function generateSingleVocabularyImage(wordIndex) {
     vocabImgDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-2"></div><p class="text-gray-600 text-xs">생성 중...</p></div>';
     
     try {
-        // ⭐ 1. 캐릭터 레퍼런스에서 매칭 확인 (정확한 매칭만)
-        const matchingCharacter = currentStorybook.characters.find(char => {
-            if (!char.name || !char.referenceImage) return false;
-            
-            const charNameLower = char.name.toLowerCase().trim();
-            const wordLower = word.toLowerCase().trim();
-            const koreanLower = korean.toLowerCase().trim();
-            
-            // 정확히 일치하는 경우만 매칭
-            return charNameLower === wordLower || charNameLower === koreanLower;
-        });
-        
-        // ⭐ 2. Key Objects에서 매칭 확인 (정확한 매칭만)
+        // ⭐ 1. Key Objects에서 매칭 확인 (정확한 매칭만) - 우선 확인!
+        // 8단어 이미지는 Key Object만 참조 (캐릭터 레퍼런스 제외)
         const matchingKeyObject = currentStorybook.key_objects && currentStorybook.key_objects.find((obj, idx) => {
             const hasImage = currentStorybook.keyObjectImages && currentStorybook.keyObjectImages[idx] && currentStorybook.keyObjectImages[idx].imageUrl;
             if (!hasImage) return false;
@@ -2390,34 +2379,7 @@ async function generateSingleVocabularyImage(wordIndex) {
         
         const matchingKeyObjectIndex = matchingKeyObject ? currentStorybook.key_objects.indexOf(matchingKeyObject) : -1;
         
-        // ⭐ 3. 매칭되는 이미지가 있으면 재사용
-        if (matchingCharacter && matchingCharacter.referenceImage) {
-            console.log(`✅ Reusing character image for "${word}" (${korean}): ${matchingCharacter.name}`);
-            
-            const imageUrl = matchingCharacter.referenceImage;
-            
-            if (!currentStorybook.vocabularyImages) {
-                currentStorybook.vocabularyImages = new Array(currentStorybook.educational_content.vocabulary.length).fill(null);
-            }
-            
-            currentStorybook.vocabularyImages[wordIndex] = {
-                word: word,
-                korean: korean,
-                imageUrl: imageUrl,
-                success: true,
-                isCharacter: true,
-                reused: true
-            };
-            
-            saveCurrentStorybook();
-            
-            const badge = '<span class="absolute top-1 right-1 bg-purple-500 text-white text-xs px-2 py-0.5 rounded">캐릭터</span>';
-            vocabImgDiv.innerHTML = `<div class="relative w-full h-full">${badge}<img src="${imageUrl}" alt="${word}" class="w-full h-full object-cover rounded-lg"/></div>`;
-            
-            console.log(`✅ Vocabulary image reused from character: ${word}`);
-            return { index: wordIndex, success: true, imageUrl: imageUrl, reused: true };
-        }
-        
+        // ⭐ 2. 매칭되는 Key Object 이미지가 있으면 재사용
         if (matchingKeyObject && matchingKeyObjectIndex >= 0) {
             const keyObjImage = currentStorybook.keyObjectImages[matchingKeyObjectIndex];
             if (keyObjImage && keyObjImage.imageUrl) {
@@ -3294,28 +3256,32 @@ async function generateAllKeyObjectImages() {
         return;
     }
     
-    if (!confirm(`${currentStorybook.key_objects.length}개의 Key Object 이미지를 모두 생성하시겠습니까?`)) {
+    if (!confirm(`${currentStorybook.key_objects.length}개의 Key Object 이미지를 동시에 생성하시겠습니까?`)) {
         return;
     }
     
-    console.log(`🎨 Generating all ${currentStorybook.key_objects.length} Key Object images...`);
+    console.log(`🎨 Generating all ${currentStorybook.key_objects.length} Key Object images in parallel...`);
     
     // keyObjectImages 배열 초기화
     if (!currentStorybook.keyObjectImages) {
         currentStorybook.keyObjectImages = new Array(currentStorybook.key_objects.length);
     }
     
-    // 순차적으로 생성
+    // ⭐ 병렬 생성 (Promise.all 사용)
+    const promises = [];
     for (let i = 0; i < currentStorybook.key_objects.length; i++) {
-        await generateSingleKeyObjectImage(i);
-        // 서버 부하 방지를 위한 딜레이
-        if (i < currentStorybook.key_objects.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+        promises.push(generateSingleKeyObjectImage(i));
     }
     
-    console.log('✅ All Key Object images generated');
-    alert('모든 Key Object 이미지 생성이 완료되었습니다!');
+    try {
+        const results = await Promise.all(promises);
+        const successCount = results.filter(r => r.success).length;
+        console.log(`✅ All Key Object images generated: ${successCount}/${currentStorybook.key_objects.length} succeeded`);
+        alert(`모든 Key Object 이미지 생성 완료!\n성공: ${successCount}/${currentStorybook.key_objects.length}개`);
+    } catch (error) {
+        console.error('❌ Error generating Key Object images:', error);
+        alert('일부 이미지 생성에 실패했습니다. 개별적으로 다시 시도해주세요.');
+    }
 }
 
 // 모든 Key Object 이미지 다운로드
