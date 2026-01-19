@@ -231,6 +231,24 @@ function closeMobileSidebar() {
     overlay.classList.remove('active');
 }
 
+// 섹션 토글 함수
+function toggleSection(sectionId) {
+    const content = document.getElementById(sectionId + '-content');
+    const icon = document.getElementById(sectionId + '-icon');
+    
+    if (content.classList.contains('hidden')) {
+        // 섹션 열기
+        content.classList.remove('hidden');
+        icon.classList.remove('fa-chevron-right');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        // 섹션 닫기
+        content.classList.add('hidden');
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-right');
+    }
+}
+
 // 이미지 설정 관련 함수
 function loadImageSettings() {
     const saved = localStorage.getItem('imageSettings');
@@ -889,7 +907,8 @@ function displayStorybook(storybook) {
         <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10 mb-8">
             <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0 mb-4 md:mb-6">
                 <div class="flex-1">
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2 cursor-pointer flex items-center" onclick="toggleSection('character-section')">
+                        <i id="character-section-icon" class="fas fa-chevron-down mr-2 text-sm transition-transform"></i>
                         <i class="fas fa-users mr-2 text-purple-500"></i>
                         캐릭터 레퍼런스
                     </h3>
@@ -921,7 +940,7 @@ function displayStorybook(storybook) {
                     </button>
                 </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div id="character-section-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 ${storybook.characters.map((char, idx) => `
                     <div class="character-card card rounded-xl p-4 md:p-6">
                         <div class="flex justify-between items-start mb-3 md:mb-4">
@@ -1018,7 +1037,8 @@ function displayStorybook(storybook) {
         <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10 mb-8">
             <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0 mb-4 md:mb-6">
                 <div class="flex-1">
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2 cursor-pointer flex items-center" onclick="toggleSection('cover-section')">
+                        <i id="cover-section-icon" class="fas fa-chevron-right mr-2 text-sm transition-transform"></i>
                         <i class="fas fa-book-open mr-2 text-indigo-500"></i>
                         표지 이미지
                     </h3>
@@ -1046,7 +1066,7 @@ function displayStorybook(storybook) {
                     ` : ''}
                 </div>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <div id="cover-section-content" class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 hidden">
                 <!-- 표지 이미지 -->
                 <div class="card rounded-xl p-4 md:p-6 bg-gradient-to-br from-indigo-500 to-purple-600">
                     <h4 class="text-lg md:text-xl font-bold text-white mb-3 md:mb-4">
@@ -1114,7 +1134,8 @@ function displayStorybook(storybook) {
         <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10 mb-8">
             <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0 mb-4 md:mb-6">
                 <div class="flex-1">
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2 cursor-pointer flex items-center" onclick="toggleSection('keyobject-section')">
+                        <i id="keyobject-section-icon" class="fas fa-chevron-right mr-2 text-sm transition-transform"></i>
                         <i class="fas fa-cube mr-2 text-orange-500"></i>
                         핵심 사물 (Key Objects)
                     </h3>
@@ -1148,7 +1169,7 @@ function displayStorybook(storybook) {
             </div>
 
             ${storybook.key_objects && storybook.key_objects.length > 0 ? `
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <div id="keyobject-section-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 hidden">
                 ${storybook.key_objects.map((obj, idx) => {
                     const objImg = storybook.keyObjectImages && storybook.keyObjectImages[idx];
                     const sizeIcon = obj.size === 'small' ? 'fa-hand-holding' : obj.size === 'large' ? 'fa-building' : 'fa-box';
