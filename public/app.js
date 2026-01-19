@@ -236,6 +236,12 @@ function toggleSection(sectionId) {
     const content = document.getElementById(sectionId + '-content');
     const icon = document.getElementById(sectionId + '-icon');
     
+    // 요소가 없으면 무시
+    if (!content || !icon) {
+        console.warn(`Section ${sectionId} not found`);
+        return;
+    }
+    
     if (content.classList.contains('hidden')) {
         // 섹션 열기
         content.classList.remove('hidden');
@@ -1285,7 +1291,8 @@ function displayStorybook(storybook) {
         <!-- 페이지 섹션 -->
         <div class="bg-white rounded-3xl shadow-2xl p-10 mb-8">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-3xl font-bold text-gray-800">
+                <h3 class="text-3xl font-bold text-gray-800 cursor-pointer flex items-center" onclick="toggleSection('pages-section')">
+                    <i id="pages-section-icon" class="fas fa-chevron-down mr-2 text-sm transition-transform"></i>
                     <i class="fas fa-book mr-2 text-purple-500"></i>
                     스토리 페이지 (${storybook.pages.length}페이지)
                 </h3>
@@ -1362,7 +1369,7 @@ function displayStorybook(storybook) {
                 </div>
             </div>
 
-            <div class="space-y-6">
+            <div id="pages-section-content" class="space-y-6">
                 ${storybook.pages.map((page, idx) => `
                     <div class="page-card">
                         <h4 class="text-xl md:text-2xl font-bold text-purple-600 mb-3 md:mb-4">페이지 ${page.pageNumber}</h4>
@@ -1542,12 +1549,12 @@ function displayStorybook(storybook) {
 
         <!-- 교육 콘텐츠 -->
         <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10">
-            <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6">
+            <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6 cursor-pointer flex items-center" onclick="toggleSection('education-section')"><i id="education-section-icon" class="fas fa-chevron-down mr-2 text-sm transition-transform"></i>
                 <i class="fas fa-graduation-cap mr-2 text-purple-500"></i>
                 교육 콘텐츠
             </h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            <div id="education-section-content" class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 <div class="bg-purple-50 p-6 rounded-xl">
                     <h4 class="text-xl font-bold text-purple-600 mb-4">
                         <i class="fas fa-question-circle mr-2"></i>상징으로 읽기
