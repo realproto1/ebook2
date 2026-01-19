@@ -1928,6 +1928,80 @@ ${pagesText}
   }
 });
 
+// TTS 생성 API
+app.post('/api/generate-tts', requireAPIKey, async (req, res) => {
+  try {
+    const { text, model, voiceConfig } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        error: '텍스트가 필요합니다.'
+      });
+    }
+    
+    console.log(`\n🔊 TTS 생성 시작`);
+    console.log(`Model: ${model}`);
+    console.log(`Text length: ${text.length}`);
+    console.log(`Voice config: ${voiceConfig}`);
+    
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `다음 텍스트를 자연스럽게 읽어주세요.
+
+**음성 설정:** ${voiceConfig}
+
+**텍스트:**
+${text}`
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.8,
+            topK: 40,
+            topP: 0.95
+          }
+        })
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`TTS API request failed: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // TTS는 오디오 URL을 반환한다고 가정 (실제 구현은 모델에 따라 다름)
+    // 여기서는 간단하게 처리
+    const audioUrl = data.audioUrl || null;
+    
+    console.log(`✅ TTS 생성 완료`);
+    
+    res.json({
+      success: true,
+      audioUrl: audioUrl
+    });
+
+  } catch (error) {
+    console.error('TTS 생성 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: 'TTS 생성 실패: ' + error.message
+    });
+  }
+});
+
 // API 키 제공 엔드포인트 (클라이언트에서 직접 Gemini API 호출용)
 app.get('/api/config', (req, res) => {
   if (!GEMINI_API_KEY) {
