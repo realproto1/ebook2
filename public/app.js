@@ -1174,8 +1174,9 @@ function displayStorybook(storybook) {
                 </div>
             </div>
 
+            <div id="keyobject-section-content" class="hidden">
             ${storybook.key_objects && storybook.key_objects.length > 0 ? `
-            <div id="keyobject-section-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 hidden">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 ${storybook.key_objects.map((obj, idx) => {
                     const objImg = storybook.keyObjectImages && storybook.keyObjectImages[idx];
                     const sizeIcon = obj.size === 'small' ? 'fa-hand-holding' : obj.size === 'large' ? 'fa-building' : 'fa-box';
@@ -1286,6 +1287,7 @@ function displayStorybook(storybook) {
                 <p class="text-sm mt-2">"사물 추가" 버튼을 눌러 핵심 사물을 추가하세요.</p>
             </div>
             `}
+            </div>
         </div>
 
         <!-- 페이지 섹션 -->
