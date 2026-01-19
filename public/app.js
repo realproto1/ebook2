@@ -1920,8 +1920,23 @@ async function generateAllIllustrationsParallel() {
                     
                     const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, '');
                     
-                    // 레퍼런스 이미지 수집: 캐릭터만 (병렬이므로 전 페이지 참조 없음)
-                    const refImageUrls = characterReferences.map(char => char.referenceImage);
+                    // 🎯 페이지에 등장하는 캐릭터 자동 감지
+                    const pageText = page.text || '';
+                    const sceneCharacters = (sceneStructure && sceneStructure.characters) || '';
+                    const allText = `${pageText} ${sceneCharacters}`.toLowerCase();
+                    
+                    // 이 페이지에 등장하는 캐릭터만 필터링
+                    const relevantCharacters = characterReferences.filter(char => {
+                        const charName = char.name.toLowerCase();
+                        return allText.includes(charName) || 
+                               allText.includes(char.description.toLowerCase().split(' ')[0]);
+                    });
+                    
+                    // 등장하지 않으면 모든 캐릭터 포함 (안전장치)
+                    const filteredCharacterRefs = relevantCharacters.length > 0 ? relevantCharacters : characterReferences;
+                    
+                    // 레퍼런스 이미지 수집: 등장 캐릭터만 (병렬이므로 전 페이지 참조 없음)
+                    const refImageUrls = filteredCharacterRefs.map(char => char.referenceImage);
                     
                     const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.illustrationModel || 'gemini-3-pro-image-preview'); // 페이지 삽화 전용 모델 사용
                     
@@ -2064,8 +2079,23 @@ async function generateAllIllustrationsSequential() {
                 
                 const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, '');
                 
-                // 레퍼런스 이미지 수집: 캐릭터 + 바로 전 페이지
-                const refImageUrls = characterReferences.map(char => char.referenceImage);
+                // 🎯 페이지에 등장하는 캐릭터 자동 감지
+                const pageText = page.text || '';
+                const sceneCharacters = (sceneStructure && sceneStructure.characters) || '';
+                const allText = `${pageText} ${sceneCharacters}`.toLowerCase();
+                
+                // 이 페이지에 등장하는 캐릭터만 필터링
+                const relevantCharacters = characterReferences.filter(char => {
+                    const charName = char.name.toLowerCase();
+                    return allText.includes(charName) || 
+                           allText.includes(char.description.toLowerCase().split(' ')[0]);
+                });
+                
+                // 등장하지 않으면 모든 캐릭터 포함 (안전장치)
+                const filteredCharacterRefs = relevantCharacters.length > 0 ? relevantCharacters : characterReferences;
+                
+                // 레퍼런스 이미지 수집: 등장 캐릭터 + 바로 전 페이지
+                const refImageUrls = filteredCharacterRefs.map(char => char.referenceImage);
                 
                 // ⭐ 바로 전 페이지의 이미지를 자동으로 참조 (연속성 향상)
                 if (i > 0) {
@@ -2172,18 +2202,38 @@ async function generateIllustration(pageIndex) {
         const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, editNote);
         
         // 레퍼런스 이미지 수집 전략:
-        // - 재생성 + editNote 있음: 캐릭터 + 현재 이미지만 (타임아웃 방지)
-        // - 재생성 + editNote 없음: 캐릭터 + 전 페이지 + 현재 이미지
-        // - 신규 생성: 캐릭터 + 전 페이지 + 사용자 선택
+        // - 재생성 + editNote 있음: 등장 캐릭터만 + 현재 이미지 (타임아웃 방지)
+        // - 재생성 + editNote 없음: 등장 캐릭터만 + 전 페이지 + 현재 이미지
+        // - 신규 생성: 등장 캐릭터만 + 전 페이지 + 사용자 선택
         
         const isRegeneration = !!page.illustrationImage;
         const hasEditNote = editNote && editNote.trim().length > 0;
         
+        // 🎯 페이지에 등장하는 캐릭터 자동 감지
+        const pageText = page.text || '';
+        const sceneCharacters = (sceneStructure && sceneStructure.characters) || '';
+        const allText = `${pageText} ${sceneCharacters} ${editNote}`.toLowerCase();
+        
+        // 이 페이지에 등장하는 캐릭터만 필터링
+        const relevantCharacters = characterReferences.filter(char => {
+            const charName = char.name.toLowerCase();
+            return allText.includes(charName) || 
+                   allText.includes(char.description.toLowerCase().split(' ')[0]);
+        });
+        
+        // 등장하지 않으면 모든 캐릭터 포함 (안전장치)
+        const filteredCharacterRefs = relevantCharacters.length > 0 ? relevantCharacters : characterReferences;
+        
+        console.log(`👥 캐릭터 필터링: 전체 ${characterReferences.length}명 → 등장 ${filteredCharacterRefs.length}명`);
+        if (filteredCharacterRefs.length < characterReferences.length) {
+            console.log(`   등장 캐릭터: ${filteredCharacterRefs.map(c => c.name).join(', ')}`);
+        }
+        
         let refImageUrls = [];
         
-        // 1. 캐릭터 레퍼런스는 항상 포함 (최대 3개로 제한)
-        refImageUrls = characterReferences.slice(0, 3).map(char => char.referenceImage);
-        console.log(`👥 캐릭터 레퍼런스: ${refImageUrls.length}개`);
+        // 1. 등장하는 캐릭터 레퍼런스만 포함
+        refImageUrls = filteredCharacterRefs.map(char => char.referenceImage);
+        console.log(`👥 등장 캐릭터 레퍼런스: ${refImageUrls.length}개`);
         
         // 2. 재생성 + 수정사항 있음 → 현재 이미지만 추가 (타임아웃 방지)
         if (isRegeneration && hasEditNote) {
@@ -2798,6 +2848,30 @@ function buildIllustrationPrompt(page, artStyle, characterReferences, settings, 
     const isRegeneration = !!page.illustrationImage;
     const hasEditNote = editNote && editNote.trim().length > 0;
     
+    // 🎯 페이지에 등장하는 캐릭터 자동 감지
+    const pageText = page.text || '';
+    const sceneCharacters = (page.scene_structure && page.scene_structure.characters) || '';
+    const editNoteText = editNote || '';
+    
+    // 모든 관련 텍스트 합치기
+    const allText = `${pageText} ${sceneCharacters} ${editNoteText}`.toLowerCase();
+    
+    // 이 페이지에 등장하는 캐릭터만 필터링
+    const relevantCharacters = characterReferences.filter(char => {
+        const charName = char.name.toLowerCase();
+        // 캐릭터 이름이나 설명이 텍스트에 포함되어 있는지 확인
+        return allText.includes(charName) || 
+               allText.includes(char.description.toLowerCase().split(' ')[0]); // 설명의 첫 단어
+    });
+    
+    // 등장하지 않으면 모든 캐릭터 포함 (안전장치)
+    const filteredCharacters = relevantCharacters.length > 0 ? relevantCharacters : characterReferences;
+    
+    console.log(`👥 캐릭터 필터링: 전체 ${characterReferences.length}명 → 등장 ${filteredCharacters.length}명`);
+    if (filteredCharacters.length < characterReferences.length) {
+        console.log(`   등장 캐릭터: ${filteredCharacters.map(c => c.name).join(', ')}`);
+    }
+    
     // 전체 스토리 맥락 구성 (재생성 시 제한)
     let storyContext = '';
     let previousPageNote = '';
@@ -2837,8 +2911,8 @@ ${previousPageNote}`;
     
     let characterInfo = '';
     
-    // 캐릭터 레퍼런스 정보 추가
-    if (characterReferences && characterReferences.length > 0 && settings.enforceCharacterConsistency) {
+    // 캐릭터 레퍼런스 정보 추가 (필터링된 캐릭터만)
+    if (filteredCharacters.length > 0 && settings.enforceCharacterConsistency) {
         characterInfo = '\n\n**Character References (MUST FOLLOW EXACTLY):**\n';
         characterInfo += 'You have been provided with character reference images. ';
         
@@ -2848,7 +2922,7 @@ ${previousPageNote}`;
             characterInfo += 'The characters in this illustration MUST be visually identical to the reference images.\n\n';
         }
         
-        currentStorybook.characters.forEach((char, index) => {
+        filteredCharacters.forEach((char, index) => {
             if (char.referenceImage) {
                 characterInfo += `${index + 1}. **${char.name}:** ${char.description}\n`;
                 if (settings.enforceCharacterConsistency) {
