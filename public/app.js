@@ -2171,32 +2171,62 @@ async function generateIllustration(pageIndex) {
         
         const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, editNote);
         
-        // 레퍼런스 이미지 수집: 캐릭터 + 바로 전 페이지 + 기존 삽화(있으면) + 사용자 선택 참조 이미지
-        const refImageUrls = characterReferences.map(char => char.referenceImage);
+        // 레퍼런스 이미지 수집 전략:
+        // - 재생성 + editNote 있음: 캐릭터 + 현재 이미지만 (타임아웃 방지)
+        // - 재생성 + editNote 없음: 캐릭터 + 전 페이지 + 현재 이미지
+        // - 신규 생성: 캐릭터 + 전 페이지 + 사용자 선택
         
-        // ⭐ 새로 추가: 바로 전 페이지의 이미지를 자동으로 참조 (연속성 향상)
-        if (pageIndex > 0) {
-            const previousPage = currentStorybook.pages[pageIndex - 1];
-            if (previousPage && previousPage.illustrationImage) {
-                console.log(`📖 바로 전 페이지(${pageIndex})의 이미지를 자동 참조하여 연속성 향상`);
-                refImageUrls.push(previousPage.illustrationImage);
+        const isRegeneration = !!page.illustrationImage;
+        const hasEditNote = editNote && editNote.trim().length > 0;
+        
+        let refImageUrls = [];
+        
+        // 1. 캐릭터 레퍼런스는 항상 포함 (최대 3개로 제한)
+        refImageUrls = characterReferences.slice(0, 3).map(char => char.referenceImage);
+        console.log(`👥 캐릭터 레퍼런스: ${refImageUrls.length}개`);
+        
+        // 2. 재생성 + 수정사항 있음 → 현재 이미지만 추가 (타임아웃 방지)
+        if (isRegeneration && hasEditNote) {
+            console.log('🔄 재생성 모드 (수정사항 있음): 현재 이미지만 참조 (타임아웃 방지)');
+            refImageUrls.push(page.illustrationImage);
+        }
+        // 3. 재생성 + 수정사항 없음 → 전 페이지 + 현재 이미지
+        else if (isRegeneration && !hasEditNote) {
+            console.log('🔄 재생성 모드 (변형): 전 페이지 + 현재 이미지 참조');
+            // 바로 전 페이지
+            if (pageIndex > 0) {
+                const previousPage = currentStorybook.pages[pageIndex - 1];
+                if (previousPage && previousPage.illustrationImage) {
+                    refImageUrls.push(previousPage.illustrationImage);
+                }
+            }
+            // 현재 이미지
+            refImageUrls.push(page.illustrationImage);
+        }
+        // 4. 신규 생성 → 전 페이지 + 사용자 선택
+        else {
+            console.log('✨ 신규 생성 모드: 전 페이지 + 사용자 선택 참조');
+            // 바로 전 페이지
+            if (pageIndex > 0) {
+                const previousPage = currentStorybook.pages[pageIndex - 1];
+                if (previousPage && previousPage.illustrationImage) {
+                    console.log(`📖 바로 전 페이지(${pageIndex})의 이미지를 자동 참조`);
+                    refImageUrls.push(previousPage.illustrationImage);
+                }
+            }
+            
+            // 사용자가 선택한 참조 이미지
+            const selectedRefImages = getSelectedReferenceImages(pageIndex);
+            if (selectedRefImages.length > 0) {
+                console.log(`🖼️ ${selectedRefImages.length}개의 참조 이미지 추가`);
+                selectedRefImages.forEach(refImg => {
+                    refImageUrls.push(refImg.imageUrl);
+                });
             }
         }
         
-        // 재생성인 경우 기존 이미지를 레퍼런스로 추가 (수정사항 유무 무관)
-        if (page.illustrationImage) {
-            console.log('🔄 재생성 모드: 기존 이미지를 레퍼런스로 추가');
-            refImageUrls.push(page.illustrationImage);
-        }
-        
-        // 사용자가 선택한 다른 페이지 이미지를 참조로 추가
-        const selectedRefImages = getSelectedReferenceImages(pageIndex);
-        if (selectedRefImages.length > 0) {
-            console.log(`🖼️ ${selectedRefImages.length}개의 참조 이미지 추가 (페이지: ${selectedRefImages.map(img => img.pageNumber).join(', ')})`);
-            selectedRefImages.forEach(refImg => {
-                refImageUrls.push(refImg.imageUrl);
-            });
-        }
+        console.log(`📊 최종 레퍼런스 이미지 개수: ${refImageUrls.length}`);
+
         
         const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.illustrationModel || 'gemini-3-pro-image-preview'); // 페이지 삽화 전용 모델 사용
 
@@ -2764,35 +2794,45 @@ ${noTextPrompt}`;
  * @returns {string} - 완성된 프롬프트
  */
 function buildIllustrationPrompt(page, artStyle, characterReferences, settings, editNote = '') {
-    // 전체 스토리 맥락 구성 (이전 페이지들)
+    // 재생성 모드 확인
+    const isRegeneration = !!page.illustrationImage;
+    const hasEditNote = editNote && editNote.trim().length > 0;
+    
+    // 전체 스토리 맥락 구성 (재생성 시 제한)
     let storyContext = '';
     let previousPageNote = '';
-    if (currentStorybook && currentStorybook.pages) {
-        const previousPages = currentStorybook.pages
-            .filter(p => p.pageNumber < page.pageNumber)
-            .sort((a, b) => a.pageNumber - b.pageNumber);
-        
-        if (previousPages.length > 0) {
-            console.log(`📖 Including story context from ${previousPages.length} previous pages`);
-            const previousTexts = previousPages
-                .map(p => `Page ${p.pageNumber}: ${p.text}`)
-                .join('\n');
+    
+    // 재생성 + editNote가 있으면 스토리 컨텍스트 생략 (타임아웃 방지)
+    if (!isRegeneration || !hasEditNote) {
+        if (currentStorybook && currentStorybook.pages) {
+            const previousPages = currentStorybook.pages
+                .filter(p => p.pageNumber < page.pageNumber)
+                .sort((a, b) => a.pageNumber - b.pageNumber);
             
-            // 바로 전 페이지 강조
-            const immediatelyPreviousPage = previousPages[previousPages.length - 1];
-            if (immediatelyPreviousPage && immediatelyPreviousPage.illustrationImage) {
-                previousPageNote = `\n\n**🎨 PREVIOUS PAGE REFERENCE (Page ${immediatelyPreviousPage.pageNumber}):**
-I have provided the illustration from the immediately previous page (Page ${immediatelyPreviousPage.pageNumber}) as a reference image. Use it to maintain visual continuity, consistent lighting, color palette, and art style. The current page should naturally flow from the previous page's visual style and composition.`;
-            }
-            
-            storyContext = `\n\n**STORY CONTEXT - What happened before this scene:**
+            if (previousPages.length > 0) {
+                // 최근 3페이지만 포함 (타임아웃 방지)
+                const recentPages = previousPages.slice(-3);
+                console.log(`📖 Including story context from ${recentPages.length} recent pages (limited for performance)`);
+                const previousTexts = recentPages
+                    .map(p => `Page ${p.pageNumber}: ${p.text}`)
+                    .join('\n');
+                
+                // 바로 전 페이지 강조
+                const immediatelyPreviousPage = previousPages[previousPages.length - 1];
+                if (immediatelyPreviousPage && immediatelyPreviousPage.illustrationImage) {
+                    previousPageNote = `\n\n**🎨 PREVIOUS PAGE REFERENCE (Page ${immediatelyPreviousPage.pageNumber}):**
+I have provided the illustration from the immediately previous page as a reference image. Use it to maintain visual continuity and art style.`;
+                }
+                
+                storyContext = `\n\n**RECENT STORY CONTEXT:**
 ${previousTexts}
 
 **CURRENT PAGE ${page.pageNumber}:** ${page.text}
-${previousPageNote}
-
-**⭐ CRITICAL:** The illustration MUST reflect the current page state. If a character has transformed or changed (e.g., mermaid → human with legs, child → adult, cursed → normal), they MUST appear in their NEW form on the current page, NOT their old form. Consider the full story progression when depicting characters and scenes.`;
+${previousPageNote}`;
+            }
         }
+    } else {
+        console.log('📖 Skipping story context (regeneration with editNote - timeout prevention)');
     }
     
     let characterInfo = '';
