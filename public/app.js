@@ -7,19 +7,73 @@ let imageSettings = {
     enforceCharacterConsistency: true,
     additionalPrompt: '',
     imageQuality: 'high',
-    imageModel: 'gemini-3-pro-image-preview'  // 기본값: Nano Banana Pro
+    imageModel: 'nano-banana-pro',  // 기본값: Nano Banana Pro
+    characterModel: 'nano-banana-pro',  // 캐릭터 레퍼런스 모델
+    keyObjectModel: 'nano-banana-pro',  // Key Object 모델
+    illustrationModel: 'nano-banana-pro',  // 페이지 삽화 모델
+    vocabularyModel: 'nano-banana-pro'  // 8단어 학습 모델
 };
+
+// 이미지 모델 목록
+const IMAGE_MODELS = [
+    { value: 'nano-banana-pro', label: 'Nano Banana Pro (권장)', description: '최고 품질, 멀티 이미지 지원' },
+    { value: 'gemini-flash', label: 'Gemini Flash', description: '빠른 생성 속도' },
+    { value: 'gemini-3-pro-image-preview', label: 'Gemini 3 Pro Image', description: '구버전' }
+];
+
+// 모델 선택 HTML 생성 함수
+function createModelSelect(sectionName, currentModel, onChangeFunction) {
+    const modelOptions = IMAGE_MODELS.map(model => 
+        `<option value="${model.value}" ${currentModel === model.value ? 'selected' : ''}>${model.label}</option>`
+    ).join('');
+    
+    return `
+        <div class="flex items-center gap-2">
+            <i class="fas fa-robot text-gray-600"></i>
+            <select 
+                id="${sectionName}-model-select"
+                onchange="${onChangeFunction}"
+                class="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+            >
+                ${modelOptions}
+            </select>
+        </div>
+    `;
+}
+
+// 캐릭터 레퍼런스 모델 변경
+function updateCharacterModel(value) {
+    imageSettings.characterModel = value;
+    saveImageSettings();
+    console.log('✅ 캐릭터 레퍼런스 모델 변경:', value);
+}
+
+// Key Object 모델 변경
+function updateKeyObjectModel(value) {
+    imageSettings.keyObjectModel = value;
+    saveImageSettings();
+    console.log('✅ Key Object 모델 변경:', value);
+}
+
+// 페이지 삽화 모델 변경
+function updateIllustrationModel(value) {
+    imageSettings.illustrationModel = value;
+    saveImageSettings();
+    console.log('✅ 페이지 삽화 모델 변경:', value);
+}
+
+// 8단어 학습 모델 변경
+function updateVocabularyModel(value) {
+    imageSettings.vocabularyModel = value;
+    saveImageSettings();
+    console.log('✅ 8단어 학습 모델 변경:', value);
+}
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', () => {
     loadImageSettings();
     loadStorybooks();
     renderBookList();
-    
-    // 이미지 모델 선택값 복원
-    if (document.getElementById('imageModelSelect')) {
-        document.getElementById('imageModelSelect').value = imageSettings.imageModel || 'gemini-3-pro-image-preview';
-    }
 });
 
 // 모바일 사이드바 토글 함수
@@ -55,7 +109,12 @@ function openSettings() {
     document.getElementById('enforceCharacterConsistency').checked = imageSettings.enforceCharacterConsistency;
     document.getElementById('additionalPrompt').value = imageSettings.additionalPrompt;
     document.getElementById('imageQuality').value = imageSettings.imageQuality;
-    document.getElementById('imageModel').value = imageSettings.imageModel || 'gemini-3-pro-image-preview';
+    
+    // 각 섹션별 모델 선택값 복원
+    document.getElementById('characterModelSelect').value = imageSettings.characterModel || 'nano-banana-pro';
+    document.getElementById('keyObjectModelSelect').value = imageSettings.keyObjectModel || 'nano-banana-pro';
+    document.getElementById('illustrationModelSelect').value = imageSettings.illustrationModel || 'nano-banana-pro';
+    document.getElementById('vocabularyModelSelect').value = imageSettings.vocabularyModel || 'nano-banana-pro';
     
     // API 키 로드 (localStorage에서)
     const savedApiKey = localStorage.getItem('gemini_api_key') || '';
@@ -76,7 +135,12 @@ function saveSettings() {
     imageSettings.enforceCharacterConsistency = document.getElementById('enforceCharacterConsistency').checked;
     imageSettings.additionalPrompt = document.getElementById('additionalPrompt').value;
     imageSettings.imageQuality = document.getElementById('imageQuality').value;
-    imageSettings.imageModel = document.getElementById('imageModel').value;
+    
+    // 각 섹션별 모델 설정 저장
+    imageSettings.characterModel = document.getElementById('characterModelSelect').value;
+    imageSettings.keyObjectModel = document.getElementById('keyObjectModelSelect').value;
+    imageSettings.illustrationModel = document.getElementById('illustrationModelSelect').value;
+    imageSettings.vocabularyModel = document.getElementById('vocabularyModelSelect').value;
     
     console.log('💾 이미지 설정 저장:', imageSettings);
     
@@ -684,7 +748,7 @@ function displayStorybook(storybook) {
         <!-- 캐릭터 섹션 -->
         <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10 mb-8">
             <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0 mb-4 md:mb-6">
-                <div>
+                <div class="flex-1">
                     <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
                         <i class="fas fa-users mr-2 text-purple-500"></i>
                         캐릭터 레퍼런스
@@ -694,6 +758,7 @@ function displayStorybook(storybook) {
                         <span class="hidden sm:inline">각 캐릭터의 레퍼런스 이미지를 생성하면 삽화에서 일관된 모습을 유지할 수 있어요.</span>
                         <span class="sm:hidden">레퍼런스 이미지로 일관성 유지</span>
                     </p>
+                    ${createModelSelect('character', imageSettings.characterModel || 'nano-banana-pro', 'updateCharacterModel(this.value)')}
                 </div>
                 <div class="flex gap-2 md:gap-3">
                     <button 
@@ -812,7 +877,7 @@ function displayStorybook(storybook) {
         <!-- Key Objects 섹션 -->
         <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10 mb-8">
             <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0 mb-4 md:mb-6">
-                <div>
+                <div class="flex-1">
                     <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
                         <i class="fas fa-cube mr-2 text-orange-500"></i>
                         핵심 사물 (Key Objects)
@@ -822,6 +887,7 @@ function displayStorybook(storybook) {
                         <span class="hidden sm:inline">스토리에서 중요한 물건들을 미리 생성하면 삽화에서 일관되게 표현할 수 있어요.</span>
                         <span class="sm:hidden">핵심 사물로 일관성 유지</span>
                     </p>
+                    ${createModelSelect('keyobject', imageSettings.keyObjectModel || 'nano-banana-pro', 'updateKeyObjectModel(this.value)')}
                 </div>
                 <div class="flex gap-2 md:gap-3">
                     <button 
@@ -1220,9 +1286,12 @@ function displayStorybook(storybook) {
 
                 <div class="bg-blue-50 p-6 rounded-xl col-span-3">
                     <div class="flex justify-between items-center mb-4">
-                        <h4 class="text-xl font-bold text-blue-600">
-                            <i class="fas fa-language mr-2"></i>영어 단어 학습 (${storybook.educational_content.vocabulary.length}개)
-                        </h4>
+                        <div class="flex-1">
+                            <h4 class="text-xl font-bold text-blue-600 mb-2">
+                                <i class="fas fa-language mr-2"></i>영어 단어 학습 (${storybook.educational_content.vocabulary.length}개)
+                            </h4>
+                            ${createModelSelect('vocabulary', imageSettings.vocabularyModel || 'nano-banana-pro', 'updateVocabularyModel(this.value)')}
+                        </div>
                         <div class="flex gap-2">
                             <button 
                                 onclick="generateAllVocabularyImages()"
@@ -1640,12 +1709,13 @@ async function generateCharacterReference(charIndex) {
         }
         
         console.log(`🎨 캐릭터 "${character.name}" 이미지 생성 ${isRegeneration ? '(재생성 모드 - 사용자 수정사항 반영)' : '(초기 생성)'}`);
+        console.log('🤖 사용 모델:', imageSettings.characterModel || 'nano-banana-pro');
         console.log('📝 프롬프트:', customPrompt.substring(0, 100) + '...');
         if (refImageUrls.length > 0) {
             console.log('🖼️ 참조 이미지:', refImageUrls.length, '개');
         }
         
-        const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
+        const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.characterModel || 'nano-banana-pro'); // 캐릭터 전용 모델 사용
 
         if (result.success && result.imageUrl) {
             const imageUrl = result.imageUrl;
@@ -1848,7 +1918,7 @@ async function generateAllIllustrationsParallel() {
                     // 레퍼런스 이미지 수집: 캐릭터만 (병렬이므로 전 페이지 참조 없음)
                     const refImageUrls = characterReferences.map(char => char.referenceImage);
                     
-                    const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
+                    const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.illustrationModel || 'nano-banana-pro'); // 페이지 삽화 전용 모델 사용
                     
                     if (result.success && result.imageUrl) {
                         currentStorybook.pages[pageIndex].illustrationImage = result.imageUrl;
@@ -2001,7 +2071,7 @@ async function generateAllIllustrationsSequential() {
                     }
                 }
                 
-                const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
+                const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.illustrationModel || 'nano-banana-pro'); // 페이지 삽화 전용 모델 사용
                 
                 if (result.success && result.imageUrl) {
                     currentStorybook.pages[i].illustrationImage = result.imageUrl;
@@ -2123,7 +2193,7 @@ async function generateIllustration(pageIndex) {
             });
         }
         
-        const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
+        const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.illustrationModel || 'nano-banana-pro'); // 페이지 삽화 전용 모델 사용
 
         if (result.success && result.imageUrl) {
             const imageUrl = result.imageUrl;
@@ -2514,7 +2584,7 @@ Requirements:
 Example: For "Apple", show only a red apple fruit. No text.`;
         }
 
-        const result = await generateImageClient(prompt, referenceImages, 3); // 최대 3회 재시도
+        const result = await generateImageClient(prompt, referenceImages, 3, imageSettings.vocabularyModel || 'nano-banana-pro'); // 8단어 학습 전용 모델 사용
         
         if (result.success && result.imageUrl) {
             const imageUrl = result.imageUrl;
@@ -3190,7 +3260,7 @@ ${imageSettings.additionalPrompt ? '\n\n**Additional Requirements:** ' + imageSe
 Create a single, clear, professional illustration of this key object.`;
 
         // 이미지 생성
-        const result = await generateImageClient(prompt, [], 3);
+        const result = await generateImageClient(prompt, [], 3, imageSettings.keyObjectModel || 'nano-banana-pro'); // Key Object 전용 모델 사용
         
         if (result.success && result.imageUrl) {
             // keyObjectImages 배열 초기화
