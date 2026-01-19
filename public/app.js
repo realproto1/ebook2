@@ -2198,7 +2198,7 @@ async function generateIllustration(pageIndex) {
             });
         }
         
-        const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.illustrationModel || 'nano-banana-pro'); // 페이지 삽화 전용 모델 사용
+        const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.illustrationModel || 'gemini-3-pro-image-preview'); // 페이지 삽화 전용 모델 사용
 
         if (result.success && result.imageUrl) {
             const imageUrl = result.imageUrl;
@@ -2502,44 +2502,9 @@ async function generateSingleVocabularyImage(wordIndex) {
         let prompt;
         let referenceImages = [];
         
-        // 캐릭터인 경우 - 캐릭터 레퍼런스 이미지 사용
-        if (matchingCharacter) {
-            console.log(`📚 Character found for "${word}" (${korean}): ${matchingCharacter.name}`);
-            
-            if (matchingCharacter.referenceImage) {
-                referenceImages.push(matchingCharacter.referenceImage);
-                console.log(`  🎨 Using character reference image`);
-            }
-            
-            prompt = `Create a simple, clear, educational illustration for a children's vocabulary learning card showing a character.
-
-**Character to Illustrate:** ${word}${korean ? ` (${korean})` : ''}
-
-**CRITICAL - Character Appearance (MUST FOLLOW EXACTLY):**
-${matchingCharacter.description}
-
-**Character Role:** ${matchingCharacter.role}
-
-**Art Style:** ${currentStorybook.artStyle} style for children's book illustration.
-
-**Requirements:**
-- Show the character in a simple, clear, frontal pose
-- Clean white or simple background (no complex scenes)
-- **EXACT appearance matching the character description above**
-- Bright, vibrant colors
-- Child-friendly, appealing design
-- Age-appropriate for 4-8 years old
-- Focus on the character's distinctive features
-- Make it easy for children to recognize this character
-
-**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, or captions in the image. Absolutely NO TEXT of any kind. Pure illustration only.
-
-${matchingCharacter.referenceImage ? '**IMPORTANT:** Use the provided reference image to maintain EXACT visual consistency with the character\'s appearance in the storybook. Match ALL visual details precisely.' : ''}
-
-Create a single, clear character portrait that children can easily recognize.`;
-        }
+        // 8단어 이미지는 Key Object만 참조하므로 캐릭터 매칭 로직 제거됨
         // 주요 사물인 경우 - scene_structure의 key_objects 설명 활용
-        else if (isKeyObject) {
+        if (isKeyObject) {
             console.log(`🔑 Key object found for "${word}" (${korean})`);
             
             // key_objects에서 관련 설명 찾기
