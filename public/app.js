@@ -1267,9 +1267,30 @@ function displayStorybook(storybook) {
                     <i class="fas fa-book mr-2 text-purple-500"></i>
                     스토리 페이지 (${storybook.pages.length}페이지)
                 </h3>
-                <div class="mb-3 flex items-center gap-2">
-                    <label class="text-sm text-gray-600">이미지 모델:</label>
-                    ${createModelSelect('illustration', imageSettings.illustrationModel || 'gemini-3-pro-image-preview')}
+                <div class="mb-3 flex items-center gap-4 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-gray-600">이미지 모델:</label>
+                        ${createModelSelect('illustration', imageSettings.illustrationModel || 'gemini-3-pro-image-preview')}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-gray-600">번역 언어:</label>
+                        <select id="translationLanguage" class="border border-gray-300 rounded px-3 py-1.5 text-sm">
+                            <option value="en">English</option>
+                            <option value="ja">日本語</option>
+                            <option value="zh">中文</option>
+                            <option value="es">Español</option>
+                            <option value="fr">Français</option>
+                            <option value="de">Deutsch</option>
+                            <option value="vi">Tiếng Việt</option>
+                            <option value="th">ไทย</option>
+                        </select>
+                        <button 
+                            onclick="translateAllText()"
+                            class="bg-teal-600 text-white px-4 py-1.5 rounded hover:bg-teal-700 transition text-sm"
+                        >
+                            <i class="fas fa-language mr-1"></i>번역
+                        </button>
+                    </div>
                 </div>
                 <div class="flex gap-3 flex-wrap">
                     <div class="flex gap-2">
@@ -2435,10 +2456,10 @@ async function generateIllustration(pageIndex) {
         
         const prompt = buildIllustrationPrompt(pageData, artStyle, characterReferences, imageSettings, editNote);
         
-        // 레퍼런스 이미지 수집 전략:
-        // - 재생성 + editNote 있음: 등장 캐릭터만 + 현재 이미지 (타임아웃 방지)
-        // - 재생성 + editNote 없음: 등장 캐릭터만 + 전 페이지 + 현재 이미지
-        // - 신규 생성: 등장 캐릭터만 + 전 페이지 + 사용자 선택
+        // 레퍼런스 이미지 수집 전략 (사용자 요청: 재생성 시 제한 해제):
+        // - 재생성 + editNote 있음: 모든 필요한 캐릭터 + 현재 이미지 + 전 페이지
+        // - 재생성 + editNote 없음: 모든 필요한 캐릭터 + 전 페이지 + 현재 이미지
+        // - 신규 생성: 모든 필요한 캐릭터 + 전 페이지 + 사용자 선택
         
         const isRegeneration = !!page.illustrationImage;
         const hasEditNote = editNote && editNote.trim().length > 0;
@@ -2469,10 +2490,26 @@ async function generateIllustration(pageIndex) {
         refImageUrls = filteredCharacterRefs.map(char => char.referenceImage);
         console.log(`👥 등장 캐릭터 레퍼런스: ${refImageUrls.length}개`);
         
-        // 2. 재생성 + 수정사항 있음 → 현재 이미지만 추가 (타임아웃 방지)
+        // 2. 재생성 + 수정사항 있음 → 전 페이지 + 현재 이미지 (제한 해제)
         if (isRegeneration && hasEditNote) {
-            console.log('🔄 재생성 모드 (수정사항 있음): 현재 이미지만 참조 (타임아웃 방지)');
+            console.log('🔄 재생성 모드 (수정사항 있음): 모든 참조 이미지 사용 (제한 해제)');
+            // 바로 전 페이지
+            if (pageIndex > 0) {
+                const previousPage = currentStorybook.pages[pageIndex - 1];
+                if (previousPage && previousPage.illustrationImage) {
+                    refImageUrls.push(previousPage.illustrationImage);
+                }
+            }
+            // 현재 이미지
             refImageUrls.push(page.illustrationImage);
+            // 사용자 선택 참조도 포함
+            const selectedRefImages = getSelectedReferenceImages(pageIndex);
+            if (selectedRefImages.length > 0) {
+                console.log(`🖼️ ${selectedRefImages.length}개의 참조 이미지 추가`);
+                selectedRefImages.forEach(refImg => {
+                    refImageUrls.push(refImg.imageUrl);
+                });
+            }
         }
         // 3. 재생성 + 수정사항 없음 → 전 페이지 + 현재 이미지
         else if (isRegeneration && !hasEditNote) {
@@ -2683,6 +2720,79 @@ function downloadAllText() {
     
     alert('텍스트 파일이 다운로드되었습니다.');
 }
+
+// 전체 텍스트 번역 함수
+async function translateAllText() {
+    if (!currentStorybook || !currentStorybook.pages || currentStorybook.pages.length === 0) {
+        alert('번역할 텍스트가 없습니다.');
+        return;
+    }
+    
+    const targetLanguage = document.getElementById('translationLanguage').value;
+    const languageNames = {
+        'en': 'English',
+        'ja': '日本語',
+        'zh': '中文',
+        'es': 'Español',
+        'fr': 'Français',
+        'de': 'Deutsch',
+        'vi': 'Tiếng Việt',
+        'th': 'ไทย'
+    };
+    
+    if (!confirm(`모든 페이지를 ${languageNames[targetLanguage]}로 번역하시겠습니까?\n\n이 작업은 약 ${Math.ceil(currentStorybook.pages.length * 2)}초 정도 소요됩니다.`)) {
+        return;
+    }
+    
+    // 로딩 표시
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'translation-loading';
+    loadingDiv.className = 'fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50';
+    loadingDiv.innerHTML = `
+        <div class="bg-white rounded-lg p-8 max-w-md">
+            <div class="flex flex-col items-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
+                <p class="text-lg font-semibold text-gray-800 mb-2">텍스트 번역 중...</p>
+                <p class="text-sm text-gray-600">잠시만 기다려주세요</p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(loadingDiv);
+    
+    try {
+        const response = await axios.post('/api/translate-storybook', {
+            storybook: currentStorybook,
+            targetLanguage: targetLanguage
+        });
+        
+        if (response.data.success) {
+            // 번역된 내용으로 업데이트
+            currentStorybook.pages = response.data.translatedPages;
+            currentStorybook.title = response.data.translatedTitle;
+            
+            if (response.data.translatedTheme) {
+                currentStorybook.theme = response.data.translatedTheme;
+            }
+            
+            // 저장 및 표시
+            saveCurrentStorybook();
+            displayStorybook(currentStorybook);
+            
+            showNotification('success', '번역 완료!', `모든 텍스트가 ${languageNames[targetLanguage]}로 번역되었습니다.`);
+        } else {
+            throw new Error(response.data.error || '번역 실패');
+        }
+    } catch (error) {
+        console.error('Translation error:', error);
+        alert('번역 중 오류가 발생했습니다: ' + (error.response?.data?.error || error.message));
+    } finally {
+        // 로딩 제거
+        if (document.getElementById('translation-loading')) {
+            document.getElementById('translation-loading').remove();
+        }
+    }
+}
+
 
 async function downloadImage(imageUrl, filename) {
     try {
@@ -3276,8 +3386,10 @@ ${regenerationNote}
 **Art Style:** ${artStyle} style for children's book illustration.
 
 **Image Aspect Ratio:** ${settings.aspectRatio}
+${isRegeneration ? '\n**⚠️ CRITICAL: MAINTAIN EXACT ASPECT RATIO** - The image MUST be exactly ' + settings.aspectRatio + '. Do NOT change the aspect ratio from the original image.' : ''}
 
 **Composition:** Create a warm, inviting scene that captures the emotion and action of the story moment. Use a horizontal composition suitable for a storybook spread.
+${currentStorybook && currentStorybook.pages && page.pageNumber > 1 ? '\n**🎯 DIRECTIONAL CONSISTENCY:** Analyze the previous page\'s character positions and maintain consistent left-right orientation throughout the story. If a character was facing right in the previous scene, keep them facing right unless the story requires a directional change.' : ''}
 
 **Lighting & Atmosphere:** Soft, warm lighting with gentle shadows. The scene should feel magical yet safe and welcoming for young children.
 

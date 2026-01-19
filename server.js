@@ -1801,6 +1801,127 @@ JSON만 응답하세요. 다른 텍스트는 포함하지 마세요.`;
   }
 });
 
+// 동화책 번역 API
+app.post('/api/translate-storybook', requireAPIKey, async (req, res) => {
+  try {
+    const { storybook, targetLanguage } = req.body;
+    
+    if (!storybook || !storybook.pages || !targetLanguage) {
+      return res.status(400).json({
+        success: false,
+        error: '동화책 데이터와 타겟 언어가 필요합니다.'
+      });
+    }
+    
+    const languageMap = {
+      'en': 'English',
+      'ja': 'Japanese',
+      'zh': 'Chinese',
+      'es': 'Spanish',
+      'fr': 'French',
+      'de': 'German',
+      'vi': 'Vietnamese',
+      'th': 'Thai'
+    };
+    
+    const targetLang = languageMap[targetLanguage] || 'English';
+    
+    console.log(`\n🌍 Translating storybook to ${targetLang}`);
+    console.log(`Pages to translate: ${storybook.pages.length}`);
+    
+    // 모든 페이지의 텍스트를 한 번에 번역
+    const pagesText = storybook.pages.map((page, idx) => 
+      `[PAGE ${page.pageNumber}]\n${page.text}`
+    ).join('\n\n---\n\n');
+    
+    const prompt = `Translate the following children's storybook to ${targetLang}.
+
+**IMPORTANT TRANSLATION RULES:**
+1. Maintain the natural tone and style for children ages ${storybook.targetAge || 4-8}
+2. Keep cultural context appropriate for the target language
+3. Preserve emotional nuance and storytelling rhythm
+4. Keep character names as they are (do not translate proper nouns)
+5. Adapt idioms and expressions to be culturally relevant
+6. Maintain the same reading level and vocabulary complexity
+
+**STORYBOOK TITLE:**
+${storybook.title}
+
+**THEME:**
+${storybook.theme || ''}
+
+**PAGES TO TRANSLATE:**
+${pagesText}
+
+**RESPOND IN THIS EXACT JSON FORMAT:**
+{
+  "translatedTitle": "translated title",
+  "translatedTheme": "translated theme",
+  "translatedPages": [
+    {
+      "pageNumber": 1,
+      "text": "translated text for page 1"
+    },
+    {
+      "pageNumber": 2,
+      "text": "translated text for page 2"
+    }
+  ]
+}
+
+**CRITICAL:** Respond ONLY with valid JSON. No markdown, no explanation, just pure JSON.`;
+
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.4,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192
+        }
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    let translationText = response.data.candidates[0].content.parts[0].text;
+    
+    // JSON 추출
+    translationText = translationText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    const translationData = JSON.parse(translationText);
+    
+    console.log(`✅ Translation complete for ${translationData.translatedPages.length} pages`);
+    
+    res.json({
+      success: true,
+      translatedTitle: translationData.translatedTitle,
+      translatedTheme: translationData.translatedTheme || storybook.theme,
+      translatedPages: translationData.translatedPages
+    });
+
+  } catch (error) {
+    console.error('번역 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: '번역 실패: ' + error.message
+    });
+  }
+});
+
 // API 키 제공 엔드포인트 (클라이언트에서 직접 Gemini API 호출용)
 app.get('/api/config', (req, res) => {
   if (!GEMINI_API_KEY) {
