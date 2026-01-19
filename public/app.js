@@ -11,7 +11,8 @@ let imageSettings = {
     characterModel: 'gemini-3-pro-image-preview',  // 캐릭터 레퍼런스 모델
     keyObjectModel: 'gemini-3-pro-image-preview',  // Key Object 모델
     illustrationModel: 'gemini-3-pro-image-preview',  // 페이지 삽화 모델
-    vocabularyModel: 'gemini-3-pro-image-preview'  // 8단어 학습 모델
+    vocabularyModel: 'gemini-3-pro-image-preview',  // 8단어 학습 모델
+    coverModel: 'gemini-3-pro-image-preview'  // 표지 모델
 };
 
 // 이미지 모델 목록
@@ -68,6 +69,144 @@ function updateVocabularyModel(value) {
     imageSettings.vocabularyModel = value;
     saveImageSettings();
     console.log('✅ 8단어 학습 모델 변경:', value);
+}
+
+// 표지 모델 변경
+function updateCoverModel(value) {
+    imageSettings.coverModel = value;
+    saveImageSettings();
+    console.log('✅ 표지 모델 변경:', value);
+}
+
+// 표지 프롬프트 생성
+function buildCoverPrompt(storybook) {
+    const title = storybook.title || '동화책';
+    const theme = storybook.theme || '';
+    const artStyle = storybook.artStyle || 'Disney animation style';
+    const characters = storybook.characters.map(c => c.name).join(', ');
+    
+    return `Create a beautiful, professional book cover illustration for a children's storybook.
+
+**Book Title:** ${title}
+**Theme:** ${theme}
+**Art Style:** ${artStyle}
+
+**Main Characters:** ${characters}
+
+**Cover Requirements:**
+- Eye-catching, vibrant illustration that captures the story's essence
+- Show the main characters in an engaging scene
+- Magical, inviting atmosphere suitable for children ages 4-8
+- Professional book cover quality
+- Composition suitable for a vertical book cover layout
+
+**DO NOT include:**
+- Any text, title, or letters on the cover
+- Book spine or binding elements
+- Just pure illustration
+
+Create a captivating cover illustration that makes children want to read this story!`;
+}
+
+// 표지 프롬프트 초기화
+function resetCoverPrompt() {
+    if (!currentStorybook) return;
+    const promptTextarea = document.getElementById('cover-prompt');
+    if (promptTextarea) {
+        promptTextarea.value = buildCoverPrompt(currentStorybook);
+        currentStorybook.coverPrompt = promptTextarea.value;
+        saveCurrentStorybook();
+    }
+}
+
+// 표지 캐릭터 참조 토글
+function toggleCoverCharacterRef(charIndex, checked) {
+    if (!currentStorybook) return;
+    
+    if (!currentStorybook.coverCharacterRefs) {
+        currentStorybook.coverCharacterRefs = [];
+    }
+    
+    if (checked) {
+        if (!currentStorybook.coverCharacterRefs.includes(charIndex)) {
+            currentStorybook.coverCharacterRefs.push(charIndex);
+        }
+    } else {
+        currentStorybook.coverCharacterRefs = currentStorybook.coverCharacterRefs.filter(i => i !== charIndex);
+    }
+    
+    saveCurrentStorybook();
+    console.log('✅ 표지 캐릭터 참조 업데이트:', currentStorybook.coverCharacterRefs);
+}
+
+// 표지 이미지 생성
+async function generateCoverImage() {
+    if (!currentStorybook) {
+        alert('동화책을 먼저 선택해주세요.');
+        return;
+    }
+    
+    const promptTextarea = document.getElementById('cover-prompt');
+    const customPrompt = promptTextarea ? promptTextarea.value.trim() : '';
+    
+    if (!customPrompt) {
+        alert('표지 프롬프트를 입력해주세요.');
+        return;
+    }
+    
+    const coverDisplay = document.getElementById('cover-image-display');
+    coverDisplay.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-6"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-white mb-3"></div><p class="text-white text-sm font-semibold">AI가 표지를 생성하는 중...</p><p class="text-white text-xs opacity-75 mt-1">실패 시 자동으로 재시도합니다</p></div>';
+    
+    try {
+        // 참조할 캐릭터 레퍼런스 수집
+        const refImageUrls = [];
+        if (currentStorybook.coverCharacterRefs && currentStorybook.coverCharacterRefs.length > 0) {
+            currentStorybook.coverCharacterRefs.forEach(charIdx => {
+                const char = currentStorybook.characters[charIdx];
+                if (char && char.referenceImage) {
+                    refImageUrls.push(char.referenceImage);
+                }
+            });
+        }
+        
+        console.log(`📚 표지 생성 시작 - 참조 캐릭터: ${refImageUrls.length}개`);
+        
+        // 재생성인 경우 기존 표지 이미지도 참조로 추가
+        if (currentStorybook.coverImage) {
+            console.log('🔄 재생성 모드: 기존 표지를 레퍼런스로 추가');
+            refImageUrls.push(currentStorybook.coverImage);
+        }
+        
+        const result = await generateImageClient(customPrompt, refImageUrls, 3, imageSettings.coverModel || 'gemini-3-pro-image-preview');
+        
+        if (result.success && result.imageUrl) {
+            currentStorybook.coverImage = result.imageUrl;
+            currentStorybook.coverPrompt = customPrompt;
+            saveCurrentStorybook();
+            
+            // UI 업데이트
+            displayStorybook(currentStorybook);
+            
+            showNotification('success', '표지 생성 완료!', '동화책 표지가 생성되었습니다.');
+        } else {
+            throw new Error(result.error || '이미지 생성 실패');
+        }
+    } catch (error) {
+        console.error('표지 생성 오류:', error);
+        coverDisplay.innerHTML = `
+            <div class="text-center p-6">
+                <i class="fas fa-exclamation-triangle text-6xl text-white opacity-50 mb-4"></i>
+                <p class="text-white text-sm mb-2">⚠️ 생성 실패</p>
+                <p class="text-white text-xs opacity-75">${error.message}</p>
+                <button 
+                    onclick="generateCoverImage()"
+                    class="mt-4 bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition"
+                >
+                    <i class="fas fa-redo mr-2"></i>재시도
+                </button>
+            </div>
+        `;
+    }
 }
 
 // 페이지 로드 시 초기화
@@ -872,6 +1011,101 @@ function displayStorybook(storybook) {
                         />
                     </div>
                 `).join('')}
+            </div>
+        </div>
+
+        <!-- 표지 생성 섹션 -->
+        <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10 mb-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0 mb-4 md:mb-6">
+                <div class="flex-1">
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                        <i class="fas fa-book-open mr-2 text-indigo-500"></i>
+                        표지 이미지
+                    </h3>
+                    <p class="text-xs md:text-base text-gray-600">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span class="hidden sm:inline">동화책의 첫인상을 결정하는 표지 이미지를 생성하세요.</span>
+                        <span class="sm:hidden">동화책 표지 생성</span>
+                    </p>
+                    ${createModelSelect('cover', imageSettings.coverModel || 'gemini-3-pro-image-preview', 'updateCoverModel(this.value)')}
+                </div>
+                <div class="flex gap-2 md:gap-3">
+                    <button 
+                        onclick="generateCoverImage()"
+                        class="bg-indigo-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-lg hover:bg-indigo-700 transition whitespace-nowrap text-sm md:text-base"
+                    >
+                        <i class="fas fa-image mr-1 md:mr-2"></i><span class="hidden sm:inline">${storybook.coverImage ? '표지 재생성' : '표지 생성'}</span><span class="sm:hidden">${storybook.coverImage ? '재생성' : '생성'}</span>
+                    </button>
+                    ${storybook.coverImage ? `
+                    <button 
+                        onclick="downloadImage('${storybook.coverImage}', '${storybook.title}_표지.png')"
+                        class="bg-green-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-lg hover:bg-green-700 transition whitespace-nowrap text-sm md:text-base"
+                    >
+                        <i class="fas fa-download mr-1 md:mr-2"></i><span class="hidden sm:inline">다운로드</span><span class="sm:hidden">다운</span>
+                    </button>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                <!-- 표지 이미지 -->
+                <div class="card rounded-xl p-4 md:p-6 bg-gradient-to-br from-indigo-500 to-purple-600">
+                    <h4 class="text-lg md:text-xl font-bold text-white mb-3 md:mb-4">
+                        <i class="fas fa-image mr-2"></i>표지 이미지
+                    </h4>
+                    <div id="cover-image-display" class="mb-3 md:mb-4 min-h-[300px] md:min-h-[400px] bg-white bg-opacity-20 rounded-lg flex items-center justify-center overflow-hidden">
+                        ${storybook.coverImage ? 
+                            `<img src="${storybook.coverImage}" alt="표지" class="w-full h-full object-cover rounded-lg"/>` :
+                            '<div class="text-center p-6"><i class="fas fa-book-open text-6xl text-white opacity-50 mb-4"></i><p class="text-white text-sm">표지 이미지 생성 대기중</p></div>'
+                        }
+                    </div>
+                </div>
+                
+                <!-- 표지 프롬프트 및 설정 -->
+                <div class="space-y-4">
+                    <div class="bg-gray-50 rounded-xl p-4 md:p-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-3">
+                            <i class="fas fa-edit mr-2"></i>표지 프롬프트
+                        </h4>
+                        <textarea 
+                            id="cover-prompt" 
+                            class="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            rows="6"
+                            placeholder="표지 이미지 프롬프트를 작성하세요..."
+                        >${storybook.coverPrompt || buildCoverPrompt(storybook)}</textarea>
+                        <button 
+                            onclick="resetCoverPrompt()"
+                            class="mt-2 text-sm text-indigo-600 hover:text-indigo-700"
+                        >
+                            <i class="fas fa-redo mr-1"></i>기본 프롬프트로 초기화
+                        </button>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-4 md:p-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-3">
+                            <i class="fas fa-users mr-2"></i>참조할 캐릭터 선택
+                        </h4>
+                        <div class="space-y-2">
+                            ${storybook.characters.map((char, idx) => `
+                                <label class="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        id="cover-char-ref-${idx}"
+                                        ${storybook.coverCharacterRefs && storybook.coverCharacterRefs.includes(idx) ? 'checked' : ''}
+                                        onchange="toggleCoverCharacterRef(${idx}, this.checked)"
+                                        class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                                    />
+                                    <div class="flex items-center gap-2 flex-1">
+                                        ${char.referenceImage ? 
+                                            `<img src="${char.referenceImage}" class="w-10 h-10 rounded object-cover" />` :
+                                            `<div class="w-10 h-10 rounded bg-gray-200 flex items-center justify-center"><i class="fas fa-user text-gray-400"></i></div>`
+                                        }
+                                        <span class="text-sm font-medium">${char.name}</span>
+                                    </div>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
