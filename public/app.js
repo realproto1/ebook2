@@ -728,9 +728,24 @@ function displayStorybook(storybook) {
                                     onchange="updateCharacterName(${idx}, this.value)"
                                     class="text-lg md:text-2xl font-bold mb-2 bg-transparent border-b-2 border-white text-white placeholder-white w-full"
                                 />
-                                <span class="bg-white text-purple-600 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm font-semibold">
-                                    ${char.role}
-                                </span>
+                                <div class="flex gap-2 items-center mb-2">
+                                    <span class="bg-white text-purple-600 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm font-semibold">
+                                        ${char.role}
+                                    </span>
+                                    <div class="flex items-center gap-1 bg-white bg-opacity-20 px-2 py-1 rounded">
+                                        <i class="fas fa-ruler-vertical text-white text-xs"></i>
+                                        <input 
+                                            type="number" 
+                                            id="char-height-${idx}" 
+                                            value="${char.height || 150}"
+                                            onchange="updateCharacterHeight(${idx}, this.value)"
+                                            class="w-12 bg-transparent text-white text-xs font-semibold text-center border-b border-white focus:outline-none"
+                                            min="50"
+                                            max="250"
+                                        />
+                                        <span class="text-white text-xs">cm</span>
+                                    </div>
+                                </div>
                             </div>
                             <button 
                                 onclick="deleteCharacter(${idx})"
@@ -859,15 +874,29 @@ function displayStorybook(storybook) {
                                     class="text-sm text-gray-600 bg-transparent border-b border-orange-200 focus:border-orange-400 focus:outline-none w-full mb-2"
                                     placeholder="한글 이름"
                                 />
-                                <select 
-                                    id="keyobj-size-${idx}"
-                                    onchange="updateKeyObjectField(${idx}, 'size', this.value)"
-                                    class="text-xs bg-white border border-orange-200 rounded px-2 py-1 w-full mb-2"
-                                >
-                                    <option value="small" ${obj.size === 'small' ? 'selected' : ''}>Small (손에 들 수 있음)</option>
-                                    <option value="medium" ${obj.size === 'medium' ? 'selected' : ''}>Medium (사람 키 정도)</option>
-                                    <option value="large" ${obj.size === 'large' ? 'selected' : ''}>Large (건물/큰 물체)</option>
-                                </select>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <select 
+                                        id="keyobj-size-${idx}"
+                                        onchange="updateKeyObjectField(${idx}, 'size', this.value)"
+                                        class="flex-1 text-xs bg-white border border-orange-200 rounded px-2 py-1"
+                                    >
+                                        <option value="small" ${obj.size === 'small' ? 'selected' : ''}>Small</option>
+                                        <option value="medium" ${obj.size === 'medium' ? 'selected' : ''}>Medium</option>
+                                        <option value="large" ${obj.size === 'large' ? 'selected' : ''}>Large</option>
+                                    </select>
+                                    <div class="flex items-center gap-1">
+                                        <input 
+                                            type="number" 
+                                            id="keyobj-size-cm-${idx}" 
+                                            value="${obj.sizeCm || (obj.size === 'small' ? 10 : obj.size === 'large' ? 200 : 100)}"
+                                            onblur="updateKeyObjectField(${idx}, 'sizeCm', parseInt(this.value))"
+                                            class="w-12 text-xs bg-white border border-orange-200 rounded px-1 py-1 text-center"
+                                            min="1"
+                                            max="1000"
+                                        />
+                                        <span class="text-xs text-gray-600">cm</span>
+                                    </div>
+                                </div>
                             </div>
                             <button 
                                 onclick="deleteKeyObject(${idx})"
@@ -1394,6 +1423,15 @@ function updateCharacterName(charIndex, newName) {
     }
 }
 
+function updateCharacterHeight(charIndex, height) {
+    const heightNum = parseInt(height);
+    if (heightNum >= 50 && heightNum <= 250) {
+        currentStorybook.characters[charIndex].height = heightNum;
+        saveCurrentStorybook();
+        console.log(`✅ Character height updated: ${currentStorybook.characters[charIndex].name} = ${heightNum}cm`);
+    }
+}
+
 function deleteCharacter(charIndex) {
     if (confirm(`"${currentStorybook.characters[charIndex].name}" 캐릭터를 삭제하시겠습니까?`)) {
         currentStorybook.characters.splice(charIndex, 1);
@@ -1411,10 +1449,14 @@ function addNewCharacter() {
     
     const role = prompt('캐릭터 역할을 입력하세요:');
     
+    const heightStr = prompt('캐릭터 키를 입력하세요 (cm, 50-250):', '150');
+    const height = parseInt(heightStr) || 150;
+    
     const newCharacter = {
         name: name.trim(),
         description: description.trim(),
         role: role ? role.trim() : '기타',
+        height: Math.max(50, Math.min(250, height)),
         referenceImage: null
     };
     
@@ -3327,6 +3369,7 @@ function addNewKeyObject() {
         name: "New Object",
         korean: "새 사물",
         size: "medium",
+        sizeCm: 100,
         description: "이 사물의 상세한 시각적 설명을 입력하세요.",
         example: "이 사물이 등장하는 예시 문장을 입력하세요."
     };
