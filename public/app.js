@@ -2836,67 +2836,68 @@ ${previousPageNote}
     const isRegeneration = !!page.illustrationImage;
     const regenerationNote = isRegeneration ? 
         '\n\n**🔄 REGENERATION MODE - CRITICAL INSTRUCTIONS:**\n' +
-        '**YOU MUST USE THE PROVIDED ILLUSTRATION REFERENCE IMAGE AS YOUR PRIMARY GUIDE.**\n\n' +
-        '**STEP 1 - ANALYZE REFERENCE ILLUSTRATION:**\n' +
-        '1. CAREFULLY study the reference illustration:\n' +
-        '   - Overall composition and layout\n' +
-        '   - Character positions and poses\n' +
-        '   - Color palette and lighting\n' +
-        '   - Art style, line work, and shading technique\n' +
-        '   - Background details and atmosphere\n\n' +
-        '**STEP 2 - ANALYZE CHARACTER REFERENCE SHEETS:**\n' +
-        '2. CRITICALLY examine each character reference image:\n' +
-        '   - Facial features (eyes, nose, mouth, face shape)\n' +
-        '   - Body proportions and build\n' +
-        '   - Clothing style, colors, and patterns\n' +
-        '   - Hairstyle, color, and texture\n' +
-        '   - Distinctive accessories or features\n' +
-        '   - Character age and personality expression\n\n' +
-        '**STEP 3 - UNDERSTAND SCENE DESCRIPTION:**\n' +
-        '3. READ the Scene Structure carefully:\n' +
-        '   - Which characters are present and what they are doing\n' +
-        '   - The setting and background environment\n' +
-        '   - The mood and atmosphere of the scene\n' +
-        '   - Key actions and interactions\n\n' +
-        '**STEP 4 - MAINTAIN CONSISTENCY:**\n' +
-        '4. PRESERVE these exact elements:\n' +
-        '   - ✅ Characters MUST look IDENTICAL to their reference sheets\n' +
-        '   - ✅ Core composition from reference illustration\n' +
-        '   - ✅ Color scheme and lighting mood\n' +
-        '   - ✅ Art style consistency\n' +
-        '   - ✅ Scene elements described in Scene Structure\n\n' +
-        '**STEP 5 - APPLY CHANGES (if any):**\n' +
+        '**YOU ARE REGENERATING AN EXISTING ILLUSTRATION WITH USER\'S SPECIFIC MODIFICATIONS.**\n\n' +
+        '**STEP 1 - ANALYZE REFERENCE IMAGES:**\n' +
+        '1. CAREFULLY study the provided reference images:\n' +
+        '   - Current illustration (what it looks like now)\n' +
+        '   - Character reference sheets (how characters should look)\n' +
+        '   - Selected reference pages (additional context)\n' +
+        '   - Overall composition, color palette, and art style\n\n' +
+        '**STEP 2 - READ MODIFICATION REQUEST:**\n' +
         (editNote ? 
-        '5. APPLY ONLY these specific modifications:\n' +
-        `   ${editNote}\n` +
-        '   - Make ONLY the requested changes\n' +
-        '   - Keep everything else EXACTLY THE SAME\n\n' : 
-        '5. Create a SIMILAR BUT SLIGHTLY DIFFERENT variation:\n' +
-        '   - Keep same composition and character positions\n' +
-        '   - Vary only minor details (angle, expression, small elements)\n' +
-        '   - Ensure characters STILL match their reference sheets EXACTLY\n' +
-        '   - Maintain scene consistency and recognizability\n\n') +
+        '2. User\'s modification request:\n' +
+        `   "${editNote}"\n\n` +
+        '   **YOUR TASK:**\n' +
+        '   - CREATE the scene based on this modification request\n' +
+        '   - USE the reference images to maintain:\n' +
+        '     • Character visual consistency (faces, clothing, proportions)\n' +
+        '     • Art style and color palette\n' +
+        '     • Overall composition quality\n' +
+        '   - IGNORE the original scene description below\n' +
+        '   - FOCUS on what the user wants to see\n\n' : 
+        '2. No specific modification request provided.\n' +
+        '   - Create a slightly varied version\n' +
+        '   - Keep characters and composition similar\n' +
+        '   - Maintain art style consistency\n\n') +
         '**⚠️ CRITICAL REQUIREMENTS:**\n' +
-        '• Characters MUST be visually IDENTICAL to reference sheets (facial features, clothing, proportions)\n' +
-        '• Scene MUST reflect the Scene Structure description accurately\n' +
-        '• Composition SHOULD follow the reference illustration layout\n' +
-        '• Any modifications MUST be explicitly requested in the modification note\n\n' +
-        '**Priority Order (STRICTLY FOLLOW):**\n' +
-        '1st: Character Reference Sheets (ABSOLUTE PRIORITY - characters must match 100%)\n' +
-        '2nd: Scene Structure Description (what\'s happening in the scene)\n' +
-        '3rd: Reference Illustration (composition and style guide)\n' +
-        (editNote ? '4th: Modification Request (specific changes only)\n' : '4th: Subtle Variation (minor details only)\n') +
-        '5th: Art Style (already established)\n' : 
+        '• Characters MUST be visually IDENTICAL to reference sheets\n' +
+        '• Follow the modification request (not the original scene description)\n' +
+        '• Reference images are for VISUAL STYLE only, not for scene content\n' +
+        '• Create what the user wants to see now\n\n' +
+        '**Priority Order for REGENERATION:**\n' +
+        '1st: User\'s Modification Request (what to create)\n' +
+        '2nd: Character Reference Sheets (how characters look)\n' +
+        '3rd: Reference Images (visual style guide)\n' +
+        '4th: Art Style (maintain consistency)\n\n' +
+        '**IGNORE these during regeneration:**\n' +
+        '❌ Original scene description (shown below for reference only)\n' +
+        '❌ Original scene structure (outdated)\n' : 
         '';
     
     const prompt = `Create a beautiful, professional illustration for a children's storybook page.
 ${storyContext}
 
-**Main Scene Description:** ${page.scene_description}
-${sceneDetails}
+${isRegeneration && editNote ? 
+`**🎯 YOUR TASK (Regeneration with Modification):**
+${editNote}
+
+**Reference Information (for visual style only):**
+- Original scene description: ${page.scene_description}
+${sceneDetails ? `${sceneDetails}` : ''}
+
+**IMPORTANT:** Create the scene based on the modification request above, NOT the original scene description. Use the original description only to understand context.` 
+: 
+isRegeneration ? 
+`**🎯 YOUR TASK (Regeneration - Variation):**
+Create a slight variation of the current illustration while maintaining the same scene.
+
+**Scene Description:** ${page.scene_description}
+${sceneDetails}` 
+: 
+`**Main Scene Description:** ${page.scene_description}
+${sceneDetails}`}
 ${characterInfo}
 ${regenerationNote}
-${editNote ? `\n\n**Important Modification Request:** ${editNote}\n**Note:** Apply this modification to the scene while keeping other elements consistent with the reference images.` : ''}
 
 **Art Style:** ${artStyle} style for children's book illustration.
 
