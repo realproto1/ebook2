@@ -31,6 +31,22 @@
             transition: opacity 0.3s ease-out;
         }
         
+        /* 커스텀 스크롤바 */
+        .overflow-y-auto::-webkit-scrollbar {
+            width: 8px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: #a0aec0;
+            border-radius: 10px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: #718096;
+        }
+        
         /* 모바일 반응형 */
         @media (max-width: 768px) {
             .sidebar {

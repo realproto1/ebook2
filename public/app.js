@@ -1084,7 +1084,7 @@ function displayStorybook(storybook) {
                         <h4 class="text-lg font-bold text-gray-800 mb-3">
                             <i class="fas fa-users mr-2"></i>참조할 캐릭터 선택
                         </h4>
-                        <div class="space-y-2">
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2" style="scrollbar-width: thin;">
                             ${storybook.characters.map((char, idx) => `
                                 <label class="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
                                     <input 
@@ -1104,6 +1104,7 @@ function displayStorybook(storybook) {
                                 </label>
                             `).join('')}
                         </div>
+                        ${storybook.characters.length > 4 ? `<p class="text-xs text-gray-500 mt-2"><i class="fas fa-info-circle mr-1"></i>스크롤하여 더 많은 캐릭터 보기</p>` : ''}
                     </div>
                 </div>
             </div>

@@ -1871,33 +1871,39 @@ ${pagesText}
 
 **CRITICAL:** Respond ONLY with valid JSON. No markdown, no explanation, just pure JSON.`;
 
-    const response = await axios.post(
+    const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${GEMINI_API_KEY}`,
       {
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.4,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192
-        }
-      },
-      {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192
+          }
+        })
       }
     );
     
-    let translationText = response.data.candidates[0].content.parts[0].text;
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    let translationText = data.candidates[0].content.parts[0].text;
     
     // JSON 추출
     translationText = translationText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
