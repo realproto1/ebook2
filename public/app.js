@@ -2569,15 +2569,14 @@ Example: For "Apple", show only a red apple fruit. No text.`;
                 korean: korean,
                 imageUrl: imageUrl,
                 success: true,
-                isCharacter: !!matchingCharacter,
+                isCharacter: false,  // 8단어는 캐릭터 매칭 안 함
                 isKeyObject: isKeyObject
             };
             
             saveCurrentStorybook();
             
             // UI만 업데이트 (전체 재렌더링 안 함)
-            const badge = matchingCharacter ? '<span class="absolute top-1 right-1 bg-purple-500 text-white text-xs px-2 py-0.5 rounded">캐릭터</span>' :
-                         isKeyObject ? '<span class="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded">핵심사물</span>' : '';
+            const badge = isKeyObject ? '<span class="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded">핵심사물</span>' : '';
             vocabImgDiv.innerHTML = `<div class="relative">${badge}<img src="${imageUrl}" alt="${word}" class="w-full h-full object-cover rounded-lg"/></div>`;
             
             return { index: wordIndex, success: true, imageUrl: imageUrl };
