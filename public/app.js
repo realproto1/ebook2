@@ -982,12 +982,167 @@ function displayStorybook(storybook) {
                                         참조할 이미지를 클릭하면 선택됩니다. 선택한 이미지의 스타일, 색감, 구도를 참고하여 생성합니다.
                                     </p>
                                 </div>
+                                
+                                ${storybook.key_objects && storybook.key_objects.length > 0 ? `
+                                <div class="mt-3">
+                                    <label class="block text-xs md:text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-cube mr-1"></i>참조할 Key Objects (선택사항)
+                                    </label>
+                                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-40 overflow-y-auto border border-orange-300 rounded-lg p-2 bg-orange-50">
+                                        ${storybook.key_objects.map((obj, objIdx) => {
+                                            const objImg = storybook.keyObjectImages && storybook.keyObjectImages[objIdx];
+                                            if (!objImg || !objImg.imageUrl) return '';
+                                            return `
+                                            <div class="relative group cursor-pointer" onclick="toggleKeyObjectReference(${idx}, ${objIdx})">
+                                                <img 
+                                                    src="${objImg.imageUrl}" 
+                                                    alt="${obj.korean}"
+                                                    class="w-full h-16 sm:h-20 object-cover rounded border-2 border-orange-300 hover:border-orange-500 transition"
+                                                    id="ref-keyobj-${idx}-${objIdx}"
+                                                />
+                                                <div class="absolute top-0 right-0 bg-orange-600 text-white text-xs px-1 sm:px-1.5 py-0.5 rounded-bl opacity-0 group-hover:opacity-100 transition">
+                                                    ${obj.korean}
+                                                </div>
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="ref-keyobj-check-${idx}-${objIdx}"
+                                                    class="absolute top-1 left-1 w-3 h-3 sm:w-4 sm:h-4"
+                                                />
+                                            </div>
+                                            `;
+                                        }).join('') || '<p class="text-gray-400 text-xs col-span-3 sm:col-span-4 text-center py-4">아직 Key Object 이미지가 없습니다.<br>먼저 Key Objects 이미지를 생성해주세요.</p>'}
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        <i class="fas fa-lightbulb mr-1"></i>
+                                        이 페이지에 등장하는 Key Objects를 선택하면 일관성있는 사물 표현이 가능합니다.
+                                    </p>
+                                </div>
+                                ` : ''}
                             </div>
                         </div>
                     </div>
                 `).join('')}
             </div>
         </div>
+
+        <!-- Key Objects 섹션 -->
+        ${storybook.key_objects && storybook.key_objects.length > 0 ? `
+        <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl md:text-3xl font-bold text-gray-800">
+                    <i class="fas fa-cube mr-2 text-orange-500"></i>
+                    핵심 사물 (Key Objects)
+                </h3>
+                <div class="flex gap-2">
+                    <button 
+                        onclick="generateAllKeyObjectImages()"
+                        class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition text-sm"
+                    >
+                        <i class="fas fa-images mr-1"></i>모든 이미지 생성
+                    </button>
+                    <button 
+                        onclick="downloadAllKeyObjectImages()"
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
+                    >
+                        <i class="fas fa-download mr-1"></i>모두 다운로드
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-4 gap-6">
+                ${storybook.key_objects.map((obj, idx) => {
+                    const objImg = storybook.keyObjectImages && storybook.keyObjectImages[idx];
+                    const sizeIcon = obj.size === 'small' ? 'fa-hand-holding' : obj.size === 'large' ? 'fa-building' : 'fa-box';
+                    const sizeColor = obj.size === 'small' ? 'text-blue-600' : obj.size === 'large' ? 'text-red-600' : 'text-yellow-600';
+                    return `
+                    <div class="bg-gradient-to-br from-orange-50 to-yellow-50 p-4 rounded-xl border-2 border-orange-200">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <input 
+                                        type="text" 
+                                        id="keyobj-name-${idx}" 
+                                        value="${obj.name}"
+                                        onchange="updateKeyObjectField(${idx}, 'name', this.value)"
+                                        class="font-bold text-gray-700 bg-transparent border-b border-orange-300 focus:border-orange-500 focus:outline-none w-full"
+                                        placeholder="영어 이름"
+                                    />
+                                    <i class="${sizeIcon} ${sizeColor}" title="${obj.size}"></i>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="keyobj-korean-${idx}" 
+                                    value="${obj.korean}"
+                                    onchange="updateKeyObjectField(${idx}, 'korean', this.value)"
+                                    class="text-sm text-gray-600 bg-transparent border-b border-orange-200 focus:border-orange-400 focus:outline-none w-full mb-2"
+                                    placeholder="한글 이름"
+                                />
+                                <select 
+                                    id="keyobj-size-${idx}"
+                                    onchange="updateKeyObjectField(${idx}, 'size', this.value)"
+                                    class="text-xs bg-white border border-orange-200 rounded px-2 py-1 w-full mb-2"
+                                >
+                                    <option value="small" ${obj.size === 'small' ? 'selected' : ''}>Small (손에 들 수 있음)</option>
+                                    <option value="medium" ${obj.size === 'medium' ? 'selected' : ''}>Medium (사람 키 정도)</option>
+                                    <option value="large" ${obj.size === 'large' ? 'selected' : ''}>Large (건물/큰 물체)</option>
+                                </select>
+                            </div>
+                            ${objImg && objImg.imageUrl ? 
+                                `<button 
+                                    onclick="downloadImage('${objImg.imageUrl}', 'keyobject_${obj.name}.png')"
+                                    class="text-green-600 hover:text-green-800 ml-2"
+                                    title="다운로드"
+                                >
+                                    <i class="fas fa-download"></i>
+                                </button>` : ''
+                            }
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label class="text-xs text-gray-500 block mb-1">설명 (시각적 상세):</label>
+                            <textarea 
+                                id="keyobj-description-${idx}" 
+                                onchange="updateKeyObjectField(${idx}, 'description', this.value)"
+                                class="text-xs text-gray-700 bg-white border border-orange-200 rounded p-2 focus:border-orange-400 focus:outline-none w-full"
+                                placeholder="색상, 재질, 모양, 크기, 특징..."
+                                rows="3"
+                            >${obj.description}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="text-xs text-gray-500 block mb-1">예시 문장:</label>
+                            <input 
+                                type="text" 
+                                id="keyobj-example-${idx}" 
+                                value="${obj.example || ''}"
+                                onchange="updateKeyObjectField(${idx}, 'example', this.value)"
+                                class="text-xs text-blue-700 bg-blue-50 border border-orange-200 rounded px-2 py-1 focus:border-orange-400 focus:outline-none w-full"
+                                placeholder="이 사물이 등장하는 문장"
+                            />
+                        </div>
+                        
+                        <div id="keyobj-img-${idx}" class="bg-white rounded-lg mb-2 min-h-[180px] flex items-center justify-center overflow-hidden border-2 border-orange-200">
+                            ${objImg && objImg.imageUrl ? 
+                                `<img src="${objImg.imageUrl}" alt="${obj.name}" class="w-full h-full object-cover rounded-lg"/>` :
+                                `<p class="text-gray-400 text-sm text-center p-4">
+                                    <i class="fas fa-cube text-3xl mb-2"></i><br>
+                                    이미지 대기중
+                                </p>`
+                            }
+                        </div>
+                        
+                        <button 
+                            onclick="generateSingleKeyObjectImage(${idx})"
+                            class="w-full bg-orange-500 text-white px-2 py-2 rounded text-sm hover:bg-orange-600 transition"
+                        >
+                            <i class="fas fa-magic mr-1"></i>${objImg && objImg.imageUrl ? '재생성' : '이미지 생성'}
+                        </button>
+                    </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+        ` : ''}
 
         <!-- 교육 콘텐츠 -->
         <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-10">
@@ -2085,21 +2240,42 @@ function toggleReferenceImage(currentPageIdx, refPageIdx) {
 // 선택된 참조 이미지 가져오기
 function getSelectedReferenceImages(pageIndex) {
     const selectedImages = [];
-    const checkboxes = document.querySelectorAll(`input[id^="ref-check-${pageIndex}-"]:checked`);
     
-    checkboxes.forEach(checkbox => {
+    // 1. 다른 페이지의 참조 이미지
+    const pageCheckboxes = document.querySelectorAll(`input[id^="ref-check-${pageIndex}-"]:checked`);
+    
+    pageCheckboxes.forEach(checkbox => {
         const refPageIdx = parseInt(checkbox.id.split('-').pop());
         const refPage = currentStorybook.pages[refPageIdx];
         
         if (refPage && refPage.illustrationImage) {
             selectedImages.push({
+                type: 'page',
                 pageNumber: refPage.pageNumber,
                 imageUrl: refPage.illustrationImage
             });
         }
     });
     
-    console.log(`📸 페이지 ${pageIndex + 1} - 선택된 참조 이미지:`, selectedImages.length);
+    // 2. Key Object 참조 이미지
+    const keyObjCheckboxes = document.querySelectorAll(`input[id^="ref-keyobj-check-${pageIndex}-"]:checked`);
+    
+    keyObjCheckboxes.forEach(checkbox => {
+        const objIdx = parseInt(checkbox.id.split('-').pop());
+        const keyObjImage = currentStorybook.keyObjectImages && currentStorybook.keyObjectImages[objIdx];
+        
+        if (keyObjImage && keyObjImage.imageUrl) {
+            selectedImages.push({
+                type: 'key_object',
+                name: keyObjImage.name,
+                korean: keyObjImage.korean,
+                imageUrl: keyObjImage.imageUrl
+            });
+        }
+    });
+    
+    console.log(`📸 페이지 ${pageIndex + 1} - 선택된 참조 이미지:`, selectedImages.length, 
+                `(페이지: ${selectedImages.filter(img => img.type === 'page').length}, Key Objects: ${selectedImages.filter(img => img.type === 'key_object').length})`);
     return selectedImages;
 }
 
@@ -2845,5 +3021,192 @@ function deleteQuiz(quizIndex) {
         currentStorybook.quizzes.splice(quizIndex, 1);
         saveCurrentStorybook();
         displayStorybook(currentStorybook);
+    }
+}
+
+// ==================== Key Objects 관련 함수 ====================
+
+// Key Object 필드 업데이트
+function updateKeyObjectField(objIndex, field, value) {
+    if (!currentStorybook.key_objects || !currentStorybook.key_objects[objIndex]) return;
+    
+    currentStorybook.key_objects[objIndex][field] = value;
+    saveCurrentStorybook();
+}
+
+// Key Object 단일 이미지 생성
+async function generateSingleKeyObjectImage(objIndex) {
+    if (!currentStorybook || !currentStorybook.key_objects || !currentStorybook.key_objects[objIndex]) {
+        alert('Key Object 정보가 없습니다.');
+        return;
+    }
+    
+    const obj = currentStorybook.key_objects[objIndex];
+    const objImgDiv = document.getElementById(`keyobj-img-${objIndex}`);
+    
+    if (!objImgDiv) return;
+    
+    // 로딩 표시
+    objImgDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mb-2"></div><p class="text-gray-600 text-xs">생성 중...</p></div>';
+    
+    try {
+        console.log(`🎨 Generating Key Object image for: ${obj.name} (${obj.korean})`);
+        
+        // 프롬프트 생성
+        const sizeGuide = obj.size === 'small' ? 'small handheld object' : 
+                         obj.size === 'large' ? 'large structure or building' : 
+                         'medium-sized object';
+        
+        const prompt = `Create a detailed, clear illustration of a key story object for a children's storybook.
+
+**Object:** ${obj.name} (${obj.korean})
+
+**Size:** ${sizeGuide}
+
+**Visual Description:**
+${obj.description}
+
+**Art Style:** ${currentStorybook.artStyle || 'Disney-style children\'s book illustration'}
+
+**Image Aspect Ratio:** ${imageSettings.aspectRatio}
+
+**Requirements:**
+- Show the object clearly and prominently
+- Clean white or simple background
+- Bright, vibrant colors suitable for children
+- Professional, high-quality illustration
+- Focus on the distinctive features described above
+- Make it recognizable and memorable
+${imageSettings.enforceNoText ? '\n\n**CRITICAL: NO TEXT, NO WORDS, NO LETTERS IN THE IMAGE**' : ''}
+${imageSettings.additionalPrompt ? '\n\n**Additional Requirements:** ' + imageSettings.additionalPrompt : ''}
+
+Create a single, clear, professional illustration of this key object.`;
+
+        // 이미지 생성
+        const result = await generateImageClient(prompt, [], 3);
+        
+        if (result.success && result.imageUrl) {
+            // keyObjectImages 배열 초기화
+            if (!currentStorybook.keyObjectImages) {
+                currentStorybook.keyObjectImages = [];
+            }
+            
+            // 해당 인덱스에 이미지 저장
+            currentStorybook.keyObjectImages[objIndex] = {
+                name: obj.name,
+                korean: obj.korean,
+                imageUrl: result.imageUrl,
+                success: true
+            };
+            
+            // 저장
+            saveCurrentStorybook();
+            
+            // UI 업데이트 - 해당 Key Object 이미지만 업데이트
+            objImgDiv.innerHTML = `<img src="${result.imageUrl}" alt="${obj.name}" class="w-full h-full object-cover rounded-lg"/>`;
+            
+            console.log(`✅ Key Object image generated successfully for: ${obj.name}`);
+            
+            return {
+                index: objIndex,
+                success: true,
+                imageUrl: result.imageUrl
+            };
+        } else {
+            throw new Error(result.error || '이미지 생성 실패');
+        }
+    } catch (error) {
+        console.error(`Key Object 이미지 생성 오류 (${obj.name}):`, error);
+        
+        objImgDiv.innerHTML = `
+            <div class="text-center p-4">
+                <i class="fas fa-exclamation-circle text-red-500 text-3xl mb-2"></i>
+                <p class="text-red-600 text-xs mb-2">생성 실패</p>
+                <button 
+                    onclick="generateSingleKeyObjectImage(${objIndex})"
+                    class="bg-orange-500 text-white px-3 py-1 rounded text-xs hover:bg-orange-600"
+                >
+                    <i class="fas fa-redo mr-1"></i>재시도
+                </button>
+            </div>
+        `;
+        
+        return {
+            index: objIndex,
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+// 모든 Key Object 이미지 생성
+async function generateAllKeyObjectImages() {
+    if (!currentStorybook || !currentStorybook.key_objects || currentStorybook.key_objects.length === 0) {
+        alert('Key Object 정보가 없습니다.');
+        return;
+    }
+    
+    if (!confirm(`${currentStorybook.key_objects.length}개의 Key Object 이미지를 모두 생성하시겠습니까?`)) {
+        return;
+    }
+    
+    console.log(`🎨 Generating all ${currentStorybook.key_objects.length} Key Object images...`);
+    
+    // keyObjectImages 배열 초기화
+    if (!currentStorybook.keyObjectImages) {
+        currentStorybook.keyObjectImages = new Array(currentStorybook.key_objects.length);
+    }
+    
+    // 순차적으로 생성
+    for (let i = 0; i < currentStorybook.key_objects.length; i++) {
+        await generateSingleKeyObjectImage(i);
+        // 서버 부하 방지를 위한 딜레이
+        if (i < currentStorybook.key_objects.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    }
+    
+    console.log('✅ All Key Object images generated');
+    alert('모든 Key Object 이미지 생성이 완료되었습니다!');
+}
+
+// 모든 Key Object 이미지 다운로드
+function downloadAllKeyObjectImages() {
+    if (!currentStorybook || !currentStorybook.keyObjectImages) {
+        alert('다운로드할 Key Object 이미지가 없습니다.');
+        return;
+    }
+    
+    const images = currentStorybook.keyObjectImages.filter(img => img && img.imageUrl);
+    
+    if (images.length === 0) {
+        alert('다운로드할 Key Object 이미지가 없습니다.');
+        return;
+    }
+    
+    images.forEach((img, index) => {
+        setTimeout(() => {
+            downloadImage(img.imageUrl, `keyobject_${img.name}.png`);
+        }, index * 500);
+    });
+    
+    alert(`${images.length}개의 Key Object 이미지 다운로드를 시작합니다.`);
+}
+
+// Key Object 참조 토글 (페이지 삽화 생성 시)
+function toggleKeyObjectReference(pageIndex, objIndex) {
+    const checkbox = document.getElementById(`ref-keyobj-check-${pageIndex}-${objIndex}`);
+    const img = document.getElementById(`ref-keyobj-${pageIndex}-${objIndex}`);
+    
+    if (checkbox && img) {
+        checkbox.checked = !checkbox.checked;
+        
+        if (checkbox.checked) {
+            img.classList.remove('border-orange-300');
+            img.classList.add('border-orange-600', 'border-4');
+        } else {
+            img.classList.remove('border-orange-600', 'border-4');
+            img.classList.add('border-orange-300');
+        }
     }
 }
