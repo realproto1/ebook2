@@ -1616,7 +1616,7 @@ async function generateAllCharacterReferences() {
                 // 재생성인 경우 기존 이미지를 레퍼런스로 추가
                 const refImageUrls = isRegeneration ? [char.referenceImage] : [];
                 
-                const result = await generateImageClient(prompt, refImageUrls, 3); // 최대 3회 재시도
+                const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.characterModel || 'gemini-3-pro-image-preview'); // 캐릭터 레퍼런스 전용 모델 사용
                 
                 if (result.success && result.imageUrl) {
                     currentStorybook.characters[i].referenceImage = result.imageUrl;
