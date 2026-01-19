@@ -2403,12 +2403,39 @@ function downloadAllText() {
     textContent += `주제: ${currentStorybook.theme}\n\n`;
     textContent += `=`.repeat(50) + '\n\n';
     
+    // 동화책 페이지
     currentStorybook.pages.forEach((page, idx) => {
         textContent += `[페이지 ${page.pageNumber}]\n${page.text}\n`;
         if (idx < currentStorybook.pages.length - 1) {
             textContent += '\n---\n\n';
         }
     });
+    
+    // 학습 단어 섹션 추가
+    if (currentStorybook.educational_content && 
+        currentStorybook.educational_content.vocabulary && 
+        currentStorybook.educational_content.vocabulary.length > 0) {
+        
+        textContent += '\n\n' + `=`.repeat(50) + '\n';
+        textContent += '영어 학습 단어\n';
+        textContent += `=`.repeat(50) + '\n\n';
+        
+        currentStorybook.educational_content.vocabulary.forEach((vocabItem, idx) => {
+            const word = typeof vocabItem === 'object' ? vocabItem.word : vocabItem;
+            const korean = typeof vocabItem === 'object' ? vocabItem.korean : '';
+            const definition = typeof vocabItem === 'object' ? vocabItem.definition : '';
+            const exampleSentence = typeof vocabItem === 'object' ? vocabItem.example_sentence : '';
+            
+            textContent += `[영어] ${word}\n`;
+            if (korean) textContent += `[한글] ${korean}\n`;
+            if (definition) textContent += `[설명] ${definition}\n`;
+            if (exampleSentence) textContent += `[예문] ${exampleSentence}\n`;
+            
+            if (idx < currentStorybook.educational_content.vocabulary.length - 1) {
+                textContent += '\n---\n\n';
+            }
+        });
+    }
     
     const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
