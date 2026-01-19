@@ -2946,8 +2946,7 @@ ${previousPageNote}`;
         '\n\n**CRITICAL - NO TEXT:** Do NOT include ANY text, labels, words, letters, captions, titles, speech bubbles, or text overlays in the image. Absolutely NO TEXT of any kind. Pure illustration only.' : 
         '\n\n**IMPORTANT:** Do NOT include any text, labels, words, letters, or captions in the image. No speech bubbles, no titles, no text overlays. Pure illustration only.';
     
-    // 재생성 안내 (기존 이미지가 있는 경우)
-    const isRegeneration = !!page.illustrationImage;
+    // 재생성 안내 (기존 이미지가 있는 경우) - isRegeneration은 이미 위에서 선언됨
     const regenerationNote = isRegeneration ? 
         '\n\n**🔄 REGENERATION MODE - CRITICAL INSTRUCTIONS:**\n' +
         '**YOU ARE REGENERATING AN EXISTING ILLUSTRATION WITH USER\'S SPECIFIC MODIFICATIONS.**\n\n' +
