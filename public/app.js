@@ -2320,25 +2320,30 @@ async function generateSingleVocabularyImage(wordIndex) {
     vocabImgDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-2"></div><p class="text-gray-600 text-xs">생성 중...</p></div>';
     
     try {
-        // ⭐ 1. 캐릭터 레퍼런스에서 매칭 확인
-        const matchingCharacter = currentStorybook.characters.find(char => 
-            char.name && char.referenceImage && (
-                char.name.toLowerCase() === word.toLowerCase() ||
-                char.name.toLowerCase() === korean.toLowerCase() ||
-                word.toLowerCase().includes(char.name.toLowerCase()) ||
-                korean.toLowerCase().includes(char.name.toLowerCase())
-            )
-        );
+        // ⭐ 1. 캐릭터 레퍼런스에서 매칭 확인 (정확한 매칭만)
+        const matchingCharacter = currentStorybook.characters.find(char => {
+            if (!char.name || !char.referenceImage) return false;
+            
+            const charNameLower = char.name.toLowerCase().trim();
+            const wordLower = word.toLowerCase().trim();
+            const koreanLower = korean.toLowerCase().trim();
+            
+            // 정확히 일치하는 경우만 매칭
+            return charNameLower === wordLower || charNameLower === koreanLower;
+        });
         
-        // ⭐ 2. Key Objects에서 매칭 확인
+        // ⭐ 2. Key Objects에서 매칭 확인 (정확한 매칭만)
         const matchingKeyObject = currentStorybook.key_objects && currentStorybook.key_objects.find((obj, idx) => {
             const hasImage = currentStorybook.keyObjectImages && currentStorybook.keyObjectImages[idx] && currentStorybook.keyObjectImages[idx].imageUrl;
-            return hasImage && (
-                obj.name.toLowerCase() === word.toLowerCase() ||
-                obj.korean.toLowerCase() === korean.toLowerCase() ||
-                word.toLowerCase().includes(obj.name.toLowerCase()) ||
-                korean.toLowerCase().includes(obj.korean.toLowerCase())
-            );
+            if (!hasImage) return false;
+            
+            const objNameLower = obj.name.toLowerCase().trim();
+            const objKoreanLower = obj.korean.toLowerCase().trim();
+            const wordLower = word.toLowerCase().trim();
+            const koreanLower = korean.toLowerCase().trim();
+            
+            // 정확히 일치하는 경우만 매칭
+            return objNameLower === wordLower || objKoreanLower === koreanLower;
         });
         
         const matchingKeyObjectIndex = matchingKeyObject ? currentStorybook.key_objects.indexOf(matchingKeyObject) : -1;
