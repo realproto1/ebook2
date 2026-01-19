@@ -1205,7 +1205,13 @@ function displayStorybook(storybook) {
                                 onclick="downloadAllVocabularyImages()"
                                 class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
                             >
-                                <i class="fas fa-download mr-1"></i>모두 다운로드
+                                <i class="fas fa-download mr-1"></i>이미지 다운로드
+                            </button>
+                            <button 
+                                onclick="downloadVocabularyTxt()"
+                                class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition text-sm"
+                            >
+                                <i class="fas fa-file-alt mr-1"></i>TXT 다운로드
                             </button>
                         </div>
                     </div>
@@ -2314,18 +2320,91 @@ async function generateSingleVocabularyImage(wordIndex) {
     vocabImgDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-2"></div><p class="text-gray-600 text-xs">생성 중...</p></div>';
     
     try {
-        // 이 단어가 캐릭터인지 확인
+        // ⭐ 1. 캐릭터 레퍼런스에서 매칭 확인
         const matchingCharacter = currentStorybook.characters.find(char => 
-            char.name && (
-                char.name.toLowerCase().includes(korean.toLowerCase()) ||
-                korean.toLowerCase().includes(char.name.toLowerCase()) ||
-                char.role === '주인공' ||
-                char.role === '조력자' ||
-                char.role === '악역'
+            char.name && char.referenceImage && (
+                char.name.toLowerCase() === word.toLowerCase() ||
+                char.name.toLowerCase() === korean.toLowerCase() ||
+                word.toLowerCase().includes(char.name.toLowerCase()) ||
+                korean.toLowerCase().includes(char.name.toLowerCase())
             )
         );
         
-        // 이 단어가 주요 사물인지 확인
+        // ⭐ 2. Key Objects에서 매칭 확인
+        const matchingKeyObject = currentStorybook.key_objects && currentStorybook.key_objects.find((obj, idx) => {
+            const hasImage = currentStorybook.keyObjectImages && currentStorybook.keyObjectImages[idx] && currentStorybook.keyObjectImages[idx].imageUrl;
+            return hasImage && (
+                obj.name.toLowerCase() === word.toLowerCase() ||
+                obj.korean.toLowerCase() === korean.toLowerCase() ||
+                word.toLowerCase().includes(obj.name.toLowerCase()) ||
+                korean.toLowerCase().includes(obj.korean.toLowerCase())
+            );
+        });
+        
+        const matchingKeyObjectIndex = matchingKeyObject ? currentStorybook.key_objects.indexOf(matchingKeyObject) : -1;
+        
+        // ⭐ 3. 매칭되는 이미지가 있으면 재사용
+        if (matchingCharacter && matchingCharacter.referenceImage) {
+            console.log(`✅ Reusing character image for "${word}" (${korean}): ${matchingCharacter.name}`);
+            
+            const imageUrl = matchingCharacter.referenceImage;
+            
+            if (!currentStorybook.vocabularyImages) {
+                currentStorybook.vocabularyImages = new Array(currentStorybook.educational_content.vocabulary.length).fill(null);
+            }
+            
+            currentStorybook.vocabularyImages[wordIndex] = {
+                word: word,
+                korean: korean,
+                imageUrl: imageUrl,
+                success: true,
+                isCharacter: true,
+                reused: true
+            };
+            
+            saveCurrentStorybook();
+            
+            const badge = '<span class="absolute top-1 right-1 bg-purple-500 text-white text-xs px-2 py-0.5 rounded">캐릭터</span>';
+            vocabImgDiv.innerHTML = `<div class="relative w-full h-full">${badge}<img src="${imageUrl}" alt="${word}" class="w-full h-full object-cover rounded-lg"/></div>`;
+            
+            console.log(`✅ Vocabulary image reused from character: ${word}`);
+            return { index: wordIndex, success: true, imageUrl: imageUrl, reused: true };
+        }
+        
+        if (matchingKeyObject && matchingKeyObjectIndex >= 0) {
+            const keyObjImage = currentStorybook.keyObjectImages[matchingKeyObjectIndex];
+            if (keyObjImage && keyObjImage.imageUrl) {
+                console.log(`✅ Reusing Key Object image for "${word}" (${korean}): ${matchingKeyObject.name}`);
+                
+                const imageUrl = keyObjImage.imageUrl;
+                
+                if (!currentStorybook.vocabularyImages) {
+                    currentStorybook.vocabularyImages = new Array(currentStorybook.educational_content.vocabulary.length).fill(null);
+                }
+                
+                currentStorybook.vocabularyImages[wordIndex] = {
+                    word: word,
+                    korean: korean,
+                    imageUrl: imageUrl,
+                    success: true,
+                    isKeyObject: true,
+                    reused: true
+                };
+                
+                saveCurrentStorybook();
+                
+                const badge = '<span class="absolute top-1 right-1 bg-orange-500 text-white text-xs px-2 py-0.5 rounded">핵심사물</span>';
+                vocabImgDiv.innerHTML = `<div class="relative w-full h-full">${badge}<img src="${imageUrl}" alt="${word}" class="w-full h-full object-cover rounded-lg"/></div>`;
+                
+                console.log(`✅ Vocabulary image reused from Key Object: ${word}`);
+                return { index: wordIndex, success: true, imageUrl: imageUrl, reused: true };
+            }
+        }
+        
+        // ⭐ 4. 매칭되는 이미지가 없으면 새로 생성
+        console.log(`🎨 Generating new image for "${word}" (${korean})`);
+        
+        // 이 단어가 주요 사물인지 확인 (scene_structure)
         const allKeyObjects = [];
         currentStorybook.pages.forEach(page => {
             if (page.scene_structure && page.scene_structure.key_objects) {
@@ -3126,6 +3205,9 @@ Create a single, clear, professional illustration of this key object.`;
             
             console.log(`✅ Key Object image generated successfully for: ${obj.name}`);
             
+            // ⭐ 모든 페이지의 참조 이미지 섹션 새로고침
+            refreshAllPageReferenceImages();
+            
             return {
                 index: objIndex,
                 success: true,
@@ -3266,4 +3348,67 @@ function deleteKeyObject(objIndex) {
         
         alert('Key Object가 삭제되었습니다.');
     }
+}
+
+// 모든 페이지의 참조 이미지 섹션 새로고침
+function refreshAllPageReferenceImages() {
+    console.log('🔄 Refreshing all page reference images...');
+    
+    // displayStorybook을 다시 호출하여 전체 UI 갱신
+    // 이렇게 하면 모든 페이지의 Key Object 참조 이미지가 업데이트됨
+    displayStorybook(currentStorybook);
+}
+
+// 8단어 TXT 다운로드
+function downloadVocabularyTxt() {
+    if (!currentStorybook || !currentStorybook.educational_content || !currentStorybook.educational_content.vocabulary) {
+        alert('다운로드할 단어가 없습니다.');
+        return;
+    }
+    
+    const vocabulary = currentStorybook.educational_content.vocabulary;
+    let txtContent = `========================================\n`;
+    txtContent += `   ${currentStorybook.title} - 영어 단어 학습\n`;
+    txtContent += `========================================\n\n`;
+    txtContent += `대상 연령: ${currentStorybook.targetAge}세\n`;
+    txtContent += `생성 일시: ${new Date(currentStorybook.createdAt).toLocaleString('ko-KR')}\n`;
+    txtContent += `총 단어 수: ${vocabulary.length}개\n\n`;
+    txtContent += `========================================\n\n`;
+    
+    vocabulary.forEach((vocabItem, index) => {
+        const word = typeof vocabItem === 'object' ? vocabItem.word : vocabItem;
+        const korean = typeof vocabItem === 'object' ? vocabItem.korean : '';
+        const definition = typeof vocabItem === 'object' ? vocabItem.definition : '';
+        const example = typeof vocabItem === 'object' ? vocabItem.example : '';
+        
+        txtContent += `${index + 1}. ${word}${korean ? ` (${korean})` : ''}\n`;
+        txtContent += `${'='.repeat(50)}\n`;
+        
+        if (definition) {
+            txtContent += `\n[설명]\n${definition}\n`;
+        }
+        
+        if (example) {
+            txtContent += `\n[예문]\n${example}\n`;
+        }
+        
+        txtContent += `\n\n`;
+    });
+    
+    txtContent += `========================================\n`;
+    txtContent += `파일 생성: ${new Date().toLocaleString('ko-KR')}\n`;
+    txtContent += `========================================\n`;
+    
+    // TXT 파일 다운로드
+    const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentStorybook.title}_영어단어학습_${new Date().getTime()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    console.log(`✅ Vocabulary TXT downloaded: ${vocabulary.length} words`);
 }
