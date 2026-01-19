@@ -49,7 +49,7 @@ async function generateImageClient(prompt, referenceImages = [], maxRetries = 3,
     // 모델 선택: 오버라이드 > imageSettings > 기본값
     const selectedModel = modelOverride || 
                          (typeof imageSettings !== 'undefined' ? imageSettings.imageModel : null) || 
-                         'gemini-2.5-flash-image';  // 기본값: Nano Banana (Gemini 2.5 Flash Image)
+                         'gemini-3-pro-image-preview';  // 기본값: Nano Banana Pro (Gemini 3 Pro Image Preview)
 
     // 재시도 로직
     for (let attempt = 0; attempt < maxRetries; attempt++) {
