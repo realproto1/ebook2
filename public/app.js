@@ -1033,6 +1033,10 @@ function displayStorybook(storybook) {
                     <i class="fas fa-book mr-2 text-purple-500"></i>
                     스토리 페이지 (${storybook.pages.length}페이지)
                 </h3>
+                <div class="mb-3 flex items-center gap-2">
+                    <label class="text-sm text-gray-600">이미지 모델:</label>
+                    ${createModelSelect('illustration', imageSettings.illustrationModel || 'gemini-3-pro-image-preview')}
+                </div>
                 <div class="flex gap-3 flex-wrap">
                     <div class="flex gap-2">
                         <div class="relative inline-flex">
@@ -2072,7 +2076,7 @@ async function generateAllIllustrationsSequential() {
                     }
                 }
                 
-                const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.illustrationModel || 'nano-banana-pro'); // 페이지 삽화 전용 모델 사용
+                const result = await generateImageClient(prompt, refImageUrls, 3, imageSettings.illustrationModel || 'gemini-3-pro-image-preview'); // 페이지 삽화 전용 모델 사용
                 
                 if (result.success && result.imageUrl) {
                     currentStorybook.pages[i].illustrationImage = result.imageUrl;
