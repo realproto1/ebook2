@@ -2534,17 +2534,16 @@ async function generateAllIllustrationsParallel() {
             
             const generatePromise = (async (pageIndex) => {
                 try {
-                    const sceneDesc = document.getElementById(`scene-${pageIndex}`)?.value || page.scene_description;
+                    const sceneCombinedElem = document.getElementById(`scene-combined-${pageIndex}`);
+                    const sceneDesc = sceneCombinedElem ? sceneCombinedElem.value : page.scene_description;
                     const artStyleElem = document.getElementById(`artstyle-${pageIndex}`);
                     const artStyle = artStyleElem ? artStyleElem.value : (page.artStyle || currentStorybook.artStyle);
-                    const sceneCharElem = document.getElementById(`scene-char-${pageIndex}`);
-                    const sceneBgElem = document.getElementById(`scene-bg-${pageIndex}`);
-                    const sceneAtmElem = document.getElementById(`scene-atm-${pageIndex}`);
                     
+                    // scene-combined에서 장면 구조 파싱 (또는 기존 값 사용)
                     const sceneStructure = {
-                        characters: sceneCharElem ? sceneCharElem.value : page.scene_structure?.characters || '',
-                        background: sceneBgElem ? sceneBgElem.value : page.scene_structure?.background || '',
-                        atmosphere: sceneAtmElem ? sceneAtmElem.value : page.scene_structure?.atmosphere || ''
+                        characters: page.scene_structure?.characters || '',
+                        background: page.scene_structure?.background || '',
+                        atmosphere: page.scene_structure?.atmosphere || ''
                     };
                     
                     // 클라이언트에서 직접 Gemini API 호출
@@ -2693,17 +2692,16 @@ async function generateAllIllustrationsSequential() {
             }
             
             try {
-                const sceneDesc = document.getElementById(`scene-${i}`)?.value || page.scene_description;
+                const sceneCombinedElem = document.getElementById(`scene-combined-${i}`);
+                const sceneDesc = sceneCombinedElem ? sceneCombinedElem.value : page.scene_description;
                 const artStyleElem = document.getElementById(`artstyle-${i}`);
                 const artStyle = artStyleElem ? artStyleElem.value : (page.artStyle || currentStorybook.artStyle);
-                const sceneCharElem = document.getElementById(`scene-char-${i}`);
-                const sceneBgElem = document.getElementById(`scene-bg-${i}`);
-                const sceneAtmElem = document.getElementById(`scene-atm-${i}`);
                 
+                // scene-combined에서 장면 구조 파싱 (또는 기존 값 사용)
                 const sceneStructure = {
-                    characters: sceneCharElem ? sceneCharElem.value : page.scene_structure?.characters || '',
-                    background: sceneBgElem ? sceneBgElem.value : page.scene_structure?.background || '',
-                    atmosphere: sceneAtmElem ? sceneAtmElem.value : page.scene_structure?.atmosphere || ''
+                    characters: page.scene_structure?.characters || '',
+                    background: page.scene_structure?.background || '',
+                    atmosphere: page.scene_structure?.atmosphere || ''
                 };
                 
                 // 클라이언트에서 직접 Gemini API 호출
@@ -2793,7 +2791,8 @@ async function generateAllIllustrationsSequential() {
 // 페이지 삽화 생성
 async function generateIllustration(pageIndex) {
     const page = currentStorybook.pages[pageIndex];
-    const sceneDesc = document.getElementById(`scene-${pageIndex}`).value;
+    const sceneCombinedElem = document.getElementById(`scene-combined-${pageIndex}`);
+    const sceneDesc = sceneCombinedElem ? sceneCombinedElem.value : (page.scene_description || '');
     const artStyleElem = document.getElementById(`artstyle-${pageIndex}`);
     const artStyle = artStyleElem ? artStyleElem.value : currentStorybook.artStyle;
     const illustrationDiv = document.getElementById(`illustration-${pageIndex}`);
@@ -2802,14 +2801,11 @@ async function generateIllustration(pageIndex) {
     const editNoteElem = document.getElementById(`edit-note-${pageIndex}`);
     const editNote = editNoteElem ? editNoteElem.value.trim() : '';
     
-    const sceneCharElem = document.getElementById(`scene-char-${pageIndex}`);
-    const sceneBgElem = document.getElementById(`scene-bg-${pageIndex}`);
-    const sceneAtmElem = document.getElementById(`scene-atm-${pageIndex}`);
-    
+    // scene-combined에서 장면 구조 파싱
     const sceneStructure = {
-        characters: sceneCharElem ? sceneCharElem.value : '',
-        background: sceneBgElem ? sceneBgElem.value : '',
-        atmosphere: sceneAtmElem ? sceneAtmElem.value : ''
+        characters: '',
+        background: '',
+        atmosphere: ''
     };
     
     const characterReferences = currentStorybook.characters
