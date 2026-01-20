@@ -1858,16 +1858,64 @@ app.post('/api/generate-tts', requireAPIKey, async (req, res) => {
       if (candidate.content && candidate.content.parts) {
         for (const part of candidate.content.parts) {
           if (part.inlineData) {
-            // Base64 오디오 데이터를 데이터 URL로 변환
             const mimeType = part.inlineData.mimeType || 'audio/wav';
-            const audioUrl = `data:${mimeType};base64,${part.inlineData.data}`;
+            const pcmData = Buffer.from(part.inlineData.data, 'base64');
             
-            console.log(`✅ TTS generated successfully (mime: ${mimeType}, size: ${part.inlineData.data.length} bytes)`);
+            console.log(`✅ TTS generated successfully (mime: ${mimeType}, PCM size: ${pcmData.length} bytes)`);
+            
+            // PCM을 WAV로 변환
+            let audioBuffer;
+            if (mimeType.includes('L16') || mimeType.includes('pcm')) {
+              // Extract sample rate from mime type (e.g., "audio/L16;codec=pcm;rate=24000")
+              const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+              const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1]) : 24000;
+              
+              console.log(`🔄 Converting PCM to WAV (sample rate: ${sampleRate}Hz)`);
+              
+              // WAV 헤더 생성
+              const numChannels = 1; // Mono
+              const bitsPerSample = 16;
+              const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+              const blockAlign = numChannels * bitsPerSample / 8;
+              const dataSize = pcmData.length;
+              const fileSize = 36 + dataSize;
+              
+              const wavHeader = Buffer.alloc(44);
+              
+              // RIFF chunk descriptor
+              wavHeader.write('RIFF', 0);
+              wavHeader.writeUInt32LE(fileSize, 4);
+              wavHeader.write('WAVE', 8);
+              
+              // fmt sub-chunk
+              wavHeader.write('fmt ', 12);
+              wavHeader.writeUInt32LE(16, 16); // Subchunk1Size (16 for PCM)
+              wavHeader.writeUInt16LE(1, 20); // AudioFormat (1 for PCM)
+              wavHeader.writeUInt16LE(numChannels, 22);
+              wavHeader.writeUInt32LE(sampleRate, 24);
+              wavHeader.writeUInt32LE(byteRate, 28);
+              wavHeader.writeUInt16LE(blockAlign, 32);
+              wavHeader.writeUInt16LE(bitsPerSample, 34);
+              
+              // data sub-chunk
+              wavHeader.write('data', 36);
+              wavHeader.writeUInt32LE(dataSize, 40);
+              
+              // WAV 파일 = 헤더 + PCM 데이터
+              audioBuffer = Buffer.concat([wavHeader, pcmData]);
+              console.log(`✅ WAV conversion complete (total size: ${audioBuffer.length} bytes)`);
+            } else {
+              audioBuffer = pcmData;
+            }
+            
+            // Base64로 인코딩하여 데이터 URL 생성
+            const base64Audio = audioBuffer.toString('base64');
+            const audioUrl = `data:audio/wav;base64,${base64Audio}`;
             
             return res.json({
               success: true,
               audioUrl: audioUrl,
-              mimeType: mimeType
+              mimeType: 'audio/wav'
             });
           }
         }
