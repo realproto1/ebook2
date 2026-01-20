@@ -1776,7 +1776,11 @@ function displayStorybook(storybook) {
                                     </p>
                                 </div>
                                 
-                                ${storybook.key_objects && storybook.key_objects.length > 0 ? `
+                            ${storybook.key_objects && storybook.key_objects.length > 0 ? `
+                            <div class="mt-3">
+                                <label class="block text-xs font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-cube mr-1"></i>Key Objects 참조 (선택)
+                                </label>
                                 <div class="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto border border-orange-300 rounded-lg p-2 bg-white">
                                     ${storybook.key_objects.map((obj, objIdx) => {
                                         const objImg = storybook.keyObjectImages && storybook.keyObjectImages[objIdx];
