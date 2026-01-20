@@ -1442,7 +1442,7 @@ function displayStorybook(storybook) {
             </div>
             
             <!-- 액션 버튼 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
                     <!-- 삽화 생성 버튼 -->
                     <div class="relative">
                         <button 
@@ -1497,7 +1497,7 @@ function displayStorybook(storybook) {
                     
                     <button 
                         onclick="downloadAllAudio()"
-                        class="w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition shadow-md flex items-center justify-center gap-2 font-medium md:col-span-2"
+                        class="w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition shadow-md flex items-center justify-center gap-2 font-medium"
                     >
                         <i class="fas fa-volume-up text-lg"></i>
                         <span>전체 오디오</span>
