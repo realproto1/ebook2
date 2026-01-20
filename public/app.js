@@ -1407,38 +1407,42 @@ function displayStorybook(storybook) {
 
         <!-- 페이지 섹션 -->
         <div class="bg-white rounded-3xl shadow-2xl p-10 mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-3xl font-bold text-gray-800 cursor-pointer flex items-center" onclick="toggleSection('pages-section')">
-                    <i id="pages-section-icon" class="fas fa-chevron-down mr-2 text-sm transition-transform"></i>
-                    <i class="fas fa-book mr-2 text-purple-500"></i>
-                    스토리 페이지 (${storybook.pages.length}페이지)
-                </h3>
-                <div class="mb-3 flex items-center gap-4 flex-wrap">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-600">이미지 모델:</label>
-                        ${createModelSelect('illustration', imageSettings.illustrationModel || 'gemini-3-pro-image-preview')}
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-600">번역 언어:</label>
-                        <select id="translationLanguage" class="border border-gray-300 rounded px-3 py-1.5 text-sm">
-                            <option value="en">English</option>
-                            <option value="ja">日本語</option>
-                            <option value="zh">中文</option>
-                            <option value="es">Español</option>
-                            <option value="fr">Français</option>
-                            <option value="de">Deutsch</option>
-                            <option value="vi">Tiếng Việt</option>
-                            <option value="th">ไทย</option>
-                        </select>
-                        <button 
-                            onclick="translateAllText()"
-                            class="bg-teal-600 text-white px-4 py-1.5 rounded hover:bg-teal-700 transition text-sm"
-                        >
-                            <i class="fas fa-language mr-1"></i>번역
-                        </button>
-                    </div>
+            <!-- 제목 -->
+            <h3 class="text-3xl font-bold text-gray-800 cursor-pointer flex items-center mb-6" onclick="toggleSection('pages-section')">
+                <i id="pages-section-icon" class="fas fa-chevron-down mr-2 text-sm transition-transform"></i>
+                <i class="fas fa-book mr-2 text-purple-500"></i>
+                스토리 페이지 (${storybook.pages.length}페이지)
+            </h3>
+            
+            <!-- 설정 옵션 -->
+            <div class="mb-4 flex items-center gap-4 flex-wrap">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-600">이미지 모델:</label>
+                    ${createModelSelect('illustration', imageSettings.illustrationModel || 'gemini-3-pro-image-preview')}
                 </div>
-                <div class="space-y-3 mb-4">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-600">번역 언어:</label>
+                    <select id="translationLanguage" class="border border-gray-300 rounded px-3 py-1.5 text-sm">
+                        <option value="en">English</option>
+                        <option value="ja">日本語</option>
+                        <option value="zh">中文</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
+                        <option value="vi">Tiếng Việt</option>
+                        <option value="th">ไทย</option>
+                    </select>
+                    <button 
+                        onclick="translateAllText()"
+                        class="bg-teal-600 text-white px-4 py-1.5 rounded hover:bg-teal-700 transition text-sm"
+                    >
+                        <i class="fas fa-language mr-1"></i>번역
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 액션 버튼 -->
+            <div class="space-y-3 mb-4">
                     <!-- 삽화 생성 버튼 -->
                     <div class="relative">
                         <button 
@@ -1499,7 +1503,6 @@ function displayStorybook(storybook) {
                         <span>전체 오디오</span>
                     </button>
                 </div>
-            </div>
 
             <div id="pages-section-content" class="space-y-4 md:space-y-6">
                 ${storybook.pages.map((page, idx) => `
