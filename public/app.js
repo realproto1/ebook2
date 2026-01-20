@@ -1442,9 +1442,9 @@ function displayStorybook(storybook) {
             </div>
             
             <!-- 액션 버튼 -->
-            <div class="space-y-3 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                     <!-- 삽화 생성 버튼 -->
-                    <div class="relative">
+                    <div class="relative md:col-span-1">
                         <button 
                             onclick="generateAllIllustrationsParallel()"
                             class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition shadow-lg flex items-center justify-center gap-2 font-semibold text-base"
@@ -1461,7 +1461,7 @@ function displayStorybook(storybook) {
                         </button>
                     </div>
                     
-                    <div class="relative">
+                    <div class="relative md:col-span-1">
                         <button 
                             onclick="generateAllIllustrationsSequential()"
                             class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-3.5 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition shadow-lg flex items-center justify-center gap-2 font-semibold text-base"
@@ -1497,7 +1497,7 @@ function displayStorybook(storybook) {
                     
                     <button 
                         onclick="downloadAllAudio()"
-                        class="w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition shadow-md flex items-center justify-center gap-2 font-medium"
+                        class="w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition shadow-md flex items-center justify-center gap-2 font-medium md:col-span-2"
                     >
                         <i class="fas fa-volume-up text-lg"></i>
                         <span>전체 오디오</span>
