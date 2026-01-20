@@ -14,7 +14,7 @@ let imageSettings = {
     vocabularyModel: 'gemini-3-pro-image-preview',  // 8단어 학습 모델
     coverModel: 'gemini-3-pro-image-preview',  // 표지 모델
     ttsModel: 'google/gemini-2.5-pro-preview-tts',  // TTS 모델
-    ttsVoiceConfig: '여성, 따뜻하고 부드러운 목소리, 천천히'  // TTS 음성 설정
+    ttsVoiceConfig: '여성 목소리, 부드럽고 따뜻한 톤, 동화 낭독 스타일, 적당한 속도로 또박또박, 어린이가 이해하기 쉽게'  // TTS 음성 설정
 };
 
 // 이미지 모델 목록
@@ -1532,14 +1532,20 @@ function displayStorybook(storybook) {
                                         <!-- TTS 설정 -->
                                         <div class="flex flex-col sm:flex-row gap-2">
                                             <div class="flex-1">
-                                                <label class="text-xs text-gray-600 block mb-1">음성 설정</label>
+                                                <label class="text-xs text-gray-600 block mb-1">
+                                                    음성 설정 
+                                                    <span class="text-gray-400 ml-1" title="성별, 톤, 속도, 스타일 등을 자유롭게 입력하세요">ℹ️</span>
+                                                </label>
                                                 <input 
                                                     id="tts-config-${idx}" 
                                                     value="${page.ttsConfig || imageSettings.ttsVoiceConfig}"
-                                                    placeholder="예: 여성, 따뜻한 목소리, 느린 속도"
+                                                    placeholder="예: 여성 목소리, 동화 낭독 스타일, 또박또박"
                                                     class="w-full p-2 border border-gray-300 rounded text-xs"
                                                     onblur="updateTTSConfig(${idx}, this.value)"
                                                 />
+                                                <p class="text-xs text-gray-500 mt-1">
+                                                    💡 예시: "남성, 깊고 차분한 목소리" / "어린이 목소리, 밝고 경쾌하게"
+                                                </p>
                                             </div>
                                             <div>
                                                 <label class="text-xs text-gray-600 block mb-1">모델</label>
