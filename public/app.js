@@ -1438,64 +1438,65 @@ function displayStorybook(storybook) {
                         </button>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                    <!-- 상단: 삽화 생성 버튼 -->
-                    <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="relative">
-                            <button 
-                                onclick="generateAllIllustrationsParallel()"
-                                class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition shadow-lg flex items-center justify-center gap-2 font-semibold"
-                            >
-                                <i class="fas fa-bolt text-lg"></i>
-                                <span class="text-sm md:text-base">모든 삽화 생성 <span class="hidden sm:inline">(빠르게)</span><span class="inline sm:hidden">(병렬)</span></span>
-                            </button>
-                            <button 
-                                onclick="showGenerationModeHelp('parallel')"
-                                class="absolute -top-1.5 -right-1.5 bg-white text-blue-600 w-5 h-5 rounded-full hover:bg-blue-50 transition shadow-md flex items-center justify-center text-xs"
-                                title="병렬 생성 모드 설명"
-                            >
-                                <i class="fas fa-question"></i>
-                            </button>
-                        </div>
-                        <div class="relative">
-                            <button 
-                                onclick="generateAllIllustrationsSequential()"
-                                class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-3 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition shadow-lg flex items-center justify-center gap-2 font-semibold"
-                            >
-                                <i class="fas fa-layer-group text-lg"></i>
-                                <span class="text-sm md:text-base">모든 삽화 생성 <span class="hidden sm:inline">(정확하게)</span><span class="inline sm:hidden">(순차)</span></span>
-                            </button>
-                            <button 
-                                onclick="showGenerationModeHelp('sequential')"
-                                class="absolute -top-1.5 -right-1.5 bg-white text-indigo-600 w-5 h-5 rounded-full hover:bg-indigo-50 transition shadow-md flex items-center justify-center text-xs"
-                                title="순차 생성 모드 설명"
-                            >
-                                <i class="fas fa-question"></i>
-                            </button>
-                        </div>
+                <div class="space-y-3 mb-4">
+                    <!-- 삽화 생성 버튼 -->
+                    <div class="relative">
+                        <button 
+                            onclick="generateAllIllustrationsParallel()"
+                            class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition shadow-lg flex items-center justify-center gap-2 font-semibold text-base"
+                        >
+                            <i class="fas fa-bolt text-xl"></i>
+                            <span>모든 삽화 생성 (빠르게)</span>
+                        </button>
+                        <button 
+                            onclick="showGenerationModeHelp('parallel')"
+                            class="absolute top-2 right-2 bg-white text-blue-600 w-6 h-6 rounded-full hover:bg-blue-50 transition shadow-md flex items-center justify-center text-xs"
+                            title="병렬 생성 모드 설명"
+                        >
+                            <i class="fas fa-question"></i>
+                        </button>
                     </div>
                     
-                    <!-- 하단: 다운로드 버튼 -->
+                    <div class="relative">
+                        <button 
+                            onclick="generateAllIllustrationsSequential()"
+                            class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-3.5 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition shadow-lg flex items-center justify-center gap-2 font-semibold text-base"
+                        >
+                            <i class="fas fa-layer-group text-xl"></i>
+                            <span>모든 삽화 생성 (정확하게)</span>
+                        </button>
+                        <button 
+                            onclick="showGenerationModeHelp('sequential')"
+                            class="absolute top-2 right-2 bg-white text-indigo-600 w-6 h-6 rounded-full hover:bg-indigo-50 transition shadow-md flex items-center justify-center text-xs"
+                            title="순차 생성 모드 설명"
+                        >
+                            <i class="fas fa-question"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- 다운로드 버튼 -->
                     <button 
                         onclick="downloadAllText()"
-                        class="bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 transition shadow-md flex items-center justify-center gap-2 font-medium"
+                        class="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition shadow-md flex items-center justify-center gap-2 font-medium"
                     >
-                        <i class="fas fa-file-alt text-base"></i>
-                        <span class="text-sm">전체 텍스트</span>
+                        <i class="fas fa-file-alt text-lg"></i>
+                        <span>전체 텍스트</span>
                     </button>
+                    
                     <button 
                         onclick="downloadAllIllustrations()"
-                        class="bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2 font-medium"
+                        class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2 font-medium"
                     >
-                        <i class="fas fa-download text-base"></i>
-                        <span class="text-sm">전체 삽화</span>
+                        <i class="fas fa-download text-lg"></i>
+                        <span>전체 삽화</span>
                     </button>
+                    
                     <button 
                         onclick="downloadAllAudio()"
-                        class="bg-orange-600 text-white px-4 py-2.5 rounded-lg hover:bg-orange-700 transition shadow-md flex items-center justify-center gap-2 font-medium col-span-1 md:col-span-2"
+                        class="w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition shadow-md flex items-center justify-center gap-2 font-medium"
                     >
-                        <i class="fas fa-volume-up text-base"></i>
-                        <span class="text-sm">전체 오디오</span>
+                        <i class="fas fa-volume-up text-lg"></i>
+                        <span>전체 오디오</span>
                     </button>
                 </div>
             </div>
