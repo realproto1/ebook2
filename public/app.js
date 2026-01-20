@@ -1494,22 +1494,33 @@ function displayStorybook(storybook) {
 
             <div id="pages-section-content" class="space-y-4 md:space-y-6">
                 ${storybook.pages.map((page, idx) => `
-                    <div class="page-card bg-white rounded-xl shadow-lg overflow-hidden">
-                        <div class="bg-gradient-to-r from-purple-600 to-purple-700 p-3 md:p-4">
-                            <h4 class="text-lg md:text-2xl font-bold text-white flex items-center">
-                                <i class="fas fa-file-alt mr-2"></i>페이지 ${page.pageNumber}
-                            </h4>
+                    <div class="page-card bg-white rounded-xl shadow-lg overflow-hidden border border-purple-200">
+                        <div class="bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 p-4 md:p-5 border-b-4 border-purple-800">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-xl md:text-2xl font-bold text-white flex items-center">
+                                    <span class="bg-white text-purple-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 font-black shadow-lg">
+                                        ${page.pageNumber}
+                                    </span>
+                                    페이지 ${page.pageNumber}
+                                </h4>
+                                <div class="flex gap-2">
+                                    ${page.text ? '<span class="bg-white bg-opacity-20 text-white px-2 py-1 rounded text-xs"><i class="fas fa-check mr-1"></i>텍스트</span>' : ''}
+                                    ${page.audioUrl ? '<span class="bg-white bg-opacity-20 text-white px-2 py-1 rounded text-xs"><i class="fas fa-check mr-1"></i>TTS</span>' : ''}
+                                    ${page.illustrationImage ? '<span class="bg-white bg-opacity-20 text-white px-2 py-1 rounded text-xs"><i class="fas fa-check mr-1"></i>삽화</span>' : ''}
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="p-3 md:p-6 space-y-3 md:space-y-4">
+                        <div class="p-3 md:p-6 space-y-4 md:space-y-5">
                             <!-- 1️⃣ 텍스트 섹션 -->
                             <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-3 md:p-4">
-                                <h5 class="font-bold text-purple-700 mb-2 text-sm md:text-base flex items-center">
-                                    <i class="fas fa-align-left mr-2"></i>1. 텍스트
+                                <h5 class="font-bold text-purple-700 mb-3 text-sm md:text-base flex items-center">
+                                    <span class="bg-purple-600 text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs">1</span>
+                                    텍스트
                                 </h5>
                                 <textarea 
                                     id="text-${idx}" 
-                                    class="w-full p-2 md:p-3 border-2 border-gray-300 rounded-lg text-xs md:text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                                    class="w-full p-2.5 md:p-3 border-2 border-purple-300 rounded-lg text-xs md:text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white"
                                     rows="4"
                                     onchange="updatePageText(${idx}, this.value)"
                                     placeholder="이 페이지의 스토리를 작성하세요..."
@@ -1518,25 +1529,31 @@ function displayStorybook(storybook) {
 
                             <!-- 2️⃣ TTS 섹션 -->
                             <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 md:p-4">
-                                <h5 class="font-bold text-blue-700 mb-2 text-sm md:text-base flex items-center">
-                                    <i class="fas fa-volume-up mr-2"></i>2. 음성(TTS)
+                                <h5 class="font-bold text-blue-700 mb-3 text-sm md:text-base flex items-center">
+                                    <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs">2</span>
+                                    음성(TTS)
                                 </h5>
                                 
-                                <div class="space-y-2 mb-3">
-                                    <div>
-                                        <label class="text-xs text-gray-600 block mb-1">음성 설정</label>
-                                        <input 
-                                            id="tts-config-${idx}" 
-                                            value="${page.ttsConfig || imageSettings.ttsVoiceConfig}"
-                                            placeholder="예: 여성 목소리, 동화 낭독 스타일"
-                                            class="w-full p-2 border border-gray-300 rounded text-xs"
-                                            onblur="updateTTSConfig(${idx}, this.value)"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-gray-600 block mb-1">모델</label>
-                                        ${createTTSModelSelect(page.ttsModel || imageSettings.ttsModel, idx)}
-                                    </div>
+                                <!-- 음성 설정 -->
+                                <div class="mb-3">
+                                    <label class="text-xs md:text-sm font-semibold text-gray-700 block mb-2">
+                                        <i class="fas fa-microphone-alt mr-1 text-blue-600"></i>음성 설정
+                                    </label>
+                                    <input 
+                                        id="tts-config-${idx}" 
+                                        value="${page.ttsConfig || imageSettings.ttsVoiceConfig}"
+                                        placeholder="예: 여성 목소리, 동화 낭독 스타일, 또박또박"
+                                        class="w-full p-2.5 md:p-3 border-2 border-blue-300 rounded-lg text-xs md:text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white"
+                                        onblur="updateTTSConfig(${idx}, this.value)"
+                                    />
+                                </div>
+                                
+                                <!-- 모델 선택 -->
+                                <div class="mb-3">
+                                    <label class="text-xs md:text-sm font-semibold text-gray-700 block mb-2">
+                                        <i class="fas fa-robot mr-1 text-blue-600"></i>모델 선택
+                                    </label>
+                                    ${createTTSModelSelect(page.ttsModel || imageSettings.ttsModel, idx)}
                                 </div>
                                 
                                 <button 
@@ -1564,31 +1581,36 @@ function displayStorybook(storybook) {
 
                             <!-- 3️⃣ 삽화 섹션 -->
                             <div class="bg-green-50 border-2 border-green-200 rounded-lg p-3 md:p-4">
-                                <h5 class="font-bold text-green-700 mb-2 text-sm md:text-base flex items-center">
-                                    <i class="fas fa-image mr-2"></i>3. 삽화
+                                <h5 class="font-bold text-green-700 mb-3 text-sm md:text-base flex items-center">
+                                    <span class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs">3</span>
+                                    삽화
                                 </h5>
                                 
-                                <div class="space-y-2 mb-3">
-                                    <div>
-                                        <label class="text-xs text-gray-600 block mb-1">장면 설명</label>
-                                        <textarea 
-                                            id="scene-combined-${idx}" 
-                                            class="w-full p-2 border-2 border-gray-300 rounded-lg text-xs"
-                                            rows="3"
-                                            placeholder="장면, 캐릭터, 배경, 분위기"
-                                            onblur="updateSceneCombined(${idx}, this.value)"
-                                        >${page.scene_description || ''}${page.scene_structure ? '\n\n캐릭터: ' + (page.scene_structure.characters || '') + '\n배경: ' + (page.scene_structure.background || '') + '\n분위기: ' + (page.scene_structure.atmosphere || '') : ''}</textarea>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="text-xs text-gray-600 block mb-1">그림체</label>
-                                        <input 
-                                            id="artstyle-${idx}" 
-                                            value="${page.artStyle || storybook.artStyle}"
-                                            placeholder="예: 현대 일러스트레이션"
-                                            class="w-full p-2 border-2 border-gray-300 rounded-lg text-xs"
-                                        />
-                                    </div>
+                                <!-- 장면 설명 -->
+                                <div class="mb-3">
+                                    <label class="text-xs md:text-sm font-semibold text-gray-700 block mb-2">
+                                        <i class="fas fa-palette mr-1 text-green-600"></i>장면 설명
+                                    </label>
+                                    <textarea 
+                                        id="scene-combined-${idx}" 
+                                        class="w-full p-2.5 md:p-3 border-2 border-green-300 rounded-lg text-xs md:text-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 bg-white"
+                                        rows="3"
+                                        placeholder="장면, 캐릭터, 배경, 분위기를 자세히 설명하세요..."
+                                        onblur="updateSceneCombined(${idx}, this.value)"
+                                    >${page.scene_description || ''}${page.scene_structure ? '\n\n캐릭터: ' + (page.scene_structure.characters || '') + '\n배경: ' + (page.scene_structure.background || '') + '\n분위기: ' + (page.scene_structure.atmosphere || '') : ''}</textarea>
+                                </div>
+                                
+                                <!-- 그림체 -->
+                                <div class="mb-3">
+                                    <label class="text-xs md:text-sm font-semibold text-gray-700 block mb-2">
+                                        <i class="fas fa-brush mr-1 text-green-600"></i>그림체
+                                    </label>
+                                    <input 
+                                        id="artstyle-${idx}" 
+                                        value="${page.artStyle || storybook.artStyle}"
+                                        placeholder="예: 현대 일러스트레이션, 수채화 스타일"
+                                        class="w-full p-2.5 md:p-3 border-2 border-green-300 rounded-lg text-xs md:text-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 bg-white"
+                                    />
                                 </div>
                                 
                                 <button 
