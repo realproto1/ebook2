@@ -13,7 +13,7 @@ let imageSettings = {
     illustrationModel: 'gemini-3-pro-image-preview',  // 페이지 삽화 모델
     vocabularyModel: 'gemini-3-pro-image-preview',  // 8단어 학습 모델
     coverModel: 'gemini-3-pro-image-preview',  // 표지 모델
-    ttsModel: 'google/gemini-2.5-pro-preview-tts',  // TTS 모델
+    ttsModel: 'ko-KR-Wavenet-A',  // TTS 모델 (Google Cloud TTS)
     ttsVoiceConfig: '여성 목소리, 부드럽고 따뜻한 톤, 동화 낭독 스타일, 적당한 속도로 또박또박, 어린이가 이해하기 쉽게'  // TTS 음성 설정
 };
 
@@ -25,12 +25,12 @@ const IMAGE_MODELS = [
     { value: 'imagen-4', label: 'Imagen 4', description: '전문 이미지, 텍스트 렌더링 우수' }
 ];
 
-// TTS 모델 목록
+// TTS 모델 목록 (Google Cloud Text-to-Speech)
 const TTS_MODELS = [
-    { value: 'google/gemini-2.5-pro-preview-tts', label: 'Gemini 2.5 Pro Preview TTS ⭐', description: '고품질, 자연스러운 음성' },
-    { value: 'fal-ai/elevenlabs/tts/multilingual-v2', label: 'ElevenLabs Multilingual V2', description: '다국어 지원, 전문 품질' },
-    { value: 'elevenlabs/v3-tts', label: 'ElevenLabs V3 TTS', description: '최신 버전, 감정 표현 우수' },
-    { value: 'fal-ai/minimax/speech-2.6-hd', label: 'Minimax Speech 2.6 HD', description: '한국어/일본어/중국어 최적화' }
+    { value: 'ko-KR-Wavenet-A', label: '한국어 여성 목소리 (Wavenet-A) ⭐', description: '자연스럽고 부드러운 여성 목소리' },
+    { value: 'ko-KR-Wavenet-C', label: '한국어 남성 목소리 (Wavenet-C)', description: '깊고 안정적인 남성 목소리' },
+    { value: 'ko-KR-Wavenet-B', label: '한국어 여성 목소리 (Wavenet-B)', description: '밝고 경쾌한 여성 목소리' },
+    { value: 'ko-KR-Wavenet-D', label: '한국어 남성 목소리 (Wavenet-D)', description: '차분하고 따뜻한 남성 목소리' }
 ];
 
 // 모델 선택 HTML 생성 함수

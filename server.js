@@ -1817,53 +1817,84 @@ app.post('/api/generate-tts', requireAPIKey, async (req, res) => {
     console.log(`Voice config: ${voiceConfig}`);
     console.log(`Model: ${model}`);
     
-    // Google Gemini 2.5 Flash TTS 사용
-    const ttsModel = model || 'google/gemini-2.5-pro-preview-tts';
-    
-    // 음성 설정을 requirements로 변환
-    const requirements = voiceConfig || '여성, 따뜻하고 부드러운 목소리, 천천히';
-    
-    // GenSpark API 호출 (audio_generation tool 사용)
-    const apiKey = process.env.GENSPARK_API_KEY;
-    if (!apiKey) {
-      throw new Error('GENSPARK_API_KEY가 설정되지 않았습니다.');
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    if (!GEMINI_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        error: 'GEMINI_API_KEY가 설정되지 않았습니다.'
+      });
     }
     
-    const gensparkUrl = 'https://www.genspark.ai/api/agent-studio/multimodal/create';
+    // Google Cloud Text-to-Speech API 사용
+    const url = 'https://texttospeech.googleapis.com/v1/text:synthesize?key=' + GEMINI_API_KEY;
     
-    const response = await fetch(gensparkUrl, {
+    // 음성 모델 선택 (기본값: ko-KR-Wavenet-A)
+    let voiceName = model || 'ko-KR-Wavenet-A';
+    let pitch = 0;
+    let speakingRate = 1.0;
+    
+    // voiceConfig에서 추가 설정 추출
+    const configLower = (voiceConfig || '').toLowerCase();
+    
+    // 속도 판단
+    if (configLower.includes('천천히') || configLower.includes('느리') || configLower.includes('slow')) {
+      speakingRate = 0.85;
+    } else if (configLower.includes('빠르') || configLower.includes('fast') || configLower.includes('경쾌')) {
+      speakingRate = 1.15;
+    } else if (configLower.includes('또박또박') || configLower.includes('적당')) {
+      speakingRate = 0.95;
+    }
+    
+    // 톤 판단
+    if (configLower.includes('깊') || configLower.includes('낮') || configLower.includes('deep')) {
+      pitch = -2.0;
+    } else if (configLower.includes('밝') || configLower.includes('높') || configLower.includes('high')) {
+      pitch = 2.0;
+    } else if (configLower.includes('어린이')) {
+      pitch = 4.0;
+    }
+    
+    console.log(`🎵 Voice settings: ${voiceName}, pitch: ${pitch}, rate: ${speakingRate}`);
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: ttsModel,
-        query: text,
-        requirements: requirements,
-        task_summary: 'TTS generation for children\'s storybook'
+        input: { text: text },
+        voice: {
+          languageCode: 'ko-KR',
+          name: voiceName
+        },
+        audioConfig: {
+          audioEncoding: 'MP3',
+          pitch: pitch,
+          speakingRate: speakingRate
+        }
       })
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`GenSpark API 오류: ${response.status} - ${errorText}`);
+      throw new Error(`Google TTS API 오류: ${response.status} - ${errorText}`);
     }
     
     const data = await response.json();
     
-    if (!data.generated_audios || data.generated_audios.length === 0) {
+    if (!data.audioContent) {
       throw new Error('TTS 생성 실패: 오디오가 생성되지 않았습니다.');
     }
     
-    const audioUrl = data.generated_audios[0].url;
+    // Base64 오디오를 데이터 URL로 변환
+    const audioUrl = `data:audio/mp3;base64,${data.audioContent}`;
     
-    console.log(`✅ TTS generated successfully: ${audioUrl}`);
+    console.log(`✅ TTS generated successfully (length: ${data.audioContent.length} bytes)`);
     
     res.json({
       success: true,
       audioUrl: audioUrl,
-      duration: data.generated_audios[0].duration || 0
+      duration: 0 // Google TTS는 duration을 반환하지 않음
     });
     
   } catch (error) {
