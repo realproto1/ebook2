@@ -1088,6 +1088,9 @@ function displayStorybook(storybook) {
                                     <span class="bg-white text-purple-600 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm font-semibold">
                                         ${char.role}
                                     </span>
+                                    ${char.age ? `<span class="bg-white bg-opacity-20 text-white px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm font-semibold">
+                                        <i class="fas fa-birthday-cake mr-1"></i>${char.age}
+                                    </span>` : ''}
                                     <div class="flex items-center gap-1 bg-white bg-opacity-20 px-2 py-1 rounded">
                                         <i class="fas fa-ruler-vertical text-white text-xs"></i>
                                         <input 

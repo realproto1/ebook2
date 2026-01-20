@@ -593,6 +593,7 @@ ${targetAge === '4-5' ? `
       "name": "캐릭터 이름 (개별 캐릭터로 작성, 복수형 금지, 숫자 붙이지 말 것)",
       "description": "외모와 성격 상세 설명 (한국어, 개별 특징 포함)",
       "role": "주인공/조력자/악역 등",
+      "age": "나이 (숫자 또는 '약 5세', '10대 초반', '중년', '노인' 등)",
       "height": 150
     }
   ],
@@ -1186,6 +1187,8 @@ app.post('/api/generate-character-image', requireAPIKey, async (req, res) => {
     const prompt = `Create a professional character design reference sheet for a children's storybook character. 
 
 **Character Description:** ${characterDescriptionEn}
+
+${character.age ? `**Character Age:** ${character.age}` : ''}
 
 **Art Style:** ${artStyle} style for children's book illustration.
 
