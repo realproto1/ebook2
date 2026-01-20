@@ -13,7 +13,7 @@ let imageSettings = {
     illustrationModel: 'gemini-3-pro-image-preview',  // 페이지 삽화 모델
     vocabularyModel: 'gemini-3-pro-image-preview',  // 8단어 학습 모델
     coverModel: 'gemini-3-pro-image-preview',  // 표지 모델
-    ttsModel: 'ko-KR-Wavenet-A',  // TTS 모델 (Google Cloud TTS with Gemini API Key)
+    ttsModel: 'Puck',  // TTS 모델 (Gemini TTS Voice)
     ttsVoiceConfig: '여성 목소리, 부드럽고 따뜻한 톤, 동화 낭독 스타일, 적당한 속도로 또박또박, 어린이가 이해하기 쉽게'  // TTS 음성 설정
 };
 
@@ -25,12 +25,13 @@ const IMAGE_MODELS = [
     { value: 'imagen-4', label: 'Imagen 4', description: '전문 이미지, 텍스트 렌더링 우수' }
 ];
 
-// TTS 모델 목록 (Google Cloud Text-to-Speech with Gemini API Key)
+// TTS 모델 목록 (Gemini TTS Voices)
 const TTS_MODELS = [
-    { value: 'ko-KR-Wavenet-A', label: '한국어 여성 (Wavenet-A) ⭐', description: '자연스럽고 부드러운 여성 목소리' },
-    { value: 'ko-KR-Wavenet-B', label: '한국어 여성 (Wavenet-B)', description: '밝고 경쾌한 여성 목소리' },
-    { value: 'ko-KR-Wavenet-C', label: '한국어 남성 (Wavenet-C)', description: '깊고 안정적인 남성 목소리' },
-    { value: 'ko-KR-Wavenet-D', label: '한국어 남성 (Wavenet-D)', description: '차분하고 따뜻한 남성 목소리' }
+    { value: 'Puck', label: 'Puck ⭐', description: '자연스럽고 부드러운 여성 목소리' },
+    { value: 'Charon', label: 'Charon', description: '깊고 안정적인 남성 목소리' },
+    { value: 'Kore', label: 'Kore', description: '밝고 경쾌한 여성 목소리' },
+    { value: 'Fenrir', label: 'Fenrir', description: '차분하고 따뜻한 남성 목소리' },
+    { value: 'Aoede', label: 'Aoede', description: '우아한 여성 목소리' }
 ];
 
 // 모델 선택 HTML 생성 함수
@@ -1486,7 +1487,7 @@ function displayStorybook(storybook) {
                         onclick="downloadAllAudio()"
                         class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition"
                     >
-                        <i class="fas fa-volume-up mr-2"></i>전체 MP3
+                        <i class="fas fa-volume-up mr-2"></i>전체 오디오
                     </button>
                 </div>
             </div>
@@ -1570,10 +1571,10 @@ function displayStorybook(storybook) {
                                                 브라우저가 오디오를 지원하지 않습니다.
                                             </audio>
                                             <button 
-                                                onclick="downloadAudio('${page.audioUrl}', '${storybook.title}_페이지_${page.pageNumber}.mp3')"
+                                                onclick="downloadAudio('${page.audioUrl}', '${storybook.title}_페이지_${page.pageNumber}.wav')"
                                                 class="w-full bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 transition text-xs"
                                             >
-                                                <i class="fas fa-download mr-1"></i>MP3 다운로드
+                                                <i class="fas fa-download mr-1"></i>오디오 다운로드
                                             </button>
                                         </div>
                                         ` : `<p class="text-xs text-gray-500 text-center py-2">TTS 생성 버튼을 클릭하세요</p>`}
@@ -2118,7 +2119,7 @@ async function downloadAudio(audioUrl, filename) {
     }
 }
 
-// 모든 MP3 다운로드
+// 모든 오디오 다운로드
 async function downloadAllAudio() {
     if (!currentStorybook || !currentStorybook.pages) {
         alert('동화책이 선택되지 않았습니다.');
@@ -2132,7 +2133,7 @@ async function downloadAllAudio() {
         return;
     }
     
-    if (!confirm(`${pagesWithAudio.length}개의 MP3 파일을 다운로드하시겠습니까?`)) {
+    if (!confirm(`${pagesWithAudio.length}개의 오디오 파일을 다운로드하시겠습니까?`)) {
         return;
     }
     
@@ -2140,7 +2141,7 @@ async function downloadAllAudio() {
     
     for (let i = 0; i < pagesWithAudio.length; i++) {
         const page = pagesWithAudio[i];
-        const filename = `${currentStorybook.title}_페이지_${page.pageNumber}.mp3`;
+        const filename = `${currentStorybook.title}_페이지_${page.pageNumber}.wav`;
         
         try {
             await downloadAudio(page.audioUrl, filename);
@@ -2153,7 +2154,7 @@ async function downloadAllAudio() {
         }
     }
     
-    showNotification('success', '일괄 다운로드 완료', `${downloadCount}개의 MP3 파일이 다운로드되었습니다.`);
+    showNotification('success', '일괄 다운로드 완료', `${downloadCount}개의 오디오 파일이 다운로드되었습니다.`);
 }
 
 // 단어 업데이트 함수
