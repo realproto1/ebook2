@@ -13,7 +13,7 @@ let imageSettings = {
     illustrationModel: 'gemini-3-pro-image-preview',  // 페이지 삽화 모델
     vocabularyModel: 'gemini-3-pro-image-preview',  // 8단어 학습 모델
     coverModel: 'gemini-3-pro-image-preview',  // 표지 모델
-    ttsModel: 'ko-KR-Wavenet-A',  // TTS 모델 (Google Cloud TTS)
+    ttsModel: 'gemini-2.5-flash',  // TTS 모델 (Gemini API)
     ttsVoiceConfig: '여성 목소리, 부드럽고 따뜻한 톤, 동화 낭독 스타일, 적당한 속도로 또박또박, 어린이가 이해하기 쉽게'  // TTS 음성 설정
 };
 
@@ -25,12 +25,10 @@ const IMAGE_MODELS = [
     { value: 'imagen-4', label: 'Imagen 4', description: '전문 이미지, 텍스트 렌더링 우수' }
 ];
 
-// TTS 모델 목록 (Google Cloud Text-to-Speech)
+// TTS 모델 목록 (Gemini API)
 const TTS_MODELS = [
-    { value: 'ko-KR-Wavenet-A', label: '한국어 여성 목소리 (Wavenet-A) ⭐', description: '자연스럽고 부드러운 여성 목소리' },
-    { value: 'ko-KR-Wavenet-C', label: '한국어 남성 목소리 (Wavenet-C)', description: '깊고 안정적인 남성 목소리' },
-    { value: 'ko-KR-Wavenet-B', label: '한국어 여성 목소리 (Wavenet-B)', description: '밝고 경쾌한 여성 목소리' },
-    { value: 'ko-KR-Wavenet-D', label: '한국어 남성 목소리 (Wavenet-D)', description: '차분하고 따뜻한 남성 목소리' }
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash ⭐', description: '빠르고 자연스러운 음성 생성' },
+    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', description: '안정적인 음성 생성' }
 ];
 
 // 모델 선택 HTML 생성 함수
