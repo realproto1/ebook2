@@ -1438,56 +1438,64 @@ function displayStorybook(storybook) {
                         </button>
                     </div>
                 </div>
-                <div class="flex gap-3 flex-wrap">
-                    <div class="flex gap-2">
-                        <div class="relative inline-flex">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    <!-- 상단: 삽화 생성 버튼 -->
+                    <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="relative">
                             <button 
                                 onclick="generateAllIllustrationsParallel()"
-                                class="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition shadow-md"
+                                class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition shadow-lg flex items-center justify-center gap-2 font-semibold"
                             >
-                                <i class="fas fa-bolt mr-2"></i>모든 삽화 생성 (빠르게)
+                                <i class="fas fa-bolt text-lg"></i>
+                                <span class="text-sm md:text-base">모든 삽화 생성 <span class="hidden sm:inline">(빠르게)</span><span class="inline sm:hidden">(병렬)</span></span>
                             </button>
                             <button 
                                 onclick="showGenerationModeHelp('parallel')"
-                                class="absolute -top-2 -right-2 bg-white text-blue-600 w-6 h-6 rounded-full hover:bg-blue-50 transition shadow-md flex items-center justify-center"
-                                title="병렬 생성 모드에 대한 자세한 설명 보기"
+                                class="absolute -top-1.5 -right-1.5 bg-white text-blue-600 w-5 h-5 rounded-full hover:bg-blue-50 transition shadow-md flex items-center justify-center text-xs"
+                                title="병렬 생성 모드 설명"
                             >
-                                <i class="fas fa-question text-xs"></i>
+                                <i class="fas fa-question"></i>
                             </button>
                         </div>
-                        <div class="relative inline-flex">
+                        <div class="relative">
                             <button 
                                 onclick="generateAllIllustrationsSequential()"
-                                class="bg-indigo-600 text-white px-5 py-3 rounded-lg hover:bg-indigo-700 transition shadow-md"
+                                class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-3 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition shadow-lg flex items-center justify-center gap-2 font-semibold"
                             >
-                                <i class="fas fa-layer-group mr-2"></i>모든 삽화 생성 (정확하게)
+                                <i class="fas fa-layer-group text-lg"></i>
+                                <span class="text-sm md:text-base">모든 삽화 생성 <span class="hidden sm:inline">(정확하게)</span><span class="inline sm:hidden">(순차)</span></span>
                             </button>
                             <button 
                                 onclick="showGenerationModeHelp('sequential')"
-                                class="absolute -top-2 -right-2 bg-white text-indigo-600 w-6 h-6 rounded-full hover:bg-indigo-50 transition shadow-md flex items-center justify-center"
-                                title="순차 생성 모드에 대한 자세한 설명 보기"
+                                class="absolute -top-1.5 -right-1.5 bg-white text-indigo-600 w-5 h-5 rounded-full hover:bg-indigo-50 transition shadow-md flex items-center justify-center text-xs"
+                                title="순차 생성 모드 설명"
                             >
-                                <i class="fas fa-question text-xs"></i>
+                                <i class="fas fa-question"></i>
                             </button>
                         </div>
                     </div>
+                    
+                    <!-- 하단: 다운로드 버튼 -->
                     <button 
                         onclick="downloadAllText()"
-                        class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition"
+                        class="bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 transition shadow-md flex items-center justify-center gap-2 font-medium"
                     >
-                        <i class="fas fa-file-alt mr-2"></i>전체 텍스트
+                        <i class="fas fa-file-alt text-base"></i>
+                        <span class="text-sm">전체 텍스트</span>
                     </button>
                     <button 
                         onclick="downloadAllIllustrations()"
-                        class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
+                        class="bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2 font-medium"
                     >
-                        <i class="fas fa-download mr-2"></i>전체 삽화
+                        <i class="fas fa-download text-base"></i>
+                        <span class="text-sm">전체 삽화</span>
                     </button>
                     <button 
                         onclick="downloadAllAudio()"
-                        class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition"
+                        class="bg-orange-600 text-white px-4 py-2.5 rounded-lg hover:bg-orange-700 transition shadow-md flex items-center justify-center gap-2 font-medium col-span-1 md:col-span-2"
                     >
-                        <i class="fas fa-volume-up mr-2"></i>전체 오디오
+                        <i class="fas fa-volume-up text-base"></i>
+                        <span class="text-sm">전체 오디오</span>
                     </button>
                 </div>
             </div>
