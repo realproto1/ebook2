@@ -1825,24 +1825,52 @@ app.post('/api/generate-tts', requireAPIKey, async (req, res) => {
       });
     }
     
-    // Gemini 2.5 Flash 모델 사용 (오디오 생성 지원)
-    const geminiModel = 'gemini-2.5-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${GEMINI_API_KEY}`;
+    // Google Cloud Text-to-Speech API 사용 (Gemini API 키 사용)
+    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${GEMINI_API_KEY}`;
     
-    // 음성 설정을 프롬프트에 포함
-    const voicePrompt = voiceConfig || '여성 목소리, 부드럽고 따뜻한 톤, 동화 낭독 스타일, 적당한 속도로 또박또박, 어린이가 이해하기 쉽게';
+    // 음성 모델 선택
+    // model 파라미터로 받은 값이 있으면 사용, 없으면 voiceConfig에서 파싱
+    let voiceName = 'ko-KR-Wavenet-A'; // 기본: 여성 목소리
+    let pitch = 0;
+    let speakingRate = 1.0;
     
-    const prompt = `You are a professional voice actor reading a children's storybook.
-
-Voice characteristics: ${voicePrompt}
-
-Please read the following text naturally and expressively as if you're reading to a child:
-
-"${text}"
-
-Generate this as natural speech audio.`;
-
-    console.log(`🎵 Using Gemini model: ${geminiModel}`);
+    // model이 gemini-로 시작하면 무시하고 voiceConfig에서 추출
+    if (model && !model.startsWith('gemini-')) {
+      voiceName = model;
+    }
+    
+    // voiceConfig에서 설정 추출
+    const configLower = (voiceConfig || '').toLowerCase();
+    
+    // 성별 판단 (model이 지정되지 않은 경우)
+    if (!model || model.startsWith('gemini-')) {
+      if (configLower.includes('남성') || configLower.includes('male') || configLower.includes('할아버지')) {
+        voiceName = 'ko-KR-Wavenet-C'; // 남성 목소리
+      } else if (configLower.includes('어린이') || configLower.includes('child')) {
+        voiceName = 'ko-KR-Wavenet-B'; // 밝은 여성 목소리 (어린이 느낌)
+        pitch = 3.0;
+      }
+    }
+    
+    // 속도 판단
+    if (configLower.includes('천천히') || configLower.includes('느리') || configLower.includes('slow')) {
+      speakingRate = 0.85;
+    } else if (configLower.includes('빠르') || configLower.includes('fast') || configLower.includes('경쾌')) {
+      speakingRate = 1.15;
+    } else if (configLower.includes('또박또박') || configLower.includes('적당')) {
+      speakingRate = 0.95;
+    }
+    
+    // 톤 판단
+    if (configLower.includes('깊') || configLower.includes('낮') || configLower.includes('deep')) {
+      pitch = -2.0;
+    } else if (configLower.includes('밝') || configLower.includes('높') || configLower.includes('high')) {
+      pitch = 2.0;
+    } else if (configLower.includes('어린이')) {
+      pitch = 3.0;
+    }
+    
+    console.log(`🎵 Voice settings: ${voiceName}, pitch: ${pitch}, rate: ${speakingRate}`);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -1850,54 +1878,41 @@ Generate this as natural speech audio.`;
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.9,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
-          responseMimeType: "audio/mp3"  // 오디오 출력 요청
+        input: { text: text },
+        voice: {
+          languageCode: 'ko-KR',
+          name: voiceName
+        },
+        audioConfig: {
+          audioEncoding: 'MP3',
+          pitch: pitch,
+          speakingRate: speakingRate
         }
       })
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API Error:', errorText);
-      throw new Error(`Gemini API 오류: ${response.status} - ${errorText}`);
+      console.error('Google TTS API Error:', errorText);
+      throw new Error(`Google TTS API 오류: ${response.status} - ${errorText}`);
     }
     
     const data = await response.json();
-    console.log('Gemini API Response:', JSON.stringify(data).substring(0, 200));
     
-    // Gemini API 응답에서 오디오 데이터 추출
-    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-      const parts = data.candidates[0].content.parts;
-      
-      // inlineData에서 오디오 찾기
-      const audioPart = parts.find(part => part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith('audio'));
-      
-      if (audioPart && audioPart.inlineData && audioPart.inlineData.data) {
-        const audioBase64 = audioPart.inlineData.data;
-        const mimeType = audioPart.inlineData.mimeType;
-        const audioUrl = `data:${mimeType};base64,${audioBase64}`;
-        
-        console.log(`✅ TTS generated successfully (mime: ${mimeType}, length: ${audioBase64.length} bytes)`);
-        
-        return res.json({
-          success: true,
-          audioUrl: audioUrl,
-          duration: 0
-        });
-      }
+    if (!data.audioContent) {
+      throw new Error('TTS 생성 실패: 오디오가 생성되지 않았습니다.');
     }
     
-    // 오디오를 찾지 못한 경우 에러
-    throw new Error('Gemini API에서 오디오를 생성하지 못했습니다. 모델이 오디오 생성을 지원하지 않을 수 있습니다.');
+    // Base64 오디오를 데이터 URL로 변환
+    const audioUrl = `data:audio/mp3;base64,${data.audioContent}`;
+    
+    console.log(`✅ TTS generated successfully (length: ${data.audioContent.length} bytes)`);
+    
+    res.json({
+      success: true,
+      audioUrl: audioUrl,
+      duration: 0
+    });
     
   } catch (error) {
     console.error('TTS 생성 실패:', error);
