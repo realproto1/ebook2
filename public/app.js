@@ -1687,9 +1687,6 @@ function displayStorybook(storybook) {
                                 </div>
                             </div>
                             ` : ''}
-                                </div>
-                            </div>
-                            ` : ''}
                         </div>
                     </div>
                 `).join('')}
