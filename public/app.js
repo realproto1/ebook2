@@ -1661,126 +1661,6 @@ function displayStorybook(storybook) {
                                 <label class="block text-xs font-semibold text-gray-700 mb-2">
                                     <i class="fas fa-cube mr-1"></i>Key Objects 참조 (선택)
                                 </label>
-                                            </div>
-                                            <div>
-                                                <label class="text-xs text-gray-600 block mb-1">모델</label>
-                                                ${createTTSModelSelect(page.ttsModel || imageSettings.ttsModel, idx)}
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- TTS 생성 버튼 -->
-                                        <button 
-                                            onclick="generatePageTTS(${idx})"
-                                            class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-sm"
-                                            id="tts-btn-${idx}"
-                                        >
-                                            <i class="fas fa-microphone mr-2"></i>${page.audioUrl ? 'TTS 재생성' : 'TTS 생성'}
-                                        </button>
-                                        
-                                        <!-- TTS 플레이어 -->
-                                        ${page.audioUrl ? `
-                                        <div class="space-y-2">
-                                            <audio controls class="w-full" id="audio-player-${idx}">
-                                                <source src="${page.audioUrl}" type="audio/mpeg">
-                                                브라우저가 오디오를 지원하지 않습니다.
-                                            </audio>
-                                            <button 
-                                                onclick="downloadAudio('${page.audioUrl}', '${storybook.title}_페이지_${page.pageNumber}.wav')"
-                                                class="w-full bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 transition text-xs"
-                                            >
-                                                <i class="fas fa-download mr-1"></i>오디오 다운로드
-                                            </button>
-                                        </div>
-                                        ` : `<p class="text-xs text-gray-500 text-center py-2">TTS 생성 버튼을 클릭하세요</p>`}
-                                    </div>
-                                </div>
-
-                                <button 
-                                    onclick="generateIllustration(${idx})"
-                                    class="w-full mt-2 bg-blue-600 text-white py-2 md:py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-sm md:text-base"
-                                >
-                                    <i class="fas fa-paint-brush mr-2"></i>${page.illustrationImage ? '삽화 재생성' : '삽화 생성'}
-                                </button>
-                            </div>
-
-                            <div>
-                                <div class="flex justify-between items-center mb-2">
-                                    <h5 class="font-bold text-gray-700 text-sm md:text-base">삽화</h5>
-                                    ${page.illustrationImage ?
-                                        `<button 
-                                            onclick="downloadImage('${page.illustrationImage}', '${storybook.title}_페이지_${page.pageNumber}.png')"
-                                            class="bg-green-600 text-white px-2 md:px-3 py-1 rounded-lg hover:bg-green-700 transition text-xs md:text-sm"
-                                        >
-                                            <i class="fas fa-download mr-1"></i>다운로드
-                                        </button>` : ''
-                                    }
-                                </div>
-                                <div id="illustration-${idx}" class="bg-gray-100 rounded-lg min-h-[200px] md:min-h-[300px] flex items-center justify-center overflow-hidden">
-                                    ${page.illustrationImage ?
-                                        `<img src="${page.illustrationImage}" alt="Page ${page.pageNumber}" class="w-full h-full object-cover rounded-lg"/>` :
-                                        `<p class="text-gray-500 text-center p-4 text-sm md:text-base">
-                                            <i class="fas fa-image text-3xl md:text-4xl mb-2"></i><br>
-                                            삽화 생성 버튼을 클릭하세요
-                                        </p>`
-                                    }
-                                </div>
-                                
-                                ${page.illustrationImage ? `
-                                <div class="mt-3">
-                                    <label class="block text-xs md:text-sm font-semibold text-gray-700 mb-1">
-                                        <i class="fas fa-edit mr-1"></i>이미지 수정사항 (선택사항)
-                                    </label>
-                                    <textarea 
-                                        id="edit-note-${idx}" 
-                                        class="w-full p-2 border-2 border-yellow-300 rounded-lg text-xs md:text-sm"
-                                        rows="2"
-                                        placeholder="수정할 내용을 입력하세요 (예: 토끼를 더 크게 그려주세요, 배경을 밝게 해주세요)"
-                                    >${page.editNote || ''}</textarea>
-                                    <p class="text-xs text-gray-500 mt-1">
-                                        <i class="fas fa-info-circle mr-1"></i>
-                                        수정사항을 입력하고 '삽화 재생성' 버튼을 누르면 반영됩니다.
-                                    </p>
-                                </div>
-                                ` : ''}
-                                
-                                <div class="mt-3">
-                                    <label class="block text-xs md:text-sm font-semibold text-gray-700 mb-2">
-                                        <i class="fas fa-images mr-1"></i>참조할 다른 페이지 이미지 (선택사항)
-                                    </label>
-                                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 bg-gray-50">
-                                        ${storybook.pages.map((p, pIdx) => {
-                                            if (pIdx === idx || !p.illustrationImage) return '';
-                                            return `
-                                            <div class="relative group cursor-pointer" onclick="toggleReferenceImage(${idx}, ${pIdx})">
-                                                <img 
-                                                    src="${p.illustrationImage}" 
-                                                    alt="페이지 ${p.pageNumber}"
-                                                    class="w-full h-16 sm:h-20 object-cover rounded border-2 border-gray-300 hover:border-blue-500 transition"
-                                                    id="ref-img-${idx}-${pIdx}"
-                                                />
-                                                <div class="absolute top-0 right-0 bg-blue-600 text-white text-xs px-1 sm:px-1.5 py-0.5 rounded-bl opacity-0 group-hover:opacity-100 transition">
-                                                    ${p.pageNumber}
-                                                </div>
-                                                <input 
-                                                    type="checkbox" 
-                                                    id="ref-check-${idx}-${pIdx}"
-                                                    class="absolute top-1 left-1 w-3 h-3 sm:w-4 sm:h-4"
-                                                />
-                                            </div>
-                                            `;
-                                        }).join('') || '<p class="text-gray-400 text-xs col-span-3 sm:col-span-4 text-center py-4">아직 다른 페이지에 이미지가 없습니다.<br>먼저 다른 페이지의 삽화를 생성해주세요.</p>'}
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-1">
-                                        <i class="fas fa-lightbulb mr-1"></i>
-                                        참조할 이미지를 클릭하면 선택됩니다. 선택한 이미지의 스타일, 색감, 구도를 참고하여 생성합니다.
-                                    </p>
-                                </div>
-                                
-                            ${storybook.key_objects && storybook.key_objects.length > 0 ? `
-                            <div class="mt-3">
-                                <label class="block text-xs font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-cube mr-1"></i>Key Objects 참조 (선택)
-                                </label>
                                 <div class="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto border border-orange-300 rounded-lg p-2 bg-white">
                                     ${storybook.key_objects.map((obj, objIdx) => {
                                         const objImg = storybook.keyObjectImages && storybook.keyObjectImages[objIdx];
@@ -1807,12 +1687,14 @@ function displayStorybook(storybook) {
                                 </div>
                             </div>
                             ` : ''}
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                 `).join('')}
             </div>
         </div>
-
 
 
         <!-- 교육 콘텐츠 -->
