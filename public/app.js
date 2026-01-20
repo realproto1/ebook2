@@ -1495,19 +1495,17 @@ function displayStorybook(storybook) {
             <div id="pages-section-content" class="space-y-4 md:space-y-6">
                 ${storybook.pages.map((page, idx) => `
                     <div class="page-card bg-white rounded-xl shadow-lg overflow-hidden border border-purple-200">
-                        <div class="bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 p-4 md:p-5 border-b-4 border-purple-800">
-                            <div class="flex items-center justify-between">
-                                <h4 class="text-xl md:text-2xl font-bold text-white flex items-center">
-                                    <span class="bg-white text-purple-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 font-black shadow-lg">
-                                        ${page.pageNumber}
-                                    </span>
-                                    페이지 ${page.pageNumber}
-                                </h4>
-                                <div class="flex gap-2">
-                                    ${page.text ? '<span class="bg-white bg-opacity-20 text-white px-2 py-1 rounded text-xs"><i class="fas fa-check mr-1"></i>텍스트</span>' : ''}
-                                    ${page.audioUrl ? '<span class="bg-white bg-opacity-20 text-white px-2 py-1 rounded text-xs"><i class="fas fa-check mr-1"></i>TTS</span>' : ''}
-                                    ${page.illustrationImage ? '<span class="bg-white bg-opacity-20 text-white px-2 py-1 rounded text-xs"><i class="fas fa-check mr-1"></i>삽화</span>' : ''}
-                                </div>
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-4 py-3 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-white text-purple-600 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold shadow">
+                                    ${page.pageNumber}
+                                </span>
+                                <span class="text-white font-semibold text-base md:text-lg">페이지 ${page.pageNumber}</span>
+                            </div>
+                            <div class="flex gap-1.5">
+                                ${page.text ? '<div class="w-6 h-6 bg-white bg-opacity-90 rounded-full flex items-center justify-center" title="텍스트 완료"><i class="fas fa-align-left text-purple-600 text-xs"></i></div>' : ''}
+                                ${page.audioUrl ? '<div class="w-6 h-6 bg-white bg-opacity-90 rounded-full flex items-center justify-center" title="TTS 완료"><i class="fas fa-volume-up text-blue-600 text-xs"></i></div>' : ''}
+                                ${page.illustrationImage ? '<div class="w-6 h-6 bg-white bg-opacity-90 rounded-full flex items-center justify-center" title="삽화 완료"><i class="fas fa-image text-green-600 text-xs"></i></div>' : ''}
                             </div>
                         </div>
                         
