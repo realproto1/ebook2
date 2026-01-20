@@ -1442,9 +1442,9 @@ function displayStorybook(storybook) {
             </div>
             
             <!-- 액션 버튼 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                     <!-- 삽화 생성 버튼 -->
-                    <div class="relative md:col-span-1">
+                    <div class="relative">
                         <button 
                             onclick="generateAllIllustrationsParallel()"
                             class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition shadow-lg flex items-center justify-center gap-2 font-semibold text-base"
@@ -1461,7 +1461,7 @@ function displayStorybook(storybook) {
                         </button>
                     </div>
                     
-                    <div class="relative md:col-span-1">
+                    <div class="relative">
                         <button 
                             onclick="generateAllIllustrationsSequential()"
                             class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-3.5 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition shadow-lg flex items-center justify-center gap-2 font-semibold text-base"
