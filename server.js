@@ -1821,15 +1821,15 @@ app.post('/api/generate-tts', requireAPIKey, async (req, res) => {
     // GoogleGenerativeAI 인스턴스 생성
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     
-    // TTS 모델 설정
+    // TTS 모델 설정 - Gemini 2.5 Flash TTS
     const ttsModel = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash-exp-audio" 
+      model: "gemini-2.5-flash-preview-tts"
     });
     
     // 음성 이름 (기본값: Puck)
     const voiceName = model || 'Puck';
     
-    console.log(`🎵 Using Gemini TTS - Model: gemini-2.0-flash-exp-audio, Voice: ${voiceName}`);
+    console.log(`🎵 Using Gemini 2.5 Flash TTS - Voice: ${voiceName}`);
     
     // TTS 요청
     const result = await ttsModel.generateContent({
@@ -1838,7 +1838,7 @@ app.post('/api/generate-tts', requireAPIKey, async (req, res) => {
         parts: [{ text: text }] 
       }],
       generationConfig: {
-        responseModalities: "audio",
+        responseModalities: ['audio'],
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
