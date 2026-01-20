@@ -532,6 +532,9 @@ function renderBookList() {
     
     console.log('📋 renderBookList 호출 - 동화책 개수:', storybooks.length);
     
+    // undefined, null 항목 필터링
+    storybooks = storybooks.filter(book => book && book.id);
+    
     if (storybooks.length === 0) {
         listDiv.innerHTML = '<p class="text-gray-500 text-center py-4">아직 만든 동화책이 없어요</p>';
         return;
@@ -697,17 +700,22 @@ function handleDrop(e) {
     if (draggedElement !== e.currentTarget) {
         const targetIndex = parseInt(e.currentTarget.dataset.bookIndex);
         
+        // undefined/null 항목 제거
+        storybooks = storybooks.filter(b => b && b.id);
+        
         // 배열에서 순서 변경
         const draggedBook = storybooks[draggedIndex];
-        storybooks.splice(draggedIndex, 1);
-        storybooks.splice(targetIndex, 0, draggedBook);
-        
-        console.log(`✅ 순서 변경: ${draggedIndex} → ${targetIndex}`);
-        
-        saveStorybooks();
-        renderBookList();
-        
-        showNotification('success', '순서가 변경되었습니다!');
+        if (draggedBook && draggedBook.id) {
+            storybooks.splice(draggedIndex, 1);
+            storybooks.splice(targetIndex, 0, draggedBook);
+            
+            console.log(`✅ 순서 변경: ${draggedIndex} → ${targetIndex}`);
+            
+            saveStorybooks();
+            renderBookList();
+            
+            showNotification('success', '순서가 변경되었습니다!');
+        }
     }
     
     e.currentTarget.classList.remove('border-purple-500', 'bg-purple-50');
@@ -953,8 +961,11 @@ async function generateStorybook() {
             
             console.log('✅ 동화책 생성 성공:', currentStorybook.title, 'ID:', currentStorybook.id);
             
+            // undefined/null 항목 제거
+            storybooks = storybooks.filter(b => b && b.id);
+            
             // 목록에 추가
-            const index = storybooks.findIndex(b => b.id === currentStorybook.id);
+            const index = storybooks.findIndex(b => b && b.id === currentStorybook.id);
             if (index !== -1) {
                 console.log('📝 기존 동화책 업데이트:', index);
                 storybooks[index] = currentStorybook;
@@ -967,7 +978,7 @@ async function generateStorybook() {
             saveStorybooks();
             console.log('🎨 목록 렌더링 시작');
             renderBookList();
-            console.log('📚 현재 목록:', storybooks.map(b => b.title));
+            console.log('📚 현재 목록:', storybooks.filter(b => b && b.title).map(b => b.title));
             
             displayStorybook(currentStorybook);
         } else {
