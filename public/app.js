@@ -1492,201 +1492,207 @@ function displayStorybook(storybook) {
                 </div>
             </div>
 
-            <div id="pages-section-content" class="space-y-6">
+            <div id="pages-section-content" class="space-y-4 md:space-y-6">
                 ${storybook.pages.map((page, idx) => `
-                    <div class="page-card">
-                        <h4 class="text-xl md:text-2xl font-bold text-purple-600 mb-4 flex items-center">
-                            <i class="fas fa-file-alt mr-2"></i>페이지 ${page.pageNumber}
-                        </h4>
+                    <div class="page-card bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div class="bg-gradient-to-r from-purple-600 to-purple-700 p-3 md:p-4">
+                            <h4 class="text-lg md:text-2xl font-bold text-white flex items-center">
+                                <i class="fas fa-file-alt mr-2"></i>페이지 ${page.pageNumber}
+                            </h4>
+                        </div>
                         
-                        <!-- 1️⃣ 텍스트 섹션 -->
-                        <div class="bg-white border-2 border-purple-200 rounded-lg p-4 mb-4">
-                            <h5 class="font-bold text-purple-700 mb-3 text-base flex items-center">
-                                <i class="fas fa-align-left mr-2"></i>1. 텍스트
-                            </h5>
-                            <textarea 
-                                id="text-${idx}" 
-                                class="w-full p-3 border-2 border-gray-300 rounded-lg text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-                                rows="4"
-                                onchange="updatePageText(${idx}, this.value)"
-                                placeholder="이 페이지의 스토리를 작성하세요..."
-                            >${page.text}</textarea>
-                        </div>
-
-                        <!-- 2️⃣ TTS 섹션 -->
-                        <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
-                            <h5 class="font-bold text-blue-700 mb-3 text-base flex items-center">
-                                <i class="fas fa-volume-up mr-2"></i>2. 음성(TTS)
-                            </h5>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                                <div>
-                                    <label class="text-xs text-gray-600 block mb-1">음성 설정</label>
-                                    <input 
-                                        id="tts-config-${idx}" 
-                                        value="${page.ttsConfig || imageSettings.ttsVoiceConfig}"
-                                        placeholder="예: 여성 목소리, 동화 낭독 스타일"
-                                        class="w-full p-2 border border-gray-300 rounded text-xs"
-                                        onblur="updateTTSConfig(${idx}, this.value)"
-                                    />
-                                </div>
-                                <div>
-                                    <label class="text-xs text-gray-600 block mb-1">모델</label>
-                                    ${createTTSModelSelect(page.ttsModel || imageSettings.ttsModel, idx)}
-                                </div>
+                        <div class="p-3 md:p-6 space-y-3 md:space-y-4">
+                            <!-- 1️⃣ 텍스트 섹션 -->
+                            <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-3 md:p-4">
+                                <h5 class="font-bold text-purple-700 mb-2 text-sm md:text-base flex items-center">
+                                    <i class="fas fa-align-left mr-2"></i>1. 텍스트
+                                </h5>
+                                <textarea 
+                                    id="text-${idx}" 
+                                    class="w-full p-2 md:p-3 border-2 border-gray-300 rounded-lg text-xs md:text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                                    rows="4"
+                                    onchange="updatePageText(${idx}, this.value)"
+                                    placeholder="이 페이지의 스토리를 작성하세요..."
+                                >${page.text}</textarea>
                             </div>
-                            
-                            <button 
-                                onclick="generatePageTTS(${idx})"
-                                class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-sm mb-2"
-                                id="tts-btn-${idx}"
-                            >
-                                <i class="fas fa-microphone mr-2"></i>${page.audioUrl ? 'TTS 재생성' : 'TTS 생성'}
-                            </button>
-                            
-                            ${page.audioUrl ? `
-                            <div class="space-y-2">
-                                <audio controls class="w-full">
-                                    <source src="${page.audioUrl}" type="audio/wav">
-                                </audio>
+
+                            <!-- 2️⃣ TTS 섹션 -->
+                            <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 md:p-4">
+                                <h5 class="font-bold text-blue-700 mb-2 text-sm md:text-base flex items-center">
+                                    <i class="fas fa-volume-up mr-2"></i>2. 음성(TTS)
+                                </h5>
+                                
+                                <div class="space-y-2 mb-3">
+                                    <div>
+                                        <label class="text-xs text-gray-600 block mb-1">음성 설정</label>
+                                        <input 
+                                            id="tts-config-${idx}" 
+                                            value="${page.ttsConfig || imageSettings.ttsVoiceConfig}"
+                                            placeholder="예: 여성 목소리, 동화 낭독 스타일"
+                                            class="w-full p-2 border border-gray-300 rounded text-xs"
+                                            onblur="updateTTSConfig(${idx}, this.value)"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-600 block mb-1">모델</label>
+                                        ${createTTSModelSelect(page.ttsModel || imageSettings.ttsModel, idx)}
+                                    </div>
+                                </div>
+                                
                                 <button 
-                                    onclick="downloadAudio('${page.audioUrl}', '${storybook.title}_페이지_${page.pageNumber}.wav')"
-                                    class="w-full bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 transition text-xs"
+                                    onclick="generatePageTTS(${idx})"
+                                    class="w-full bg-blue-600 text-white py-2.5 md:py-3 rounded-lg font-semibold hover:bg-blue-700 active:bg-blue-800 transition text-sm md:text-base shadow-md mb-2"
+                                    id="tts-btn-${idx}"
                                 >
-                                    <i class="fas fa-download mr-1"></i>오디오 다운로드
+                                    <i class="fas fa-microphone mr-2"></i>${page.audioUrl ? 'TTS 재생성' : 'TTS 생성'}
                                 </button>
+                                
+                                ${page.audioUrl ? `
+                                <div class="space-y-2">
+                                    <audio controls class="w-full h-10 md:h-12">
+                                        <source src="${page.audioUrl}" type="audio/wav">
+                                    </audio>
+                                    <button 
+                                        onclick="downloadAudio('${page.audioUrl}', '${storybook.title}_페이지_${page.pageNumber}.wav')"
+                                        class="w-full bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 active:bg-green-800 transition text-xs md:text-sm shadow"
+                                    >
+                                        <i class="fas fa-download mr-1"></i>오디오 다운로드
+                                    </button>
+                                </div>
+                                ` : `<p class="text-xs text-gray-500 text-center py-3 bg-white rounded-lg border border-blue-200">TTS 생성 버튼을 클릭하세요</p>`}
                             </div>
-                            ` : `<p class="text-xs text-gray-500 text-center py-2 bg-white rounded">TTS 생성 버튼을 클릭하세요</p>`}
-                        </div>
 
-                        <!-- 3️⃣ 삽화 섹션 -->
-                        <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                            <h5 class="font-bold text-green-700 mb-3 text-base flex items-center">
-                                <i class="fas fa-image mr-2"></i>3. 삽화
-                            </h5>
-                            
-                            <div class="mb-3">
-                                <label class="text-xs text-gray-600 block mb-1">장면 설명</label>
-                                <textarea 
-                                    id="scene-combined-${idx}" 
-                                    class="w-full p-2 border-2 border-gray-300 rounded-lg text-xs"
-                                    rows="3"
-                                    placeholder="장면, 캐릭터, 배경, 분위기를 설명하세요"
-                                    onblur="updateSceneCombined(${idx}, this.value)"
-                                >${page.scene_description || ''}${page.scene_structure ? '\n\n캐릭터: ' + (page.scene_structure.characters || '') + '\n배경: ' + (page.scene_structure.background || '') + '\n분위기: ' + (page.scene_structure.atmosphere || '') : ''}</textarea>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="text-xs text-gray-600 block mb-1">그림체</label>
-                                <input 
-                                    id="artstyle-${idx}" 
-                                    value="${page.artStyle || storybook.artStyle}"
-                                    placeholder="예: 현대 일러스트레이션"
-                                    class="w-full p-2 border-2 border-gray-300 rounded-lg text-xs"
-                                />
-                            </div>
-                            
-                            <button 
-                                onclick="generateIllustration(${idx})"
-                                class="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition text-sm mb-3"
-                            >
-                                <i class="fas fa-paint-brush mr-2"></i>${page.illustrationImage ? '삽화 재생성' : '삽화 생성'}
-                            </button>
-                            
-                            <div class="bg-white rounded-lg overflow-hidden">
-                                ${page.illustrationImage ?
-                                    `<div class="relative">
-                                        <img src="${page.illustrationImage}" alt="Page ${page.pageNumber}" class="w-full h-auto"/>
-                                        <button 
-                                            onclick="downloadImage('${page.illustrationImage}', '${storybook.title}_페이지_${page.pageNumber}.png')"
-                                            class="absolute top-2 right-2 bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition text-xs shadow-lg"
-                                        >
-                                            <i class="fas fa-download mr-1"></i>다운로드
-                                        </button>
-                                    </div>` :
-                                    `<div class="min-h-[200px] flex items-center justify-center bg-gray-100">
-                                        <p class="text-gray-500 text-center p-4 text-sm">
-                                            <i class="fas fa-image text-4xl mb-2 block"></i>
-                                            삽화 생성 버튼을 클릭하세요
-                                        </p>
-                                    </div>`
-                                }
-                            </div>
-                            
-                            ${page.illustrationImage ? `
-                            <div class="mt-3">
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">
-                                    <i class="fas fa-edit mr-1"></i>수정사항 (선택)
-                                </label>
-                                <textarea 
-                                    id="edit-note-${idx}" 
-                                    class="w-full p-2 border-2 border-yellow-300 rounded-lg text-xs"
-                                    rows="2"
-                                    placeholder="수정할 내용 입력 (예: 토끼를 더 크게)"
-                                >${page.editNote || ''}</textarea>
-                            </div>
-                            ` : ''}
-                            
-                            <div class="mt-3">
-                                <label class="block text-xs font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-images mr-1"></i>참조 이미지 선택 (선택)
-                                </label>
-                                <div class="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto border border-gray-300 rounded-lg p-2 bg-white">
-                                    ${storybook.pages.map((p, pIdx) => {
-                                        if (pIdx === idx || !p.illustrationImage) return '';
-                                        return `
-                                        <div class="relative cursor-pointer" onclick="toggleReferenceImage(${idx}, ${pIdx})">
-                                            <img 
-                                                src="${p.illustrationImage}" 
-                                                alt="페이지 ${p.pageNumber}"
-                                                class="w-full h-16 object-cover rounded border-2 border-gray-300 hover:border-green-500 transition"
-                                                id="ref-img-${idx}-${pIdx}"
-                                            />
-                                            <div class="absolute top-0 right-0 bg-green-600 text-white text-xs px-1 py-0.5 rounded-bl">
-                                                ${p.pageNumber}
-                                            </div>
-                                            <input 
-                                                type="checkbox" 
-                                                id="ref-check-${idx}-${pIdx}"
-                                                class="absolute top-1 left-1 w-4 h-4"
-                                            />
-                                        </div>
-                                        `;
-                                    }).join('') || '<p class="text-gray-400 text-xs col-span-4 text-center py-4">아직 다른 페이지에 이미지가 없습니다</p>'}
+                            <!-- 3️⃣ 삽화 섹션 -->
+                            <div class="bg-green-50 border-2 border-green-200 rounded-lg p-3 md:p-4">
+                                <h5 class="font-bold text-green-700 mb-2 text-sm md:text-base flex items-center">
+                                    <i class="fas fa-image mr-2"></i>3. 삽화
+                                </h5>
+                                
+                                <div class="space-y-2 mb-3">
+                                    <div>
+                                        <label class="text-xs text-gray-600 block mb-1">장면 설명</label>
+                                        <textarea 
+                                            id="scene-combined-${idx}" 
+                                            class="w-full p-2 border-2 border-gray-300 rounded-lg text-xs"
+                                            rows="3"
+                                            placeholder="장면, 캐릭터, 배경, 분위기"
+                                            onblur="updateSceneCombined(${idx}, this.value)"
+                                        >${page.scene_description || ''}${page.scene_structure ? '\n\n캐릭터: ' + (page.scene_structure.characters || '') + '\n배경: ' + (page.scene_structure.background || '') + '\n분위기: ' + (page.scene_structure.atmosphere || '') : ''}</textarea>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="text-xs text-gray-600 block mb-1">그림체</label>
+                                        <input 
+                                            id="artstyle-${idx}" 
+                                            value="${page.artStyle || storybook.artStyle}"
+                                            placeholder="예: 현대 일러스트레이션"
+                                            class="w-full p-2 border-2 border-gray-300 rounded-lg text-xs"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            ${storybook.key_objects && storybook.key_objects.length > 0 ? `
-                            <div class="mt-3">
-                                <label class="block text-xs font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-cube mr-1"></i>Key Objects 참조 (선택)
-                                </label>
-                                <div class="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto border border-orange-300 rounded-lg p-2 bg-white">
-                                    ${storybook.key_objects.map((obj, objIdx) => {
-                                        const objImg = storybook.keyObjectImages && storybook.keyObjectImages[objIdx];
-                                        if (!objImg || !objImg.imageUrl) return '';
-                                        return `
-                                        <div class="relative cursor-pointer" onclick="toggleKeyObjectReference(${idx}, ${objIdx})">
-                                            <img 
-                                                src="${objImg.imageUrl}" 
-                                                alt="${obj.korean}"
-                                                class="w-full h-16 object-cover rounded border-2 border-orange-300 hover:border-orange-500 transition"
-                                                id="ref-keyobj-${idx}-${objIdx}"
-                                            />
-                                            <div class="absolute top-0 right-0 bg-orange-600 text-white text-xs px-1 py-0.5 rounded-bl">
-                                                ${obj.korean}
-                                            </div>
-                                            <input 
-                                                type="checkbox" 
-                                                id="ref-keyobj-check-${idx}-${objIdx}"
-                                                class="absolute top-1 left-1 w-4 h-4"
-                                            />
-                                        </div>
-                                        `;
-                                    }).join('') || '<p class="text-gray-400 text-xs col-span-4 text-center py-4">아직 Key Object가 없습니다</p>'}
+                                
+                                <button 
+                                    onclick="generateIllustration(${idx})"
+                                    class="w-full bg-green-600 text-white py-2.5 md:py-3 rounded-lg font-semibold hover:bg-green-700 active:bg-green-800 transition text-sm md:text-base shadow-md mb-3"
+                                >
+                                    <i class="fas fa-paint-brush mr-2"></i>${page.illustrationImage ? '삽화 재생성' : '삽화 생성'}
+                                </button>
+                                
+                                <div class="bg-white rounded-lg overflow-hidden shadow-sm border-2 border-gray-200">
+                                    ${page.illustrationImage ?
+                                        `<div class="relative">
+                                            <img src="${page.illustrationImage}" alt="Page ${page.pageNumber}" class="w-full h-auto"/>
+                                            <button 
+                                                onclick="downloadImage('${page.illustrationImage}', '${storybook.title}_페이지_${page.pageNumber}.png')"
+                                                class="absolute top-2 right-2 bg-green-600 text-white px-2 md:px-3 py-1.5 rounded-lg hover:bg-green-700 active:bg-green-800 transition text-xs shadow-lg"
+                                            >
+                                                <i class="fas fa-download mr-1"></i>저장
+                                            </button>
+                                        </div>` :
+                                        `<div class="min-h-[150px] md:min-h-[200px] flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                                            <p class="text-gray-400 text-center p-4 text-xs md:text-sm">
+                                                <i class="fas fa-image text-3xl md:text-4xl mb-2 block"></i>
+                                                삽화 생성 버튼을 클릭하세요
+                                            </p>
+                                        </div>`
+                                    }
                                 </div>
+                                
+                                ${page.illustrationImage ? `
+                                <div class="mt-2">
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                        <i class="fas fa-edit mr-1"></i>수정사항 (선택)
+                                    </label>
+                                    <textarea 
+                                        id="edit-note-${idx}" 
+                                        class="w-full p-2 border-2 border-yellow-300 rounded-lg text-xs bg-yellow-50"
+                                        rows="2"
+                                        placeholder="예: 토끼를 더 크게"
+                                    >${page.editNote || ''}</textarea>
+                                </div>
+                                ` : ''}
+                                
+                                <div class="mt-2">
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+                                        <i class="fas fa-images mr-1"></i>참조 이미지 (선택)
+                                    </label>
+                                    <div class="grid grid-cols-3 md:grid-cols-4 gap-1.5 md:gap-2 max-h-28 md:max-h-32 overflow-y-auto border border-gray-300 rounded-lg p-1.5 md:p-2 bg-white">
+                                        ${storybook.pages.map((p, pIdx) => {
+                                            if (pIdx === idx || !p.illustrationImage) return '';
+                                            return `
+                                            <div class="relative cursor-pointer touch-manipulation" onclick="toggleReferenceImage(${idx}, ${pIdx})">
+                                                <img 
+                                                    src="${p.illustrationImage}" 
+                                                    alt="페이지 ${p.pageNumber}"
+                                                    class="w-full h-14 md:h-16 object-cover rounded border-2 border-gray-300 active:border-green-500 transition"
+                                                    id="ref-img-${idx}-${pIdx}"
+                                                />
+                                                <div class="absolute top-0 right-0 bg-green-600 text-white text-[10px] md:text-xs px-1 py-0.5 rounded-bl font-semibold">
+                                                    ${p.pageNumber}
+                                                </div>
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="ref-check-${idx}-${pIdx}"
+                                                    class="absolute top-0.5 left-0.5 w-3.5 h-3.5 md:w-4 md:h-4"
+                                                />
+                                            </div>
+                                            `;
+                                        }).join('') || '<p class="text-gray-400 text-[10px] md:text-xs col-span-3 md:col-span-4 text-center py-3">아직 다른 페이지에 이미지가 없습니다</p>'}
+                                    </div>
+                                </div>
+                                
+                                ${storybook.key_objects && storybook.key_objects.length > 0 ? `
+                                <div class="mt-2">
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+                                        <i class="fas fa-cube mr-1"></i>Key Objects (선택)
+                                    </label>
+                                    <div class="grid grid-cols-3 md:grid-cols-4 gap-1.5 md:gap-2 max-h-28 md:max-h-32 overflow-y-auto border border-orange-300 rounded-lg p-1.5 md:p-2 bg-white">
+                                        ${storybook.key_objects.map((obj, objIdx) => {
+                                            const objImg = storybook.keyObjectImages && storybook.keyObjectImages[objIdx];
+                                            if (!objImg || !objImg.imageUrl) return '';
+                                            return `
+                                            <div class="relative cursor-pointer touch-manipulation" onclick="toggleKeyObjectReference(${idx}, ${objIdx})">
+                                                <img 
+                                                    src="${objImg.imageUrl}" 
+                                                    alt="${obj.korean}"
+                                                    class="w-full h-14 md:h-16 object-cover rounded border-2 border-orange-300 active:border-orange-500 transition"
+                                                    id="ref-keyobj-${idx}-${objIdx}"
+                                                />
+                                                <div class="absolute top-0 right-0 bg-orange-600 text-white text-[10px] md:text-xs px-1 py-0.5 rounded-bl font-semibold">
+                                                    ${obj.korean}
+                                                </div>
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="ref-keyobj-check-${idx}-${objIdx}"
+                                                    class="absolute top-0.5 left-0.5 w-3.5 h-3.5 md:w-4 md:h-4"
+                                                />
+                                            </div>
+                                            `;
+                                        }).join('') || '<p class="text-gray-400 text-[10px] md:text-xs col-span-3 md:col-span-4 text-center py-3">아직 Key Object가 없습니다</p>'}
+                                    </div>
+                                </div>
+                                ` : ''}
                             </div>
-                            ` : ''}
                         </div>
                     </div>
                 `).join('')}
