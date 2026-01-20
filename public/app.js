@@ -12,7 +12,9 @@ let imageSettings = {
     keyObjectModel: 'gemini-3-pro-image-preview',  // Key Object 모델
     illustrationModel: 'gemini-3-pro-image-preview',  // 페이지 삽화 모델
     vocabularyModel: 'gemini-3-pro-image-preview',  // 8단어 학습 모델
-    coverModel: 'gemini-3-pro-image-preview'  // 표지 모델
+    coverModel: 'gemini-3-pro-image-preview',  // 표지 모델
+    ttsModel: 'google/gemini-2.5-pro-preview-tts',  // TTS 모델
+    ttsVoiceConfig: '여성, 따뜻하고 부드러운 목소리, 천천히'  // TTS 음성 설정
 };
 
 // 이미지 모델 목록
@@ -21,6 +23,14 @@ const IMAGE_MODELS = [
     { value: 'gemini-2.5-flash-image', label: 'Gemini 2.5 Flash Image', description: '빠르고 저렴한 이미지 생성' },
     { value: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash (실험)', description: '무료 테스트용' },
     { value: 'imagen-4', label: 'Imagen 4', description: '전문 이미지, 텍스트 렌더링 우수' }
+];
+
+// TTS 모델 목록
+const TTS_MODELS = [
+    { value: 'google/gemini-2.5-pro-preview-tts', label: 'Gemini 2.5 Pro Preview TTS ⭐', description: '고품질, 자연스러운 음성' },
+    { value: 'fal-ai/elevenlabs/tts/multilingual-v2', label: 'ElevenLabs Multilingual V2', description: '다국어 지원, 전문 품질' },
+    { value: 'elevenlabs/v3-tts', label: 'ElevenLabs V3 TTS', description: '최신 버전, 감정 표현 우수' },
+    { value: 'fal-ai/minimax/speech-2.6-hd', label: 'Minimax Speech 2.6 HD', description: '한국어/일본어/중국어 최적화' }
 ];
 
 // 모델 선택 HTML 생성 함수
@@ -69,6 +79,110 @@ function updateVocabularyModel(value) {
     imageSettings.vocabularyModel = value;
     saveImageSettings();
     console.log('✅ 8단어 학습 모델 변경:', value);
+}
+
+// TTS 모델 선택 HTML 생성
+function createTTSModelSelect(currentModel, pageIndex) {
+    const modelOptions = TTS_MODELS.map(model => 
+        `<option value="${model.value}" ${currentModel === model.value ? 'selected' : ''}>${model.label}</option>`
+    ).join('');
+    
+    return `
+        <select 
+            id="tts-model-select-${pageIndex}"
+            onchange="updatePageTTSModel(${pageIndex}, this.value)"
+            class="text-xs border border-gray-300 rounded px-2 py-1 bg-white"
+        >
+            ${modelOptions}
+        </select>
+    `;
+}
+
+// TTS 모델 변경
+function updateTTSModel(value) {
+    imageSettings.ttsModel = value;
+    saveImageSettings();
+    console.log('✅ TTS 모델 변경:', value);
+}
+
+// TTS 음성 설정 변경
+function updateTTSVoiceConfig(value) {
+    imageSettings.ttsVoiceConfig = value;
+    saveImageSettings();
+    console.log('✅ TTS 음성 설정 변경:', value);
+}
+
+// 페이지 TTS 생성
+async function generatePageTTS(pageIndex) {
+    if (!currentStorybook || !currentStorybook.pages[pageIndex]) {
+        alert('페이지 정보가 없습니다.');
+        return;
+    }
+    
+    const page = currentStorybook.pages[pageIndex];
+    const text = page.text;
+    
+    if (!text || text.trim().length === 0) {
+        alert('텍스트가 없습니다.');
+        return;
+    }
+    
+    const ttsButton = document.getElementById(`tts-btn-${pageIndex}`);
+    const ttsPlayer = document.getElementById(`tts-player-${pageIndex}`);
+    
+    // 로딩 표시
+    if (ttsButton) {
+        ttsButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>생성중...';
+        ttsButton.disabled = true;
+    }
+    
+    try {
+        const response = await axios.post('/api/generate-tts', {
+            text: text,
+            model: imageSettings.ttsModel,
+            voiceConfig: imageSettings.ttsVoiceConfig
+        });
+        
+        if (response.data.success && response.data.audioUrl) {
+            // TTS 저장
+            if (!currentStorybook.pages[pageIndex].ttsAudio) {
+                currentStorybook.pages[pageIndex].ttsAudio = {};
+            }
+            currentStorybook.pages[pageIndex].ttsAudio.url = response.data.audioUrl;
+            currentStorybook.pages[pageIndex].ttsAudio.model = imageSettings.ttsModel;
+            saveCurrentStorybook();
+            
+            // 플레이어 표시
+            if (ttsPlayer) {
+                ttsPlayer.innerHTML = `
+                    <audio controls class="w-full">
+                        <source src="${response.data.audioUrl}" type="audio/mpeg">
+                        브라우저가 오디오를 지원하지 않습니다.
+                    </audio>
+                `;
+                ttsPlayer.classList.remove('hidden');
+            }
+            
+            // 버튼 업데이트
+            if (ttsButton) {
+                ttsButton.innerHTML = '<i class="fas fa-redo mr-1"></i>재생성';
+                ttsButton.disabled = false;
+            }
+            
+            showNotification('success', 'TTS 생성 완료!', '음성이 생성되었습니다.');
+        } else {
+            throw new Error(response.data.error || 'TTS 생성 실패');
+        }
+    } catch (error) {
+        console.error('TTS 생성 오류:', error);
+        alert('TTS 생성 중 오류가 발생했습니다: ' + (error.response?.data?.error || error.message));
+        
+        // 버튼 복원
+        if (ttsButton) {
+            ttsButton.innerHTML = '<i class="fas fa-volume-up mr-1"></i>음성 생성';
+            ttsButton.disabled = false;
+        }
+    }
 }
 
 // 표지 모델 변경
@@ -1368,6 +1482,12 @@ function displayStorybook(storybook) {
                     >
                         <i class="fas fa-download mr-2"></i>전체 삽화
                     </button>
+                    <button 
+                        onclick="downloadAllAudio()"
+                        class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition"
+                    >
+                        <i class="fas fa-volume-up mr-2"></i>전체 MP3
+                    </button>
                 </div>
             </div>
 
@@ -1385,12 +1505,14 @@ function displayStorybook(storybook) {
                                     onchange="updatePageText(${idx}, this.value)"
                                 >${page.text}</textarea>
 
-                                <h5 class="font-bold text-gray-700 mb-2 text-sm md:text-base">장면 설명</h5>
+                                <h5 class="font-bold text-gray-700 mb-2 text-sm md:text-base">장면 전체 설명 (통합)</h5>
                                 <textarea 
-                                    id="scene-${idx}" 
+                                    id="scene-combined-${idx}" 
                                     class="w-full p-2 md:p-3 border-2 border-gray-300 rounded-lg text-xs md:text-sm mb-2"
-                                    rows="2"
-                                >${page.scene_description}</textarea>
+                                    rows="5"
+                                    placeholder="장면 설명, 캐릭터, 배경, 분위기를 모두 포함하여 작성하세요"
+                                    onblur="updateSceneCombined(${idx}, this.value)"
+                                >${page.scene_description || ''}${page.scene_structure ? '\n\n캐릭터: ' + (page.scene_structure.characters || '') + '\n배경: ' + (page.scene_structure.background || '') + '\n분위기: ' + (page.scene_structure.atmosphere || '') : ''}</textarea>
                                 
                                 <h5 class="font-bold text-gray-700 mb-2 mt-3 text-sm md:text-base">그림체</h5>
                                 <input 
@@ -1400,29 +1522,57 @@ function displayStorybook(storybook) {
                                     class="w-full p-2 border-2 border-gray-300 rounded-lg text-xs md:text-sm mb-2"
                                 />
                                 
-                                ${page.scene_structure ? `
-                                <h5 class="font-bold text-gray-700 mb-2 mt-3 text-sm md:text-base">장면 구조</h5>
-                                <div class="space-y-2 mb-2">
-                                    <input 
-                                        id="scene-char-${idx}" 
-                                        value="${page.scene_structure.characters || ''}"
-                                        placeholder="캐릭터 & 행동"
-                                        class="w-full p-2 border border-gray-300 rounded text-xs md:text-sm"
-                                    />
-                                    <input 
-                                        id="scene-bg-${idx}" 
-                                        value="${page.scene_structure.background || ''}"
-                                        placeholder="배경"
-                                        class="w-full p-2 border border-gray-300 rounded text-xs md:text-sm"
-                                    />
-                                    <input 
-                                        id="scene-atm-${idx}" 
-                                        value="${page.scene_structure.atmosphere || ''}"
-                                        placeholder="분위기"
-                                        class="w-full p-2 border border-gray-300 rounded text-xs md:text-sm"
-                                    />
+                                <!-- TTS 섹션 -->
+                                <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <h5 class="font-bold text-gray-700 mb-2 text-sm md:text-base flex items-center">
+                                        <i class="fas fa-volume-up mr-2 text-blue-600"></i>음성(TTS)
+                                    </h5>
+                                    
+                                    <div class="space-y-2">
+                                        <!-- TTS 설정 -->
+                                        <div class="flex flex-col sm:flex-row gap-2">
+                                            <div class="flex-1">
+                                                <label class="text-xs text-gray-600 block mb-1">음성 설정</label>
+                                                <input 
+                                                    id="tts-config-${idx}" 
+                                                    value="${page.ttsConfig || imageSettings.ttsVoiceConfig}"
+                                                    placeholder="예: 여성, 따뜻한 목소리, 느린 속도"
+                                                    class="w-full p-2 border border-gray-300 rounded text-xs"
+                                                    onblur="updateTTSConfig(${idx}, this.value)"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-600 block mb-1">모델</label>
+                                                ${createTTSModelSelect(page.ttsModel || imageSettings.ttsModel, idx)}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- TTS 생성 버튼 -->
+                                        <button 
+                                            onclick="generatePageTTS(${idx})"
+                                            class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-sm"
+                                            id="tts-btn-${idx}"
+                                        >
+                                            <i class="fas fa-microphone mr-2"></i>${page.audioUrl ? 'TTS 재생성' : 'TTS 생성'}
+                                        </button>
+                                        
+                                        <!-- TTS 플레이어 -->
+                                        ${page.audioUrl ? `
+                                        <div class="space-y-2">
+                                            <audio controls class="w-full" id="audio-player-${idx}">
+                                                <source src="${page.audioUrl}" type="audio/mpeg">
+                                                브라우저가 오디오를 지원하지 않습니다.
+                                            </audio>
+                                            <button 
+                                                onclick="downloadAudio('${page.audioUrl}', '${storybook.title}_페이지_${page.pageNumber}.mp3')"
+                                                class="w-full bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 transition text-xs"
+                                            >
+                                                <i class="fas fa-download mr-1"></i>MP3 다운로드
+                                            </button>
+                                        </div>
+                                        ` : `<p class="text-xs text-gray-500 text-center py-2">TTS 생성 버튼을 클릭하세요</p>`}
+                                    </div>
                                 </div>
-                                ` : ''}
 
                                 <button 
                                     onclick="generateIllustration(${idx})"
@@ -1831,6 +1981,173 @@ function updatePageText(pageIndex, newText) {
         currentStorybook.pages[pageIndex].text = newText.trim();
         saveCurrentStorybook();
     }
+}
+
+// 장면 통합 설명 업데이트
+function updateSceneCombined(pageIndex, combinedText) {
+    if (!combinedText || !combinedText.trim()) return;
+    
+    const text = combinedText.trim();
+    currentStorybook.pages[pageIndex].scene_description = text;
+    
+    // scene_structure는 더 이상 별도로 관리하지 않음
+    // 모든 정보를 scene_description에 통합
+    saveCurrentStorybook();
+    console.log(`✅ 페이지 ${pageIndex + 1} 장면 설명 업데이트됨`);
+}
+
+// TTS 설정 업데이트
+function updateTTSConfig(pageIndex, config) {
+    if (!config || !config.trim()) return;
+    
+    currentStorybook.pages[pageIndex].ttsConfig = config.trim();
+    saveCurrentStorybook();
+    console.log(`✅ 페이지 ${pageIndex + 1} TTS 설정 업데이트: ${config}`);
+}
+
+// TTS 모델 업데이트
+function updateTTSModel(value) {
+    imageSettings.ttsModel = value;
+    saveImageSettings();
+    console.log('✅ TTS 모델 변경:', value);
+}
+
+// 페이지별 TTS 모델 업데이트
+function updatePageTTSModel(pageIndex, value) {
+    currentStorybook.pages[pageIndex].ttsModel = value;
+    saveCurrentStorybook();
+    console.log(`✅ 페이지 ${pageIndex + 1} TTS 모델 변경:`, value);
+}
+
+// 페이지 TTS 생성
+async function generatePageTTS(pageIndex) {
+    const page = currentStorybook.pages[pageIndex];
+    const btnId = `tts-btn-${pageIndex}`;
+    const btn = document.getElementById(btnId);
+    
+    if (!page.text || !page.text.trim()) {
+        alert('텍스트가 없습니다. 먼저 텍스트를 입력해주세요.');
+        return;
+    }
+    
+    // 버튼 비활성화 및 로딩 표시
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>TTS 생성 중...';
+    
+    try {
+        const ttsConfig = page.ttsConfig || imageSettings.ttsVoiceConfig;
+        const ttsModel = page.ttsModel || imageSettings.ttsModel;
+        
+        console.log(`🎙️ TTS 생성 시작 - 페이지 ${pageIndex + 1}:`, {
+            text: page.text,
+            config: ttsConfig,
+            model: ttsModel
+        });
+        
+        // API 호출
+        const response = await fetch('/api/generate-tts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': localStorage.getItem('API_KEY') || ''
+            },
+            body: JSON.stringify({
+                text: page.text,
+                voiceConfig: ttsConfig,
+                model: ttsModel
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'TTS 생성 실패');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.audioUrl) {
+            // 페이지에 오디오 URL 저장
+            currentStorybook.pages[pageIndex].audioUrl = data.audioUrl;
+            currentStorybook.pages[pageIndex].ttsConfig = ttsConfig;
+            currentStorybook.pages[pageIndex].ttsModel = ttsModel;
+            saveCurrentStorybook();
+            
+            // UI 업데이트
+            displayStorybook(currentStorybook);
+            
+            showNotification('success', 'TTS 생성 완료!', `페이지 ${pageIndex + 1}의 음성이 생성되었습니다.`);
+        } else {
+            throw new Error(data.error || 'TTS URL을 받지 못했습니다.');
+        }
+        
+    } catch (error) {
+        console.error('TTS 생성 오류:', error);
+        alert('TTS 생성 실패: ' + error.message);
+        
+        // 버튼 복구
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-microphone mr-2"></i>${page.audioUrl ? 'TTS 재생성' : 'TTS 생성'}`;
+    }
+}
+
+// 오디오 다운로드
+async function downloadAudio(audioUrl, filename) {
+    try {
+        const response = await fetch(audioUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showNotification('success', '다운로드 완료', filename + '이 다운로드되었습니다.');
+    } catch (error) {
+        console.error('다운로드 오류:', error);
+        alert('다운로드 실패: ' + error.message);
+    }
+}
+
+// 모든 MP3 다운로드
+async function downloadAllAudio() {
+    if (!currentStorybook || !currentStorybook.pages) {
+        alert('동화책이 선택되지 않았습니다.');
+        return;
+    }
+    
+    const pagesWithAudio = currentStorybook.pages.filter(page => page.audioUrl);
+    
+    if (pagesWithAudio.length === 0) {
+        alert('생성된 TTS가 없습니다. 먼저 TTS를 생성해주세요.');
+        return;
+    }
+    
+    if (!confirm(`${pagesWithAudio.length}개의 MP3 파일을 다운로드하시겠습니까?`)) {
+        return;
+    }
+    
+    let downloadCount = 0;
+    
+    for (let i = 0; i < pagesWithAudio.length; i++) {
+        const page = pagesWithAudio[i];
+        const filename = `${currentStorybook.title}_페이지_${page.pageNumber}.mp3`;
+        
+        try {
+            await downloadAudio(page.audioUrl, filename);
+            downloadCount++;
+            
+            // 다운로드 간 약간의 지연 (브라우저 제한 방지)
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+            console.error(`페이지 ${page.pageNumber} 다운로드 실패:`, error);
+        }
+    }
+    
+    showNotification('success', '일괄 다운로드 완료', `${downloadCount}개의 MP3 파일이 다운로드되었습니다.`);
 }
 
 // 단어 업데이트 함수

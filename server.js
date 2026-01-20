@@ -1801,6 +1801,80 @@ JSON만 응답하세요. 다른 텍스트는 포함하지 마세요.`;
   }
 });
 
+// TTS 생성 API
+app.post('/api/generate-tts', requireAPIKey, async (req, res) => {
+  try {
+    const { text, voiceConfig, model } = req.body;
+    
+    if (!text || !text.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: '텍스트가 필요합니다.'
+      });
+    }
+    
+    console.log(`\n🎙️ Generating TTS for text: "${text.substring(0, 50)}..."`);
+    console.log(`Voice config: ${voiceConfig}`);
+    console.log(`Model: ${model}`);
+    
+    // Google Gemini 2.5 Flash TTS 사용
+    const ttsModel = model || 'google/gemini-2.5-pro-preview-tts';
+    
+    // 음성 설정을 requirements로 변환
+    const requirements = voiceConfig || '여성, 따뜻하고 부드러운 목소리, 천천히';
+    
+    // GenSpark API 호출 (audio_generation tool 사용)
+    const apiKey = process.env.GENSPARK_API_KEY;
+    if (!apiKey) {
+      throw new Error('GENSPARK_API_KEY가 설정되지 않았습니다.');
+    }
+    
+    const gensparkUrl = 'https://www.genspark.ai/api/agent-studio/multimodal/create';
+    
+    const response = await fetch(gensparkUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: ttsModel,
+        query: text,
+        requirements: requirements,
+        task_summary: 'TTS generation for children\'s storybook'
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`GenSpark API 오류: ${response.status} - ${errorText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.generated_audios || data.generated_audios.length === 0) {
+      throw new Error('TTS 생성 실패: 오디오가 생성되지 않았습니다.');
+    }
+    
+    const audioUrl = data.generated_audios[0].url;
+    
+    console.log(`✅ TTS generated successfully: ${audioUrl}`);
+    
+    res.json({
+      success: true,
+      audioUrl: audioUrl,
+      duration: data.generated_audios[0].duration || 0
+    });
+    
+  } catch (error) {
+    console.error('TTS 생성 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: 'TTS 생성 실패: ' + error.message
+    });
+  }
+});
+
 // 동화책 번역 API
 app.post('/api/translate-storybook', requireAPIKey, async (req, res) => {
   try {
