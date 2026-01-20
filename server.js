@@ -1825,17 +1825,14 @@ app.post('/api/generate-tts', requireAPIKey, async (req, res) => {
       });
     }
     
-    // Gemini TTS API 사용
-    // 음성 설정을 speaker_id로 변환
-    const voiceModel = model || 'Puck'; // 기본: Puck (여성 목소리)
+    // Gemini 2.5 Flash Multimodal 사용
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-tts:generateContent?key=${GEMINI_API_KEY}`;
     
-    console.log(`🎵 Using Gemini TTS with voice: ${voiceModel}`);
-    
-    // Gemini TTS API 엔드포인트
-    const url = `https://generativelanguage.googleapis.com/v1alpha/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`;
-    
-    // 음성 설정을 프롬프트에 포함
+    // 음성 설정
+    const voiceName = model || 'Puck';
     const voicePrompt = voiceConfig || '여성 목소리, 부드럽고 따뜻한 톤, 동화 낭독 스타일';
+    
+    console.log(`🎵 Using Gemini TTS with voice: ${voiceName}`);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -1845,21 +1842,19 @@ app.post('/api/generate-tts', requireAPIKey, async (req, res) => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Read this children's storybook text with these voice characteristics: ${voicePrompt}\n\nText: ${text}`
+            text: text
           }]
         }],
         generationConfig: {
-          temperature: 0.9,
+          temperature: 1.0,
           topK: 40,
           topP: 0.95,
-          maxOutputTokens: 8192,
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: voiceModel
-              }
-            }
-          }
+          maxOutputTokens: 8192
+        },
+        systemInstruction: {
+          parts: [{
+            text: `You are a professional voice actor for children's audiobooks. ${voicePrompt}. Read the text naturally and expressively.`
+          }]
         }
       })
     });
@@ -1871,38 +1866,57 @@ app.post('/api/generate-tts', requireAPIKey, async (req, res) => {
     }
     
     const data = await response.json();
-    console.log('Gemini TTS Response structure:', JSON.stringify(data).substring(0, 300));
+    console.log('Gemini TTS Response:', JSON.stringify(data).substring(0, 500));
     
-    // Gemini API 응답에서 오디오 데이터 추출
-    if (data.candidates && data.candidates[0]) {
-      const candidate = data.candidates[0];
+    // 응답 파싱
+    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+      const content = data.candidates[0].content;
       
-      // content.parts에서 inlineData 찾기
-      if (candidate.content && candidate.content.parts) {
-        for (const part of candidate.content.parts) {
-          if (part.inlineData) {
+      // parts 배열에서 audio 찾기
+      for (const part of content.parts) {
+        // inlineData에 오디오가 있는지 확인
+        if (part.inlineData && part.inlineData.mimeType) {
+          if (part.inlineData.mimeType.startsWith('audio/')) {
             const audioBase64 = part.inlineData.data;
-            const mimeType = part.inlineData.mimeType || 'audio/wav';
+            const mimeType = part.inlineData.mimeType;
             const audioUrl = `data:${mimeType};base64,${audioBase64}`;
             
-            console.log(`✅ TTS generated successfully (mime: ${mimeType}, length: ${audioBase64.length} bytes)`);
+            console.log(`✅ TTS generated successfully (mime: ${mimeType}, size: ${audioBase64.length} bytes)`);
             
             return res.json({
               success: true,
               audioUrl: audioUrl,
-              mimeType: mimeType,
-              duration: 0
+              mimeType: mimeType
+            });
+          }
+        }
+        
+        // fileData에 오디오가 있는지 확인
+        if (part.fileData && part.fileData.mimeType) {
+          if (part.fileData.mimeType.startsWith('audio/')) {
+            const fileUri = part.fileData.fileUri;
+            
+            // fileUri에서 오디오 다운로드
+            const audioResponse = await fetch(fileUri);
+            const audioBuffer = await audioResponse.arrayBuffer();
+            const audioBase64 = Buffer.from(audioBuffer).toString('base64');
+            const audioUrl = `data:${part.fileData.mimeType};base64,${audioBase64}`;
+            
+            console.log(`✅ TTS generated successfully from fileUri (mime: ${part.fileData.mimeType})`);
+            
+            return res.json({
+              success: true,
+              audioUrl: audioUrl,
+              mimeType: part.fileData.mimeType
             });
           }
         }
       }
-      
-      // 혹시 다른 구조에 있을 수 있으니 전체 응답 로깅
-      console.log('Full response:', JSON.stringify(data, null, 2));
     }
     
-    // 오디오를 찾지 못한 경우 에러
-    throw new Error('Gemini TTS API에서 오디오를 찾을 수 없습니다. 응답 구조를 확인해주세요.');
+    // 오디오를 찾지 못한 경우 전체 응답 로깅
+    console.log('Full Gemini response (no audio found):', JSON.stringify(data, null, 2));
+    throw new Error('Gemini TTS API에서 오디오를 찾을 수 없습니다. gemini-2.5-flash-tts 모델을 사용했는지 확인하세요.');
     
   } catch (error) {
     console.error('TTS 생성 실패:', error);
