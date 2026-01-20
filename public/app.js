@@ -1630,7 +1630,7 @@ function displayStorybook(storybook) {
                                     <i class="fas fa-paint-brush mr-2"></i>${page.illustrationImage ? '삽화 재생성' : '삽화 생성'}
                                 </button>
                                 
-                                <div class="bg-white rounded-lg overflow-hidden shadow-sm border-2 border-gray-200">
+                                <div id="illustration-${idx}" class="bg-white rounded-lg overflow-hidden shadow-sm border-2 border-gray-200">
                                     ${page.illustrationImage ?
                                         `<div class="relative">
                                             <img src="${page.illustrationImage}" alt="Page ${page.pageNumber}" class="w-full h-auto"/>
@@ -2515,7 +2515,7 @@ async function generateAllIllustrationsParallel() {
         if (!page.illustrationImage) {
             const illustrationDiv = document.getElementById(`illustration-${i}`);
             if (illustrationDiv) {
-                illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-3"></div><p class="text-gray-600 text-sm font-semibold">생성 중...</p><p class="text-gray-500 text-xs mt-1">병렬 생성 (빠르게)</p></div>';
+                illustrationDiv.innerHTML = '<div class="min-h-[200px] flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg"><div class="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-600 mb-4"></div><p class="text-blue-800 text-base font-bold">⚡ 생성 중...</p><p class="text-blue-600 text-sm mt-2">병렬 생성 (빠르게)</p><p class="text-blue-500 text-xs mt-1">페이지 ' + (i + 1) + '</p></div>';
             }
         }
     });
@@ -2668,7 +2668,7 @@ async function generateAllIllustrationsSequential() {
         if (!page.illustrationImage) {
             const illustrationDiv = document.getElementById(`illustration-${i}`);
             if (illustrationDiv) {
-                illustrationDiv.innerHTML = '<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-gray-400 mb-3"></div><p class="text-gray-600 text-sm font-semibold">대기 중...</p><p class="text-gray-500 text-xs mt-1">순차적으로 생성됩니다</p></div>';
+                illustrationDiv.innerHTML = '<div class="min-h-[200px] flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg"><div class="animate-pulse rounded-full h-20 w-20 bg-purple-300 mb-4"></div><p class="text-purple-800 text-base font-bold">🔷 대기 중...</p><p class="text-purple-600 text-sm mt-2">순차적으로 생성됩니다</p><p class="text-purple-500 text-xs mt-1">페이지 ' + (i + 1) + '</p></div>';
             }
         }
     });
@@ -2688,7 +2688,7 @@ async function generateAllIllustrationsSequential() {
             
             const illustrationDiv = document.getElementById(`illustration-${i}`);
             if (illustrationDiv) {
-                illustrationDiv.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-4"><div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-3"></div><p class="text-gray-600 text-sm font-semibold">페이지 ${page.pageNumber} 생성 중...</p><p class="text-gray-500 text-xs mt-1">${successCount + failCount + 1}/${pagesToGenerate.length}</p></div>`;
+                illustrationDiv.innerHTML = `<div class="min-h-[200px] flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg"><div class="animate-spin rounded-full h-20 w-20 border-b-4 border-purple-600 mb-4"></div><p class="text-purple-800 text-base font-bold">🔷 페이지 ${page.pageNumber} 생성 중...</p><p class="text-purple-600 text-sm mt-2">${successCount + failCount + 1}/${pagesToGenerate.length}</p><p class="text-purple-500 text-xs mt-1">순차 생성 (정확하게)</p></div>`;
             }
             
             try {
